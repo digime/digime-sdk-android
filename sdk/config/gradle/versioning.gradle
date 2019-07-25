@@ -17,14 +17,14 @@ ext.versions = [
         // Build time plugins
         androidGradlePlugin : '3.1.3',
         buildInfoExtractor: '4.5.2',
-        kotlin : '1.3.21',
+        kotlin : '1.3.40',
 
         // Libraries
         supportLibrary : '27.0.2',
         constraintLayout : '1.0.2',
         gson : '2.8.5',
-        okhttp : '3.9.0',
-        retrofit : '2.3.0',
+        okhttp : '4.0.1',
+        retrofit : '2.6.0',
         commonsCompress : '1.18',
         brotli : '0.1.2',
         moshi : '1.8.0',

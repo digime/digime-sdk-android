@@ -1,20 +1,25 @@
 package me.digi.sdk.api.helpers
 
 import android.content.Context
-import android.content.res.AssetManager
 import okhttp3.CertificatePinner
 import java.security.cert.CertificateFactory
 
-class DMECertificatePinnerBuilder(private val context: Context, private val domain: String) {
+internal class DMECertificatePinnerBuilder(private val context: Context, private val domain: String) {
 
     fun buildCertificatePinner(): CertificatePinner {
 
+        var pinnerBuilder = CertificatePinner.Builder()
+        val assetManager = context.assets
         val certFactory = CertificateFactory.getInstance("X.509")
 
-        for (certPath in listCertificateFiles()) {
-
+        listCertificateFiles().flatMap { certPath ->
+            val fileStream = assetManager.open(certPath)
+            certFactory.generateCertificates(fileStream)
+        }.forEach { cert ->
+            pinnerBuilder.add(domain, CertificatePinner.pin(cert))
         }
 
+        return pinnerBuilder.build()
     }
 
     fun shouldPinCommunicationsWithDomain() = listCertificateFiles().isNotEmpty()
@@ -34,5 +39,4 @@ class DMECertificatePinnerBuilder(private val context: Context, private val doma
 
         return certsForDomain.toList()
     }
-
 }

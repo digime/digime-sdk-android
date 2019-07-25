@@ -2,6 +2,7 @@ package me.digi.sdk.api
 
 import android.content.Context
 import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
+import me.digi.sdk.api.helpers.DMESharedAPIScope
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.services.DMEArgonService
 import okhttp3.OkHttpClient
@@ -9,10 +10,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 
-class DMEAPIClient(private val context: Context, private val baseUrl: String) {
+internal class DMEAPIClient(private val context: Context, private val baseUrl: String) {
 
     private val httpClient: Retrofit
     val argonService: DMEArgonService
+    val sharedAPIScope: DMESharedAPIScope = DMESharedAPIScope()
 
     init {
         val httpClientBuilder = OkHttpClient.Builder()
