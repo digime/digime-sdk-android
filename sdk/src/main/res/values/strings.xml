@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">DigiMeSDK</string>
+
+    <!-- Cross App Messaging Keys -->
+
+    <string name="key_session_key">sessionKey</string>
+    <string name="key_result">result</string>
+    <string name="key_app_id">appId</string>
+    <string name="key_contract_id">contractId</string>
+    <string name="key_postbox_id">postboxId</string>
+    <string name="key_public_key">publicKey</string>
+    <string name="key_app_name">appName</string>
+    <string name="key_callback_url">callbackUrl</string>
+
+    <string name="key_timing_get_all_files">timingGetAllFiles</string>
+    <string name="key_timing_get_file">timingGetFile</string>
+    <string name="key_timing_fetch_contract_permission">timingFetchContractPermission</string>
+    <string name="key_timing_fetch_account">timingFetchAccount</string>
+    <string name="key_timing_fetch_file_list">timingFetchFileList</string>
+    <string name="key_timing_fetch_session_key">timingFetchSessionKey</string>
+    <string name="key_timing_data_request">timingDataRequest</string>
+    <string name="key_timing_fetch_contract_details">timingFetchContractDetails</string>
+    <string name="key_timing_update_contract_permission">timingUpdateContractPermission</string>
+    <string name="key_timing_total">timingTotal</string>
+
+    <string name="key_debug_app_id">debugAppId</string>
+    <string name="key_debug_bundle_version">debugBundleVersion</string>
+    <string name="key_debug_platform">debugPlatform</string>
+    <string name="key_debug_contract_type">debugContractType</string>
+    <string name="key_debug_device_id">debugDeviceId</string>
+    <string name="key_debug_digime_version">debugDigiMeVersion</string>
+    <string name="key_debug_user_id">debugUserId</string>
+    <string name="key_debug_library_id">debugLibraryId</string>
+    <string name="key_debug_pcloud_type">debugPcloudType</string>
+
 </resources>
