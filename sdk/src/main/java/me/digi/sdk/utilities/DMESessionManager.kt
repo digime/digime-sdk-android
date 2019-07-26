@@ -1,30 +1,30 @@
 package me.digi.sdk.utilities
 
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import me.digi.sdk.DMEError
 import me.digi.sdk.api.DMEAPIClient
 import me.digi.sdk.callbacks.DMEAuthorizationCallback
-import me.digi.sdk.entities.DMEDataRequest
-import me.digi.sdk.entities.DMEScope
+import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
 import java.util.Date
 
-internal class DMESessionManager(private val apiClient: DMEAPIClient) {
+internal class DMESessionManager(private val apiClient: DMEAPIClient, private val clientConfig: DMEClientConfiguration) {
 
     var currentSession: DMESession? = null
-    var scope: DMEDataRequest = DMEScope() // Default to entire scope.
+    var currentScope: DMESessionRequest? = null
 
     fun getSession(sessionRequest: DMESessionRequest, completion: DMEAuthorizationCallback) {
 
         currentSession = null
+        currentScope = null
 
         apiClient.sharedAPIScope.launch {
             try {
 
                 val session = apiClient.argonService.getSession(sessionRequest)
                 currentSession = session
+                currentScope = sessionRequest
                 completion(session, null)
 
             } catch (error: DMEError) {
@@ -35,9 +35,11 @@ internal class DMESessionManager(private val apiClient: DMEAPIClient) {
         }
     }
 
-    fun isSessionValid(): Boolean {
-        return currentSession?.let {
-            it.expiryDate.after(Date()) && it.id
-        } ?: false
-    }
+    fun isSessionValid() = currentSession?.let {
+        it.expiryDate.after(Date()) && it.key == clientConfig.contractId
+    } ?: false
+
+    fun isSessionKeyValid(key: String) = currentSession?.let {
+        key.isNotEmpty() && key == it.key
+    } ?: false
 }

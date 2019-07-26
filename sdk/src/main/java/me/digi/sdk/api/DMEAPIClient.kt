@@ -5,12 +5,13 @@ import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.helpers.DMESharedAPIScope
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.services.DMEArgonService
+import me.digi.sdk.entities.DMEClientConfiguration
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 
-internal class DMEAPIClient(private val context: Context, private val baseUrl: String) {
+internal class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
     private val httpClient: Retrofit
     val argonService: DMEArgonService
@@ -22,7 +23,7 @@ internal class DMEAPIClient(private val context: Context, private val baseUrl: S
             .configureCertificatePinningIfNecessary()
 
         val retrofitBuilder = Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(clientConfig.baseUrl)
             .client(httpClientBuilder.build())
             .addConverterFactory(GsonConverterFactory.create())
 
@@ -37,5 +38,5 @@ internal class DMEAPIClient(private val context: Context, private val baseUrl: S
         return this
     }
 
-    private fun domainForBaseUrl() = URL(baseUrl).host
+    private fun domainForBaseUrl() = URL(clientConfig.baseUrl).host
 }
