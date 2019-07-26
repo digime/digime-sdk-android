@@ -1,8 +1,11 @@
 package me.digi.sdk.callbacks
 
+import me.digi.sdk.DMEError
 import me.digi.sdk.entities.DMEAccount
 import me.digi.sdk.entities.DMEFile
 
-typealias DMEFileContentCompletion = (file: DMEFile?, error: Throwable?) -> Unit
+typealias DMEEmptyCompletion = (error: DMEError?) -> Unit
 
-typealias DMEAccountsCompletion = (accounts: List<DMEAccount>?, error: Throwable?) -> Unit
+typealias DMEFileContentCompletion = (file: DMEFile?, error: DMEError?) -> Unit
+
+typealias DMEAccountsCompletion = (accounts: List<DMEAccount>?, error: DMEError?) -> Unit

@@ -19,19 +19,11 @@ internal class DMESessionManager(private val apiClient: DMEAPIClient, private va
         currentSession = null
         currentScope = null
 
-        apiClient.sharedAPIScope.launch {
-            try {
+        apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { session, error ->
 
-                val session = apiClient.argonService.getSession(sessionRequest)
-                currentSession = session
-                currentScope = sessionRequest
-                completion(session, null)
-
-            } catch (error: DMEError) {
-
-                completion(null, error)
-
-            }
+            currentSession = session
+            currentScope = sessionRequest
+            completion(session, error)
         }
     }
 
