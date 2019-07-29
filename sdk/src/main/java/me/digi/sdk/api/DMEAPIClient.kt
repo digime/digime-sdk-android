@@ -64,7 +64,7 @@ internal class DMEAPIClient(private val context: Context, private val clientConf
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
-                val genericAPIError = DMEAPIError.Generic(context.getString(R.string.error_msg_api_unreachable))
+                val genericAPIError = DMEAPIError.Unreachable()
                 completion(null, genericAPIError)
             }
         })
@@ -74,7 +74,7 @@ internal class DMEAPIClient(private val context: Context, private val clientConf
 
         // For now return generic error until I have the spec from CCS.
         // TODO: Implement full error deduction.
-        return DMEAPIError.Generic(context.getString(R.string.error_msg_api_unreachable))
+        return DMEAPIError.Unreachable()
 
         // Try to parse a digi.me error object from the response.
 //        val responseString = response.errorBody()?.string()

@@ -33,9 +33,7 @@
     <string name="key_debug_library_id">debugLibraryId</string>
     <string name="key_debug_pcloud_type">debugPcloudType</string>
 
-
-    <!-- Error Messages -->
-
-    <string name="error_msg_api_unreachable">Couldn\'t reach the digi.me API - please check your network connection.</string>
+    <!-- Miscellaneous Constants -->
+    <string name="const_digime_app_package_name">me.digi.app3</string>
 
 </resources>

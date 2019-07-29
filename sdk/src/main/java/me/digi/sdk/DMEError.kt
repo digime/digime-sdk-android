@@ -28,5 +28,6 @@ sealed class DMEAuthError(override val message: String): DMEError(message) {
 sealed class DMEAPIError(override val message: String): DMEError(message) {
 
     class Generic(override val message: String): DMEAPIError(message)
+    class Unreachable(): DMEAPIError("Couldn't reach the digi.me API - please check your network connection.")
 
 }
