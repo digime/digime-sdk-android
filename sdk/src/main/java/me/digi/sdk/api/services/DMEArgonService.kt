@@ -7,7 +7,7 @@ import me.digi.sdk.entities.api.DMESessionRequest
 import retrofit2.Call
 import retrofit2.http.*
 
-internal interface DMEArgonService {
+interface DMEArgonService {
 
     @POST("v1/permission-access/session")
     fun getSession(@Body sessionRequest: DMESessionRequest): Call<DMESession>

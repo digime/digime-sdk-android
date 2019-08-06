@@ -2,7 +2,7 @@ package me.digi.sdk.entities.api
 
 import com.google.gson.annotations.SerializedName
 
-internal data class DMESessionRequest (
+data class DMESessionRequest (
 
     @SerializedName("appId")
     val appId: String,

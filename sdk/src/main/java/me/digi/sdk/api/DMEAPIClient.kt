@@ -18,7 +18,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 
-internal class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
+class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
     private val httpClient: Retrofit
     val argonService: DMEArgonService

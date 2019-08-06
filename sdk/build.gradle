@@ -28,6 +28,7 @@ android {
     sourceSets {
         main.kotlin.srcDirs += 'src/main/kotlin'
         main.java.srcDirs += 'src/main/java'
+        main { assets.srcDirs = ['src/main/assets', 'src/test/assets'] }
     }
 
 }
@@ -49,6 +50,9 @@ dependencies {
     implementation "org.brotli:dec:$versions.brotli"
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
+
+    implementation "com.madgag.spongycastle:pkix:$versions.spongycastlepkix"
+    implementation "com.madgag.spongycastle:prov:$versions.spongycastleprovider"
 }
 repositories {
     mavenCentral()

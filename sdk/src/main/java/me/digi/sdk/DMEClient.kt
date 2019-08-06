@@ -9,10 +9,10 @@ import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.utilities.DMEDeepLinkBuilder
 import me.digi.sdk.utilities.DMESessionManager
 
-internal abstract class DMEClient(private val context: Context, private val config: DMEClientConfiguration) {
+abstract class DMEClient(private val context: Context, private val config: DMEClientConfiguration) {
 
-    private val apiClient: DMEAPIClient
-    private val sessionManager: DMESessionManager
+    protected val apiClient: DMEAPIClient
+    protected val sessionManager: DMESessionManager
 
 
     init {
