@@ -38,11 +38,16 @@ android {
         }
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    implementation 'com.android.support:support-annotations:27.0.0'
     implementation 'com.android.support:appcompat-v7:27.0.0'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.robolectric:robolectric:4.3'
@@ -66,3 +71,5 @@ dependencies {
 repositories {
     mavenCentral()
 }
+
+apply from: project.file('../sdk/config/gradle/publishing.gradle')

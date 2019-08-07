@@ -1,0 +1,18 @@
+publishing {
+    publications {
+        sdk(MavenPublication) {
+            def project = project(':sdk')
+            if (components.hasWithName("java")) {
+                from components.java
+            } else if (components.hasWithName("android")) {
+                from components.android
+            }
+
+            artifact("$buildDir/outputs/aar/sdk-release.aar")
+
+            groupId 'me.digi'
+            artifactId project.name
+            version 'PRERELEASE'
+        }
+    }
+}
