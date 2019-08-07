@@ -20,15 +20,10 @@ class DMECryptoUtilities(val context: Context) {
 
     fun privateKeyHexFrom(p12File: String, password: String): String {
 
-        val list = context.assets.list("")
-
         val inStream = context.assets.open("CA_RSA_PRIVATE_KEY.p12")
-        PKCS12Utils.getKeysFromP12Stream(inStream, "monkey periscope")
-//        keyStore.load(dataStream, password.toCharArray())
-
-        val privateKey = keyStore.getKey(keyCAPrivateKey, password.toCharArray())
-
-        return privateKey.toString()
+        val keys = PKCS12Utils.getKeysFromP12Stream(inStream, "monkey periscope")
+    
+        return keys.first().toString()
     }
 
 }
