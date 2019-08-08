@@ -1,10 +1,9 @@
 package me.digi.sdk.entities
 
-data class DMEClientConfiguration (
+abstract class DMEClientConfiguration (
 
     var appId: String,
-    var contractId: String,
-    var privateKeyHex: String
+    var contractId: String
 
 ) {
 

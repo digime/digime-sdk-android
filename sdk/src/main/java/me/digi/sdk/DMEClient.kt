@@ -6,6 +6,7 @@ import me.digi.sdk.api.DMEAPIClient
 import me.digi.sdk.callbacks.DMEAccountsCompletion
 import me.digi.sdk.callbacks.DMEFileContentCompletion
 import me.digi.sdk.entities.DMEClientConfiguration
+import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMEDeepLinkBuilder
 import me.digi.sdk.utilities.DMESessionManager
 
@@ -43,18 +44,7 @@ abstract class DMEClient(private val context: Context, private val config: DMECl
 
     }
 
-    fun canOpenDigiMeApp(): Boolean {
-
-        val packageManager = context.packageManager
-        val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
-
-        return try {
-            packageManager.getApplicationInfo(digiMeAppPackageName, 0).enabled
-        }
-        catch (error: Throwable) {
-            return false
-        }
-    }
+    fun canOpenDigiMeApp() = DMEAppCommunicator.canOpenDMEApp()
 
     fun viewReceiptsInDigiMeApp() {
 

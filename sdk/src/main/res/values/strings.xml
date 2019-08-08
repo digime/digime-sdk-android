@@ -33,6 +33,14 @@
     <string name="key_debug_library_id">debugLibraryId</string>
     <string name="key_debug_pcloud_type">debugPcloudType</string>
 
+    <!-- Deep Link Paths -->
+    <string name="deeplink_consent_access">consent-access</string>
+    <string name="deeplink_add_sources">add-sources</string>
+    <string name="deeplink_demo">demo.digi.me</string>
+    <string name="deeplink_create_postbox">postbox-create</string>
+    <string name="deeplink_import_postbox">postbox-import</string>
+    <string name="deeplink_receipt">receipt</string>
+
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>
 
