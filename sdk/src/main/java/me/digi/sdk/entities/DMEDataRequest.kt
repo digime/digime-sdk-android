@@ -2,7 +2,7 @@ package me.digi.sdk.entities
 
 interface DMEDataRequest {
 
-    var timeRange: DMETimeRange
+    var timeRanges: List<DMETimeRange>
 
     var context: String
 

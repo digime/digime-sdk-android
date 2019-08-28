@@ -1,19 +1,25 @@
 package me.digi.sdk.entities
 
+import com.google.gson.annotations.SerializedName
 import java.lang.ref.WeakReference
 import java.util.Date
 
 data class DMESession (
 
+    @SerializedName("sessionKey")
     val key: String,
+
+    @SerializedName("sessionExchangeToken")
     val exchangeToken: String,
-    val expiryDate: Date,
-    val createdDate: Date,
-    val scope: DMEDataRequest,
-    private val sessionManager: WeakReference<String>
+
+    @SerializedName("expiry")
+    val expiryDate: Date
 
 ) {
 
+    var createdDate: Date? = null
+    var scope: DMEDataRequest? = null
+    private var sessionManager: WeakReference<String>? = null
     var metadata: Map<String, Any> = emptyMap()
 
 }

@@ -9,16 +9,16 @@ import retrofit2.http.*
 
 interface DMEArgonService {
 
-    @POST("v1/permission-access/session")
+    @POST("v1.3/permission-access/session")
     fun getSession(@Body sessionRequest: DMESessionRequest): Call<DMESession>
 
-    @GET("/v1/permission-access/query/{sessionKey}")
+    @GET("/v1.3/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<List<String>>
 
-    @GET("/v1/permission-access/query/{sessionKey}/{fileName}")
+    @GET("/v1.3/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(@Path("sessionKey") sessionKey: String, @Path("fileName") fileName: String): Call<DMEFile>
 
-    @GET("/v1/permission-access/query/{sessionKey}/accounts.json")
+    @GET("/v1.3/permission-access/query/{sessionKey}/accounts.json")
     fun getAccounts(@Path("sessionKey") sessionKey: String): Call<List<DMEAccount>>
 
 }

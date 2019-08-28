@@ -2,7 +2,7 @@ package me.digi.sdk.entities
 
 class DMEScope(): DMEDataRequest {
 
-    override lateinit var timeRange: DMETimeRange
+    override lateinit var timeRanges: List<DMETimeRange>
 
-    override lateinit var context: String
+    override var context: String = "scope" // Context defaults to 'scope'.
 }

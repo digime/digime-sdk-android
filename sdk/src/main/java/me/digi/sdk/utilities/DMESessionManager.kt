@@ -1,7 +1,7 @@
 package me.digi.sdk.utilities
 
 import me.digi.sdk.api.DMEAPIClient
-import me.digi.sdk.callbacks.DMEAuthorizationCallback
+import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
@@ -12,13 +12,15 @@ class DMESessionManager(private val apiClient: DMEAPIClient, private val clientC
     var currentSession: DMESession? = null
     var currentScope: DMESessionRequest? = null
 
-    fun getSession(sessionRequest: DMESessionRequest, completion: DMEAuthorizationCallback) {
+    fun getSession(sessionRequest: DMESessionRequest, completion: DMEAuthorizationCompletion) {
 
         currentSession = null
         currentScope = null
 
         apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { session, error ->
 
+            session?.scope = sessionRequest.scope
+            session?.createdDate = Date()
             currentSession = session
             currentScope = sessionRequest
             completion(session, error)

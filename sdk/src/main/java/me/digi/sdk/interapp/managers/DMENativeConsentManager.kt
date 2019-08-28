@@ -1,24 +1,29 @@
 package me.digi.sdk.interapp.managers
 
-import android.content.Context
 import android.content.Intent
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.DMESessionManager
+import me.digi.sdk.utilities.toMap
 
-class DMENativeConsentManager(appCommunicator: DMEAppCommunicator): DMEAppCallbackHandler(appCommunicator) {
+class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
 
     fun beginAuthorization(completion: DMEAuthorizationCompletion) {
 
     }
 
-    override fun canHandle(intent: Intent) = when (intent.action) {
-        appCommunicator.buildActionFor(R.string.deeplink_consent_access) -> {
-
-            true
+    override fun canHandle(intent: Intent): Boolean {
+        val communicator = DMEAppCommunicator.getSharedInstance()
+        val params = intent.extras.toMap()
+        return when (intent.action) {
+            DMEAppCommunicator.getSharedInstance().buildActionFor(R.string.deeplink_consent_access) -> {
+                (params.containsKey(communicator.context.getString(R.string.key_app_id)) &&
+                        params.containsKey(communicator.context.getString(R.string.key_contract_id)))
+            }
+            else -> false
         }
-        else -> false
     }
 
     override fun handle(intent: Intent) {

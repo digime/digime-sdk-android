@@ -5,7 +5,7 @@ import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 
-class DMEPostboxConsentManager(appCommunicator: DMEAppCommunicator): DMEAppCallbackHandler(appCommunicator) {
+class DMEPostboxConsentManager: DMEAppCallbackHandler() {
 
     fun beginPostboxAuthorization(completion: DMEAuthorizationCompletion) {
 

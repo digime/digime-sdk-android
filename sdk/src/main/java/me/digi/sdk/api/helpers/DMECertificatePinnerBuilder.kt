@@ -36,7 +36,8 @@ internal class DMECertificatePinnerBuilder(private val context: Context, private
         val fileLocation = filePathComponents.joinToString("/")
 
         val certsForDomain = assetManager.list(fileLocation) ?: emptyArray()
+        val qualifiedFilePaths = certsForDomain.map { listOf(fileLocation, it).joinToString("/") }
 
-        return certsForDomain.toList()
+        return qualifiedFilePaths.toList()
     }
 }

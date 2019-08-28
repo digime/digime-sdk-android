@@ -4,8 +4,8 @@ import java.util.*
 
 class DMETimeRange (
 
-    val from: Date,
-    val to: Date,
-    val last: String
+    val from: Date?,
+    val to: Date?,
+    val last: String?
 
 )

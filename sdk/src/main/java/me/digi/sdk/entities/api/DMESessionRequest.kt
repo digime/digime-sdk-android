@@ -1,6 +1,8 @@
 package me.digi.sdk.entities.api
 
 import com.google.gson.annotations.SerializedName
+import me.digi.sdk.entities.DMEDataRequest
+import me.digi.sdk.entities.DMESDKAgent
 
 data class DMESessionRequest (
 
@@ -11,9 +13,11 @@ data class DMESessionRequest (
     val contractId: String,
 
     @SerializedName("sdkAgent")
-    val sdkAgent: String,
+    val sdkAgent: DMESDKAgent,
 
     @SerializedName("accept")
-    val compression: String
+    val compression: String,
 
+    @SerializedName("scope")
+    val scope: DMEDataRequest?
 )

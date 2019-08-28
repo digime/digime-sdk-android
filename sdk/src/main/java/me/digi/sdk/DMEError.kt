@@ -13,6 +13,8 @@ sealed class DMESDKError(override val message: String): DMEError(message) {
     class P12ParsingError(): DMESDKError("Could not parse the P12 file with supplied password, or no P12/password given.")
     class NoURLScheme(): DMESDKError("Intent filter for URL scheme (for callbacks) not found.")
     class DigiMeAppNotFound(): DMESDKError("Querying digime schema failed. (digi.me app not installed.)")
+    class CommunicatorNotInitialized(): DMESDKError("DMEAppCommunicator shared instance accessed before initialization.")
+    class InvalidContext(): DMESDKError("Given context is not the application context; ONLY the application context may be used.")
 
 }
 
