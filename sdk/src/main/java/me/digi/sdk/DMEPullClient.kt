@@ -1,5 +1,6 @@
 package me.digi.sdk
 
+import android.app.Activity
 import android.content.Context
 import me.digi.sdk.callbacks.DMEAccountsCompletion
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
@@ -15,13 +16,13 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
 
     val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
 
-    fun authorize(completion: DMEAuthorizationCompletion) {
+    fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) {
 
         val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", null)
         sessionManager.getSession(req) { session, error ->
 
             if (session != null) {
-                nativeConsentManager.beginAuthorization(completion)
+                nativeConsentManager.beginAuthorization(fromActivity, completion)
             }
             else {
                 completion(null, error)

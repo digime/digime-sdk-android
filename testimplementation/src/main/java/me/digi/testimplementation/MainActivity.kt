@@ -1,5 +1,8 @@
 package me.digi.testimplementation
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.StrictMode
@@ -7,6 +10,7 @@ import android.util.Log
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.entities.DMEPullClientConfiguration
+import me.digi.sdk.interapp.DMEAppCommunicator
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,11 +31,16 @@ class MainActivity : AppCompatActivity() {
         )
         client = DMEPullClient(applicationContext, cfg)
 
-        client.authorize { session, error ->
+        client.authorize(this) { session, error ->
             Log.i("DME", session.toString())
             Log.i("DME", error.toString())
         }
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }
