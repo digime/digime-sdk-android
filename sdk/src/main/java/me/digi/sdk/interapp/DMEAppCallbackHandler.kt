@@ -5,8 +5,9 @@ import android.os.Bundle
 
 abstract class DMEAppCallbackHandler {
 
-    abstract fun canHandle(intent: Intent): Boolean
+    abstract fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean
 
-    abstract fun handle(intent: Intent)
+    abstract fun handle(intent: Intent?)
 
+    abstract fun extractAndAppendMetadata(payload: Map<String, Any>)
 }

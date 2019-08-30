@@ -11,11 +11,15 @@ class DMEGuestConsentManager: DMEAppCallbackHandler() {
         
     }
 
-    override fun canHandle(intent: Intent): Boolean {
+    override fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun handle(intent: Intent) {
+    override fun handle(intent: Intent?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun extractAndAppendMetadata(payload: Map<String, Any>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

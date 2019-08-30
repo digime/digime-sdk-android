@@ -43,13 +43,13 @@ class DMEAppCommunicator(val context: Context) {
     }
 
     fun buildActionFor(@StringRes deeplinkResId: Int): String {
-        val intentPrefix = "com.android.intent.action.me.digi."
+        val intentPrefix = "android.intent.action.me.digi."
         val deeplinkSuffix = context.getString(deeplinkResId)
         return intentPrefix + deeplinkSuffix
     }
 
     fun buildIntentFor(@StringRes deeplinkResId: Int, params: Map<String, String>): Intent {
-        val action = /*buildActionFor(deeplinkResId)*/ "android.intent.action.DIGI_PERMISSION_REQUEST"
+        val action = buildActionFor(deeplinkResId)
         val intent = Intent()
         intent.setAction(action)
         intent.setPackage(context.getString(R.string.const_digime_app_package_name))
@@ -60,13 +60,13 @@ class DMEAppCommunicator(val context: Context) {
     }
 
     fun openDigiMeApp(fromActivity: Activity, intent: Intent) {
-        fromActivity.startActivityForResult(intent, 762)
+        fromActivity.startActivityForResult(intent, requestCodeForDeeplinkIntentAction(intent.action.orEmpty()))
     }
 
     fun onActivityResult(requestCode: Int, responseCode: Int, data: Intent?) {
 
         if (data != null) {
-            val availableHandlers = callbackHandlers.filter { it.canHandle(data) }
+            val availableHandlers = callbackHandlers.filter { it.canHandle(requestCode, responseCode, data) }
             availableHandlers.forEach {
                 it.handle(data)
             }
@@ -84,4 +84,12 @@ class DMEAppCommunicator(val context: Context) {
             callbackHandlers.remove(handler)
         }
     }
+
+    fun requestCodeForDeeplinkIntentAction(deeplinkIntentAction: String) = when (deeplinkIntentAction) {
+        buildActionFor(R.string.deeplink_consent_access) -> 18450
+        buildActionFor(R.string.deeplink_create_postbox) -> 18451
+        else -> 0
+    }
+
+    fun requestCodeForDeeplinkIntentActionId(@StringRes deeplinkIntentActionId: Int) = requestCodeForDeeplinkIntentAction(buildActionFor(deeplinkIntentActionId))
 }

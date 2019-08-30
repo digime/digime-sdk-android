@@ -11,6 +11,7 @@ import me.digi.sdk.DMEPullClient
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.entities.DMEPullClientConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,12 +32,14 @@ class MainActivity : AppCompatActivity() {
         )
         client = DMEPullClient(applicationContext, cfg)
 
-        client.authorize(this) { session, error ->
-            Log.i("DME", session.toString())
-            Log.i("DME", error.toString())
-        }
-
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
+
+        launchBtn.setOnClickListener {
+            client.authorize(this) { session, error ->
+                Log.i("DME", session.toString())
+                Log.i("DME", error.toString())
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

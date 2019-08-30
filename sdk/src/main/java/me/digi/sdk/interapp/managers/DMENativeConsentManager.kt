@@ -13,18 +13,30 @@ import me.digi.sdk.utilities.toMap
 
 class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
 
+    private var pendingAuthCallbackHandler: DMEAuthorizationCompletion? = null
+        set(value) {
+            if (field != null && value != null) {
+                field?.invoke(null, DMEAuthError.Cancelled())
+            }
+            field = value
+        }
+
+
     fun beginAuthorization(fromActivity: Activity, completion: DMEAuthorizationCompletion) {
+
+        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
 
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
         sessionManager.currentSession?.let { session ->
 
             val caParams = mapOf(
-                "KEY_SESSION_TOKEN" to session.key,
-                "KEY_APP_ID" to appId
+                ctx.getString(R.string.key_session_key) to session.key,
+                ctx.getString(R.string.key_app_id) to appId
             )
 
-            val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_data, caParams)
+            val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_consent_access, caParams)
+            pendingAuthCallbackHandler = completion
             DMEAppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
 
         } ?: run {
@@ -32,19 +44,82 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
         }
     }
 
-    override fun canHandle(intent: Intent): Boolean {
+    override fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean {
         val communicator = DMEAppCommunicator.getSharedInstance()
-        val params = intent.extras.toMap()
-        return when (intent.action) {
-            DMEAppCommunicator.getSharedInstance().buildActionFor(R.string.deeplink_consent_access) -> {
-                (params.containsKey(communicator.context.getString(R.string.key_app_id)) &&
-                        params.containsKey(communicator.context.getString(R.string.key_contract_id)))
-            }
-            else -> false
-        }
+        return (requestCode == communicator.requestCodeForDeeplinkIntentActionId(R.string.deeplink_consent_access))
     }
 
-    override fun handle(intent: Intent) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun handle(intent: Intent?) {
+
+        if (intent == null) {
+            // Received no data, Android system failed to start activity.
+            pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, DMEAuthError.General())
+            DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+            pendingAuthCallbackHandler = null
+            return
+        }
+
+        val ctx = DMEAppCommunicator.getSharedInstance().context
+
+        val params = intent.extras?.toMap() ?: emptyMap()
+        val result = params[ctx.getString(R.string.key_result)] as? String
+        val sessionKey = params[ctx.getString(R.string.key_session_key)]
+
+        extractAndAppendMetadata(params)
+
+        val error = if (!sessionManager.isSessionValid()) {
+            DMEAuthError.InvalidSession()
+        }
+        else when (result) {
+            ctx.getString(R.string.const_result_error) -> DMEAuthError.General()
+            ctx.getString(R.string.const_result_cancel) -> DMEAuthError.Cancelled()
+            else -> null
+        }
+
+        pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, error)
+        DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+        pendingAuthCallbackHandler = null
     }
+
+    override fun extractAndAppendMetadata(payload: Map<String, Any>) = sessionManager.currentSession?.let { session ->
+
+        val ctx = DMEAppCommunicator.getSharedInstance().context
+
+        val metadataWhitelistedKeys = listOf(
+            // Functional Keys
+            R.string.key_session_key,
+            R.string.key_result,
+            R.string.key_app_id,
+
+            // Timing Keys
+            R.string.key_timing_get_all_files,
+            R.string.key_timing_get_file,
+            R.string.key_timing_fetch_contract_permission,
+            R.string.key_timing_fetch_account,
+            R.string.key_timing_fetch_file_list,
+            R.string.key_timing_fetch_session_key,
+            R.string.key_timing_data_request,
+            R.string.key_timing_fetch_contract_details,
+            R.string.key_timing_update_contract_permission,
+            R.string.key_timing_total,
+
+            // Debug Keys
+            R.string.key_debug_app_id,
+            R.string.key_debug_bundle_version,
+            R.string.key_debug_platform,
+            R.string.key_debug_contract_type,
+            R.string.key_debug_device_id,
+            R.string.key_debug_digime_version,
+            R.string.key_debug_user_id,
+            R.string.key_debug_library_id,
+            R.string.key_debug_pcloud_type,
+            R.string.key_contract_id,
+            R.string.key_app_name
+        ).map { ctx.getString(it) }
+
+        session.metadata = payload.filter {
+            metadataWhitelistedKeys.contains(it.key)
+        }
+
+    } ?: run { Unit }
 }

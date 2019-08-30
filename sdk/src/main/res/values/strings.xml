@@ -41,10 +41,12 @@
     <string name="deeplink_import_postbox">postbox-import</string>
     <string name="deeplink_receipt">receipt</string>
 
+    <!-- Result Constants -->
+    <string name="const_result_success">SUCCESS</string>
+    <string name="const_result_error">ERROR</string>
+    <string name="const_result_cancel">CANCEL</string>
+
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>
-
-    <!-- TEMPORARY COMPAT STRINGS -->
-    <string name="deeplink_data">data</string>
 
 </resources>

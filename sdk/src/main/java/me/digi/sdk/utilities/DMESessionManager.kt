@@ -28,7 +28,7 @@ class DMESessionManager(private val apiClient: DMEAPIClient, private val clientC
     }
 
     fun isSessionValid() = currentSession?.let {
-        it.expiryDate.after(Date()) && it.key == clientConfig.contractId
+        it.expiryDate.after(Date())
     } ?: false
 
     fun isSessionKeyValid(key: String) = currentSession?.let {
