@@ -2,6 +2,7 @@ package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import me.digi.sdk.callbacks.DMEAccountsCompletion
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.callbacks.DMEFileContentCompletion
@@ -16,9 +17,10 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
 
     val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
 
-    fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) {
+    fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
 
-        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", null)
+    fun authorize(fromActivity: Activity, scope: DMEDataRequest?, completion: DMEAuthorizationCompletion) {
+        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
         sessionManager.getSession(req) { session, error ->
 
             if (session != null) {
@@ -28,11 +30,6 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
                 completion(null, error)
             }
         }
-
-    }
-
-    fun authorize(scope: DMEDataRequest, completion: DMEAuthorizationCompletion) {
-
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
@@ -49,7 +46,9 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
-            apiClient.makeCall(apiClient.argonService.getAccounts(currentSession.key), completion)
+            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, "accounts.json")) { file, error ->
+                Log.i("DME", "foo")
+            }
 
         }
         else {

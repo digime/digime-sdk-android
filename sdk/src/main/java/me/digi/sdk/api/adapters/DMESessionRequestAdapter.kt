@@ -12,12 +12,12 @@ object DMESessionRequestAdapter: JsonSerializer<DMESessionRequest> {
 
         val json = JsonObject()
 
-        if (src != null) {
+        if (src != null && context != null) {
 
             json.addProperty("appId", src.appId)
             json.addProperty("contractId", src.contractId)
-            json.add("accept", Gson().toJsonTree(DMEDataAcceptCondition(src.compression)))
-            json.add("sdkAgent", Gson().toJsonTree(src.sdkAgent))
+            json.add("accept", context.serialize(DMEDataAcceptCondition(src.compression)))
+            json.add("sdkAgent", context.serialize(src.sdkAgent))
 
             if (src.scope != null) {
                 val dataReq = serializeDataRequest(src.scope)

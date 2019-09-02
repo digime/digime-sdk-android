@@ -17,8 +17,4 @@ interface DMEArgonService {
 
     @GET("/v1.3/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(@Path("sessionKey") sessionKey: String, @Path("fileName") fileName: String): Call<DMEFile>
-
-    @GET("/v1.3/permission-access/query/{sessionKey}/accounts.json")
-    fun getAccounts(@Path("sessionKey") sessionKey: String): Call<List<DMEAccount>>
-
 }

@@ -7,11 +7,15 @@ import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
 import me.digi.sdk.R
+import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
 import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.services.DMEArgonService
+import me.digi.sdk.entities.DMEAccount
 import me.digi.sdk.entities.DMEClientConfiguration
+import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.DMEPullClientConfiguration
 import me.digi.sdk.entities.api.DMESessionRequest
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -30,7 +34,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
     val argonService: DMEArgonService
 
     init {
-        val gson = GsonBuilder()
+        val gsonBuilder = GsonBuilder()
             .registerTypeAdapter(DMESessionRequest::class.java, DMESessionRequestAdapter)
             .registerTypeAdapter(Date::class.java, object: JsonDeserializer<Date> {
                 override fun deserialize(
@@ -41,7 +45,9 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
                     return Date(json?.asLong ?: 0)
                 }
             })
-            .create()
+        if (clientConfig is DMEPullClientConfiguration) {
+            gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
+        }
 
         val httpClientBuilder = OkHttpClient.Builder()
             .addInterceptor(DMEDefaultHeaderAppender())
@@ -50,7 +56,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
         val retrofitBuilder = Retrofit.Builder()
             .baseUrl(clientConfig.baseUrl)
             .client(httpClientBuilder.build())
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(GsonConverterFactory.create(gsonBuilder.create()))
 
         httpClient = retrofitBuilder.build()
         argonService = httpClient.create(DMEArgonService::class.java)

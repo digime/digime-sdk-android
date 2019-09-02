@@ -36,8 +36,12 @@ class MainActivity : AppCompatActivity() {
 
         launchBtn.setOnClickListener {
             client.authorize(this) { session, error ->
-                Log.i("DME", session.toString())
-                Log.i("DME", error.toString())
+                session?.let {
+                    client.getSessionAccounts { accounts, error ->
+                        Log.i("DME", accounts?.toString())
+                        Log.i("DME", error?.message)
+                    }
+                }
             }
         }
     }

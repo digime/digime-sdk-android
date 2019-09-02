@@ -6,19 +6,18 @@ import com.google.gson.reflect.TypeToken
 
 data class DMEFile (
 
-    @SerializedName("identifier")
-    val identifier: String,
-
-    @SerializedName("metadata")
+    @JvmField
     val metadata: DMEFileMetadata,
 
     @SerializedName("mimetype")
     val mimeType: DMEMimeType,
 
-    @SerializedName("content")
+    @JvmField
     val content: ByteArray
 
 ) {
+
+    lateinit var identifier: String
 
     fun fileContentAsJSON(): Map<String, Any> {
         val jsonString = String(content, Charsets.UTF_8)
