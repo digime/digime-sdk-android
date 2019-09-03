@@ -12,6 +12,7 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.entities.DMEPullClientConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
 import kotlinx.android.synthetic.main.activity_main.*
+import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,13 +38,19 @@ class MainActivity : AppCompatActivity() {
         launchBtn.setOnClickListener {
             client.authorize(this) { session, error ->
                 session?.let {
-//                    client.getSessionAccounts { accounts, error ->
-//                        Log.i("DME", accounts?.toString())
-//                        Log.i("DME", error?.message)
-//                    }
                     client.getFileList { fileIds, error ->
-                        Log.i("DME", fileIds?.toString())
-                        Log.i("DME", error?.message)
+
+                        fileIds?.orEmpty()?.forEach {
+                            client.getSessionData(it) { file, error ->
+
+                                if (file != null) {
+                                    Log.i("DME", "File Received: ${String(file.content, StandardCharsets.UTF_8)}")
+                                }
+                                else {
+                                    Log.i("DME", "File Download Error: $error")
+                                }
+                            }
+                        }
                     }
                 }
             }

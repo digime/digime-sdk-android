@@ -40,6 +40,17 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
 
+        val currentSession = sessionManager.currentSession
+
+        if (currentSession != null && sessionManager.isSessionValid()) {
+
+            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId), completion)
+
+        }
+        else {
+            completion(null, DMEAuthError.InvalidSession())
+        }
+
     }
 
     fun getFileList(completion: DMEFileListCompletion) {
