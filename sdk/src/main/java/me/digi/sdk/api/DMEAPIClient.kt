@@ -31,7 +31,7 @@ import kotlin.reflect.typeOf
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
     private val httpClient: Retrofit
-    val argonService: DMEArgonService
+    internal val argonService: DMEArgonService
 
     init {
         val gsonBuilder = GsonBuilder()
