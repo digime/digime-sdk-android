@@ -1,4 +1,4 @@
-package api.helpers
+package me.digi.sdk.tests.api.helpers
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
