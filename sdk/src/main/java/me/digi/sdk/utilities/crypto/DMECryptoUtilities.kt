@@ -8,6 +8,8 @@ import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.spongycastle.crypto.params.KeyParameter
 import org.spongycastle.crypto.params.ParametersWithIV
 import org.spongycastle.jce.provider.BouncyCastleProvider
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.security.*
 import javax.crypto.Cipher
 
@@ -38,7 +40,7 @@ class DMECryptoUtilities(val context: Context) {
         internal fun decryptRSA(encryptedBytes: ByteArray, key: PrivateKey): ByteArray {
             try {
 
-                val cipher = Cipher.getInstance("RSA", "SC")
+                val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding", "SC")
                 cipher.init(Cipher.DECRYPT_MODE, key)
                 return cipher.doFinal(encryptedBytes)
 
@@ -77,5 +79,22 @@ class DMECryptoUtilities(val context: Context) {
                 .digest(data)
                 .map { String.format("%02X", it) }
                 .joinToString("")
+
+        internal fun blockedBytesFromStream(stream: InputStream): ByteArray {
+            var readCount: Int
+            val buffer = ByteArrayOutputStream()
+            val data = ByteArray(16)
+
+            while(true) {
+                readCount = stream.read(data)
+                if (readCount == -1) {
+                    break
+                }
+                buffer.write(data, 0, readCount)
+            }
+
+            buffer.flush()
+            return buffer.toByteArray()
+        }
     }
 }

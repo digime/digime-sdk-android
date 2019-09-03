@@ -11,28 +11,21 @@ object DMEDataDecryptor {
 
     fun dataFromEncryptedBytes(encryptedBytes: ByteArray, privateKeyHex: String): ByteArray {
 
-        val inStream = encryptedBytes.inputStream()
-
-        val encryptedDSK = ByteArray(dskLength)
-        val dataIV = ByteArray(ivLength)
-
-        if (encryptedDSK.count() != inStream.read(encryptedDSK) || dataIV.count() != inStream.read(dataIV)) {
-            throw DMESDKError.DecryptionFailed()
-        }
+        val encryptedDSK = encryptedBytes.copyOfRange(0, dskLength)
+        val dataIV = encryptedBytes.copyOfRange(dskLength, dskLength + ivLength)
 
         val privateKey = DMEKeyTransformer.javaPrivateKeyFromHex(privateKeyHex)
         val dsk = DMECryptoUtilities.decryptRSA(encryptedDSK, privateKey)
 
-        val encryptedContent = inStream.readBytes()
-        val totalLength = encryptedContent.count() + dskLength + ivLength
+        val encryptedContent = encryptedBytes.copyOfRange(dskLength + ivLength, encryptedBytes.count())
 
-        if (totalLength < 352 || totalLength % 16 != 0) {
+        if (encryptedBytes.count() < 352 || encryptedBytes.count() % 16 != 0) {
             throw DMESDKError.DecryptionFailed()
         }
 
         val jfsDataAndHash = DMECryptoUtilities.decryptAES(encryptedContent, dsk, dataIV)
         val jfsHash = jfsDataAndHash.copyOfRange(0, hashLength)
-        val jfsData = jfsDataAndHash.copyOfRange(hashLength, jfsDataAndHash.count() - hashLength)
+        val jfsData = jfsDataAndHash.copyOfRange(hashLength, jfsDataAndHash.count())
 
         if (!verifyHash(jfsData, jfsHash)) {
             throw DMESDKError.InvalidData()
@@ -41,19 +34,9 @@ object DMEDataDecryptor {
         return jfsData
     }
 
-//    private fun blockedBytesFromStream(stream: InputStream): ByteArray {
-//        var readCount: Int
-//        val buffer = ByteArrayOutputStream()
-//        val data = ByteArray(16)
-//
-//        while ((readCount = stream.read(data)) != -1) {
-//            buffer.write(data, 0, readCount)
-//        }
-//    }
-
     private fun verifyHash(data: ByteArray, hash: ByteArray): Boolean {
         val computedHash = DMECryptoUtilities.hashData(data)
-        val bundledHash = String(hash, StandardCharsets.UTF_8)
-        return computedHash == bundledHash
+        val bundledHash = DMEByteTransformer.hexStringFromBytes(hash)
+        return computedHash.toUpperCase() == bundledHash.toUpperCase()
     }
 }

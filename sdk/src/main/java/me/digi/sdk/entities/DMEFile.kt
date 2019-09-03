@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
 data class DMEFile (
 
     @JvmField
-    val metadata: DMEFileMetadata,
+    val metadata: DMEFileMetadata?,
 
     @SerializedName("mimetype")
     val mimeType: DMEMimeType,

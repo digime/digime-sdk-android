@@ -21,21 +21,26 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
 
         val metadata = extractMetadata(json, context)
 
-        val encryptedContent = json["fileContent"] as? String ?: throw DMESDKError.InvalidData()
-        val encryptedBytes = Base64.decode(encryptedContent, 0)
+        val encryptedContent = json["fileContent"].asString ?: throw DMESDKError.InvalidData()
+        val encryptedBytes = Base64.decode(encryptedContent, Base64.DEFAULT)
 
         val contentBytes = DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
 
-        val compression = json["compression"] as? String ?: throw DMESDKError.InvalidData()
+        val compression = try { json["compression"].asString } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
         val decompressedContentBytes = DMECompressor.decompressData(contentBytes, compression)
 
         return DMEFile(metadata, DMEMimeType.APPLICATION_JSON, decompressedContentBytes)
     }
 
-    private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): DMEFileMetadata {
+    private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): DMEFileMetadata? {
 
-        val metadataJSON = rootJSON["fileMetadata"] as? JsonObject ?: throw DMESDKError.InvalidData()
-        val metadataObjectType = object: TypeToken<DMEFileMetadata>() {}.type
-        return context.deserialize(metadataJSON, metadataObjectType)
+        return try {
+            val metadataJSON = rootJSON["fileMetadata"].asJsonObject ?: throw DMESDKError.InvalidData()
+            val metadataObjectType = object: TypeToken<DMEFileMetadata>() {}.type
+            context.deserialize(metadataJSON, metadataObjectType)
+        }
+        catch(e: Throwable) {
+            return null
+        }
     }
 }
