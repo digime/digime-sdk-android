@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 apply from: 'config/gradle/versioning.gradle'
+apply from: 'config/gradle/coverage.gradle'
 
 android {
     compileSdkVersion 27
@@ -61,6 +62,7 @@ dependencies {
     testImplementation "junit:junit:$versions.junit"
     testImplementation "org.robolectric:robolectric:$versions.robolectric"
     testImplementation "androidx.test:core:$versions.testcore"
+    testImplementation "org.robolectric:robolectric-shadows:$versions.robolectricshadows"
     androidTestImplementation "com.android.support.test:runner:$versions.testrunner"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$versions.espresso"
 }

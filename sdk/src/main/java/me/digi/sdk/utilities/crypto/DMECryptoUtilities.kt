@@ -79,22 +79,5 @@ class DMECryptoUtilities(val context: Context) {
                 .digest(data)
                 .map { String.format("%02X", it) }
                 .joinToString("")
-
-        internal fun blockedBytesFromStream(stream: InputStream): ByteArray {
-            var readCount: Int
-            val buffer = ByteArrayOutputStream()
-            val data = ByteArray(16)
-
-            while(true) {
-                readCount = stream.read(data)
-                if (readCount == -1) {
-                    break
-                }
-                buffer.write(data, 0, readCount)
-            }
-
-            buffer.flush()
-            return buffer.toByteArray()
-        }
     }
 }

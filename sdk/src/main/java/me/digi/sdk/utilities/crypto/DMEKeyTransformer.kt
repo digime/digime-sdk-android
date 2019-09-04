@@ -1,6 +1,5 @@
 package me.digi.sdk.utilities.crypto
 
-import org.spongycastle.jcajce.provider.asymmetric.RSA
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
@@ -8,9 +7,13 @@ import java.security.spec.PKCS8EncodedKeySpec
 object DMEKeyTransformer {
 
     fun javaPrivateKeyFromHex(hex: String): PrivateKey {
-        val keyFactory = KeyFactory.getInstance("RSA", "SC")
         val keyBytes = DMEByteTransformer.bytesFromHexString(hex)
-        val keySpec = PKCS8EncodedKeySpec(keyBytes)
+        return javaPrivateKeyFromBytes(keyBytes)
+    }
+
+    fun javaPrivateKeyFromBytes(bytes: ByteArray): PrivateKey {
+        val keyFactory = KeyFactory.getInstance("RSA", "SC")
+        val keySpec = PKCS8EncodedKeySpec(bytes)
         return keyFactory.generatePrivate(keySpec)
     }
 
