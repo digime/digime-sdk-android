@@ -81,9 +81,8 @@ class DMEPullClient(val context: Context, val configuration: DMEClientConfigurat
                     completion(null, error)
                 }
 
-                val accountsFileMap = file?.fileContentAsJSON().orEmpty()
+                val accountsFileJSON = file?.fileContentAsJSON()
                 val accountsType = object: TypeToken<List<DMEAccount>>(){}.type
-                val accountsFileJSON = Gson().toJsonTree(accountsFileMap)
 
                 val accounts = try { Gson().fromJson<List<DMEAccount>>(accountsFileJSON, accountsType) } catch( e: Throwable) { emptyList<DMEAccount>() }
                 completion(accounts, error)
