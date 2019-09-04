@@ -47,26 +47,22 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.android.support:support-annotations:27.0.0'
-    implementation 'com.android.support:appcompat-v7:27.0.0'
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.robolectric:robolectric:4.3'
-    testImplementation 'androidx.test:core:1.0.0'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "com.android.support:support-annotations:$versions.supportannotations"
+    implementation "com.android.support:appcompat-v7:$versions.supportlibrary"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.2.2'
-
     implementation "com.google.code.gson:gson:$versions.gson"
-
     implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
     implementation "org.brotli:dec:$versions.brotli"
-
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
-
     implementation "com.madgag.spongycastle:pkix:$versions.spongycastlepkix"
     implementation "com.madgag.spongycastle:prov:$versions.spongycastleprovider"
+
+    testImplementation "junit:junit:$versions.junit"
+    testImplementation "org.robolectric:robolectric:$versions.robolectric"
+    testImplementation "androidx.test:core:$versions.testcore"
+    androidTestImplementation "com.android.support.test:runner:$versions.testrunner"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:$versions.espresso"
 }
 repositories {
     mavenCentral()
