@@ -13,20 +13,29 @@ import me.digi.sdk.callbacks.DMEFileContentCompletion
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
 
-class DMEPullClient(val context: Context, val configuration: DMEClientConfiguration): DMEClient(context, configuration) {
+class DMEPullClient(val context: Context, val configuration: DMEPullClientConfiguration): DMEClient(context, configuration) {
 
     private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
+    private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
 
     fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
 
     fun authorize(fromActivity: Activity, scope: DMEDataRequest?, completion: DMEAuthorizationCompletion) {
+
         val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
         sessionManager.getSession(req) { session, error ->
 
             if (session != null) {
-                nativeConsentManager.beginAuthorization(fromActivity, completion)
+                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+                    Pair(true, true),
+                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
+                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                    Pair(false, false) -> completion(null, DMESDKError.DigiMeAppNotFound())
+                }
             }
             else {
                 completion(null, error)

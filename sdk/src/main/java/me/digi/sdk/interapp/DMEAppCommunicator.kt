@@ -31,6 +31,7 @@ class DMEAppCommunicator(val context: Context) {
     private var callbackHandlers = emptyList<DMEAppCallbackHandler>().toMutableList()
 
     fun canOpenDMEApp(): Boolean {
+        return false
         val packageManager = context.packageManager
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 
@@ -88,6 +89,7 @@ class DMEAppCommunicator(val context: Context) {
     fun requestCodeForDeeplinkIntentAction(deeplinkIntentAction: String) = when (deeplinkIntentAction) {
         buildActionFor(R.string.deeplink_consent_access) -> 18450
         buildActionFor(R.string.deeplink_create_postbox) -> 18451
+        buildActionFor(R.string.deeplink_guest_consent_callback) -> 18452
         else -> 0
     }
 

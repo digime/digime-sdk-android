@@ -63,7 +63,6 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
 
         val params = intent.extras?.toMap() ?: emptyMap()
         val result = params[ctx.getString(R.string.key_result)] as? String
-        val sessionKey = params[ctx.getString(R.string.key_session_key)]
 
         extractAndAppendMetadata(params)
 

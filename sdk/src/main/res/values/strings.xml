@@ -11,6 +11,7 @@
     <string name="key_public_key">publicKey</string>
     <string name="key_app_name">appName</string>
     <string name="key_callback_url">callbackUrl</string>
+    <string name="key_session_exchange_token">sessionExchangeToken</string>
 
     <string name="key_timing_get_all_files">timingGetAllFiles</string>
     <string name="key_timing_get_file">timingGetFile</string>
@@ -40,11 +41,13 @@
     <string name="deeplink_create_postbox">postbox-create</string>
     <string name="deeplink_import_postbox">postbox-import</string>
     <string name="deeplink_receipt">receipt</string>
+    <string name="deeplink_guest_consent_callback">quark-callback</string>
 
     <!-- Result Constants -->
     <string name="const_result_success">SUCCESS</string>
     <string name="const_result_error">ERROR</string>
     <string name="const_result_cancel">CANCEL</string>
+    <string name="const_result_data_ready">DATA_READY</string>
 
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>
