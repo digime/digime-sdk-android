@@ -29,16 +29,14 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
 
     fun beginGuestAuthorization(fromActivity: Activity, completion: DMEAuthorizationCompletion) {
 
-        try {
-            val guestRequestCode = DMEAppCommunicator.getSharedInstance()
-                .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
-            val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
-            proxyLaunchIntent.putExtra(GuestConsentBrowserActivity.QUARK_LAUNCH_URL_EXTRA_KEY, buildQuarkURI())
-            fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
-        }
-        catch (e: Throwable) {
-            Log.e("DME", e.message)
-        }
+        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
+        pendingAuthCallbackHandler = completion
+
+        val guestRequestCode = DMEAppCommunicator.getSharedInstance().requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
+        val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
+        proxyLaunchIntent.setData(buildQuarkURI())
+
+        fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
 
     override fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean {

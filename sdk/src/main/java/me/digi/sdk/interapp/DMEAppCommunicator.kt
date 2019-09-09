@@ -31,7 +31,7 @@ class DMEAppCommunicator(val context: Context) {
     private var callbackHandlers = emptyList<DMEAppCallbackHandler>().toMutableList()
 
     fun canOpenDMEApp(): Boolean {
-        return false
+//        return false
         val packageManager = context.packageManager
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 
@@ -52,9 +52,10 @@ class DMEAppCommunicator(val context: Context) {
     fun buildIntentFor(@StringRes deeplinkResId: Int, params: Map<String, String>): Intent {
         val action = buildActionFor(deeplinkResId)
         val intent = Intent()
-        intent.setAction(action)
-        intent.setPackage(context.getString(R.string.const_digime_app_package_name))
-        intent.setType("text/plain")
+        intent.action = action
+        intent.`package` = context.getString(R.string.const_digime_app_package_name)
+        intent.type = "text/plain"
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         params.forEach { intent.putExtra(it.key, it.value) }
 
         return intent
@@ -65,12 +66,9 @@ class DMEAppCommunicator(val context: Context) {
     }
 
     fun onActivityResult(requestCode: Int, responseCode: Int, data: Intent?) {
-
-        if (data != null) {
-            val availableHandlers = callbackHandlers.filter { it.canHandle(requestCode, responseCode, data) }
-            availableHandlers.forEach {
-                it.handle(data)
-            }
+        val availableHandlers = callbackHandlers.filter { it.canHandle(requestCode, responseCode, data) }
+        availableHandlers.forEach {
+            it.handle(data)
         }
     }
 

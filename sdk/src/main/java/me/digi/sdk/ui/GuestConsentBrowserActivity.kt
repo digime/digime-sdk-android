@@ -20,21 +20,31 @@ class GuestConsentBrowserActivity: Activity() {
 
         if (intentUri.scheme.orEmpty() == getString(R.string.deeplink_guest_consent_callback)) {
             // Launched by Quark returning from onboarding.
-            val result = intentUri.getQueryParameter(getString(R.string.key_result))
-            if (result != null && result == getString(R.string.const_result_data_ready)) {
-                intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_success))
-                setResult(RESULT_OK)
-            }
-            else {
-                intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_cancel))
-                setResult(RESULT_CANCELED)
-            }
-            finish()
+            handleWebOnboardingCallback(intentUri)
         }
         else {
             // Launched by DMEGuestConsentManager.
-            val quarkLaunchUri = intent.getParcelableExtra<Uri>(QUARK_LAUNCH_URL_EXTRA_KEY)
-            startActivity(Intent(Intent.ACTION_VIEW, quarkLaunchUri))
+            startActivity(Intent(Intent.ACTION_VIEW, intentUri))
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        val intentUri = intent?.data ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
+        handleWebOnboardingCallback(intentUri)
+    }
+
+    private fun handleWebOnboardingCallback(intentUri: Uri) {
+        val result = intentUri.getQueryParameter(getString(R.string.key_result))
+        if (result != null && result == getString(R.string.const_result_data_ready)) {
+            intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_success))
+            setResult(RESULT_OK)
+        }
+        else {
+            intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_cancel))
+            setResult(RESULT_CANCELED)
+        }
+        finish()
     }
 }

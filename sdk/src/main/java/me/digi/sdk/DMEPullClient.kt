@@ -44,7 +44,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullClientConfig
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
-
+        throw NotImplementedError()
     }
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
@@ -103,5 +103,4 @@ class DMEPullClient(val context: Context, val configuration: DMEPullClientConfig
         }
 
     }
-
 }
