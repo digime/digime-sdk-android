@@ -1,3 +1,6 @@
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'digital.wup.android-maven-publish'
+
 publishing {
     publications {
         sdk(MavenPublication) {
@@ -8,32 +11,25 @@ publishing {
                 from components.android
             }
 
-            artifact("$buildDir/outputs/aar/sdk-release.aar")
-
             groupId 'me.digi'
             artifactId 'sdk'
             version '1.0.0'
+        }
+    }
+}
 
-            pom.withXml {
-                // for dependencies and exclusions
-                def dependenciesNode = asNode().appendNode('dependencies')
-                configurations.implementation.allDependencies.withType(ModuleDependency) { ModuleDependency dp ->
-                    def dependencyNode = dependenciesNode.appendNode('dependency')
-                    dependencyNode.appendNode('groupId', dp.group)
-                    dependencyNode.appendNode('artifactId', dp.name)
-                    dependencyNode.appendNode('version', dp.version)
-
-                    // for exclusions
-                    if (dp.excludeRules.size() > 0) {
-                        def exclusions = dependencyNode.appendNode('exclusions')
-                        dp.excludeRules.each { ExcludeRule ex ->
-                            def exclusion = exclusions.appendNode('exclusion')
-                            exclusion.appendNode('groupId', ex.group)
-                            exclusion.appendNode('artifactId', ex.module)
-                        }
-                    }
-                }
-            }
+artifactory {
+    contextUrl = "https://repository.sysdigi.net/m2/"
+    publish {
+        repository {
+            repoKey = "libs-internal-local"
+            username = "USER-HERE"
+            password = "PASSWORD-HERE"
+        }
+        defaults {
+            publications('sdk')
+            publishArtifacts = true
+            publishPom = true
         }
     }
 }
