@@ -1,12 +1,4 @@
-<div style="text-align:center;display:block;">
-    <img src="https://i.imgur.com/IJPpbR0.png" style="width:60%;"/>
-</div>
-
-<p align="center" style="font-size:32px;">
-    Private Sharing
-</p>
-
-<br>
+![](https://i.imgur.com/o1CNZZr.png)
 
 <p align="center">
     <a href="https://digime-api.slack.com/">
