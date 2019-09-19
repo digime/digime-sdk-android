@@ -1,6 +1,6 @@
 package me.digi.sdk.entities
 
-class DMEPushClientConfiguration (
+class DMEPushConfiguration (
 
     appId: String,
     contractId: String

@@ -1,6 +1,6 @@
 package me.digi.sdk.entities
 
-class DMEPullClientConfiguration (
+class DMEPullConfiguration (
 
     appId: String,
     contractId: String,

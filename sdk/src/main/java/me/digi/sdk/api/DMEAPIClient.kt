@@ -1,21 +1,16 @@
 package me.digi.sdk.api
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.*
-import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
-import me.digi.sdk.R
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
-import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.services.DMEArgonService
-import me.digi.sdk.entities.DMEAccount
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.DMEPullClientConfiguration
+import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.entities.api.DMESessionRequest
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -26,7 +21,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import java.net.URL
 import java.util.*
-import kotlin.reflect.typeOf
 
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
@@ -45,7 +39,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
                     return Date(json?.asLong ?: 0)
                 }
             })
-        if (clientConfig is DMEPullClientConfiguration) {
+        if (clientConfig is DMEPullConfiguration) {
             gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
         }
 

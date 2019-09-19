@@ -66,7 +66,7 @@ This example will show you how to configure the SDK, and get you up and running 
 
 To access the digi.me platform, you need to obtain an `AppID` for your application. You can get yours by filling out the registration form [here](https://go.digi.me/developers/register).
 
-In a production environment, you will also be required to obtain your own `Contract I` and `Private Key` from digi.me support. However, for sandbox purposes, we provide the following example values:
+In a production environment, you will also be required to obtain your own `Contract ID` and `Private Key` from digi.me support. However, for sandbox purposes, we provide the following example values:
 
 **Example Contract ID:** `fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF `
 <br>
@@ -88,14 +88,14 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
 ```
 
 ### 3. Configuring the `DMEPullClient` object:
-`DMEPullClient` is the object you will primarily interface with to use the SDK. It is instantiated with a context, and a `DMEPullClientConfiguration` object. **The provided context should always be the main application context.**
+`DMEPullClient` is the object you will primarily interface with to use the SDK. It is instantiated with a context, and a `DMEPullConfiguration` object. **The provided context should always be the main application context.**
 
-The `DMEPullClientConfiguration` object is instantiated with your `AppID`, `Contract ID` and `Private Key` in hex format. We provide a convenience method to extract the private key. The below code snippet shows you how to combine all this to get a configured `DMEPullClient`:
+The `DMEPullConfiguration` object is instantiated with your `AppID`, `Contract ID` and `Private Key` in hex format. We provide a convenience method to extract the private key. The below code snippet shows you how to combine all this to get a configured `DMEPullClient`:
 
 ```kotlin
 val privateKeyHex = DMECryptoUtilities(applicationContext).privateKeyHexFrom("p12-filename", "p12-password")
-val configuration = DMEPushClientConfiguration("app-id", "contract-id", "private-key-hex")
-val pushClient = DMEPushClient(applicationContext, configuration)
+val configuration = DMEPullConfiguration("app-id", "contract-id", privateKeyHex)
+val pullClient = DMEPullClient(applicationContext, configuration)
 ```
 
 ### 4. Requesting Consent:
@@ -113,25 +113,15 @@ If a user grants consent, a session will be created and returned; this is used b
 
 ### 5. Fetching Data:
 
-Once you have a session, you can request data. digi.me shards data into any number of files - you can list these files by calling `getFileList`:
+Once you have a session, you can request data. We strive to make this as simple as possible, so expose a single method to do so: 
 
 ```kotlin
-pullClient.getFileList() { fileIds, error ->
-
-}
-```
-
-If successful, a list of strings will be returned, each representing a file ID. In the case that the session obtained above isn't valid (it may have expired, for example), you will receive an error. In such cases, you should call `authorize` again to obtain a new session. See [Handling Errors](#).
-
-Now that you know the names of the files you're looking for, you can download each one like so:
-
-```kotlin
-pullClient.getSessionData(fileId) { file, error ->
+pullClient.getSessionData() { files, error ->
 	val jsonData = file?.fileContentAsJSON()
 }
 ```
 
-If successful, you will be returned a `DMEFile` object. It's `content` property is a byte array of the file data. An error will be returned if a problem is encountered. See [Handling Errors](#).
+If successful, you will be returned a `DMEFile` object. It's `content` property is a byte array of the file data. In the case that the session obtained above isn't valid (it may have expired, for example), you will receive an error. In such cases, you should call `authorize` again to obtain a new session. See [Handling Errors](#).
 
 `fileContentAsJSON` attempts to decode the binary file into a JSON map, so that you can easily extract the values you need to power your app.
 
@@ -143,6 +133,6 @@ We ask that when contributing, you ensure your changes meet our [contribution gu
 
 ## Further Reading
 
-The topics discussed under [Quick Start]() are just a small part of the power digi.me Private Sharing gives to data consumers such as yourself. We highly encourage you to explore the [documentation]() for more in-depth examples and guides, as well as troubleshooting advice and showcases of the vast plethora of capabilities on offer.
+The topics discussed under [Quick Start]() are just a small part of the power digi.me Private Sharing gives to data consumers such as yourself. We highly encourage you to explore the [documentation]() for more in-depth examples and guides, as well as troubleshooting advice and showcases of the plethora of capabilities on offer.
 
 Additionally, there are a number of example apps built on digi.me in the examples folder. Feel free to have a look at those to get an insight into the power of Private Sharing.

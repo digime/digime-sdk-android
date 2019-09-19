@@ -2,10 +2,7 @@ package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.callbacks.DMEAccountsCompletion
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
@@ -17,7 +14,7 @@ import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
 
-class DMEPullClient(val context: Context, val configuration: DMEPullClientConfiguration): DMEClient(context, configuration) {
+class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
     private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
     private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
@@ -44,7 +41,24 @@ class DMEPullClient(val context: Context, val configuration: DMEPullClientConfig
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
-        throw NotImplementedError()
+        getFileList { fileIds, error ->
+
+            fileIds?.let { ids ->
+
+                var remainingFileCount = ids.count()
+
+                for (id in ids) {
+                    getSessionData(id) { file, error ->
+                        downloadHandler(file, error)
+                        remainingFileCount++
+
+                        if (remainingFileCount == 0)
+                            completion(null)
+                    }
+                }
+
+            } ?: run { completion(error) }
+        }
     }
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
@@ -62,7 +76,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullClientConfig
 
     }
 
-    fun getFileList(completion: DMEFileListCompletion) {
+    internal fun getFileList(completion: DMEFileListCompletion) {
 
         val currentSession = sessionManager.currentSession
 

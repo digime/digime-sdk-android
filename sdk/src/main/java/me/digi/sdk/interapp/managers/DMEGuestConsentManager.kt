@@ -1,16 +1,11 @@
 package me.digi.sdk.interapp.managers
 
 import android.app.Activity
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import me.digi.sdk.DMEAuthError
-import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
-import me.digi.sdk.entities.DMEPullClientConfiguration
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
