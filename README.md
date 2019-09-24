@@ -116,23 +116,26 @@ If a user grants consent, a session will be created and returned; this is used b
 Once you have a session, you can request data. We strive to make this as simple as possible, so expose a single method to do so: 
 
 ```kotlin
-pullClient.getSessionData() { files, error ->
-	val jsonData = file?.fileContentAsJSON()
+pullClient.getSessionData({ file, error ->
+    // Handle each downloaded file here.
+}) { error ->
+    // Any errors interupting the flow of data will be directed here, or null once all files are retrieved.
 }
 ```
 
-If successful, you will be returned a `DMEFile` object. It's `content` property is a byte array of the file data. In the case that the session obtained above isn't valid (it may have expired, for example), you will receive an error. In such cases, you should call `authorize` again to obtain a new session. See [Handling Errors](#).
+For each file, the first 'file handler' block will be called. If the download was successful, you will receive a `DMEFile` object. If the download fails, an error. 
 
-`fileContentAsJSON` attempts to decode the binary file into a JSON map, so that you can easily extract the values you need to power your app.
+Once all files are downloaded, the second block will be invoked to inform you of this. In the case that the data stream is interrupted, or if the session obtained above isn't valid (it may have expired, for example), you will receive an error in the second block. See [Handling Errors](#).
 
+`DMEFile` exposes the method `fileContentAsJSON` which attempts to decode the binary file into a JSON map, so that you can easily extract the values you need to power your app. Not all files can be represented as JSON, see [Raw Data]() for details.
 ## Contributions
 
 digi.me prides itself in offering our SDKs completely open source, under the [Apache 2.0 Licence](LICENCE); we welcome contributions from all developers.
 
-We ask that when contributing, you ensure your changes meet our [contribution guidelines]() before submitting a pull request.
+We ask that when contributing, you ensure your changes meet our [Contribution Guidelines]() before submitting a pull request.
 
 ## Further Reading
 
-The topics discussed under [Quick Start]() are just a small part of the power digi.me Private Sharing gives to data consumers such as yourself. We highly encourage you to explore the [documentation]() for more in-depth examples and guides, as well as troubleshooting advice and showcases of the plethora of capabilities on offer.
+The topics discussed under [Quick Start]() are just a small part of the power digi.me Private Sharing gives to data consumers such as yourself. We highly encourage you to explore the [Documentation]() for more in-depth examples and guides, as well as troubleshooting advice and showcases of the plethora of capabilities on offer.
 
 Additionally, there are a number of example apps built on digi.me in the examples folder. Feel free to have a look at those to get an insight into the power of Private Sharing.

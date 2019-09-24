@@ -83,7 +83,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
-                val genericAPIError = DMEAPIError.Generic(error.message ?: "")
+                val genericAPIError = DMEAPIError.Unreachable()
                 completion(null, genericAPIError)
             }
         })
@@ -91,15 +91,15 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
     private fun <ResponseType> deduceErrorFromResponse(response: Response<ResponseType>): DMEError {
 
-        // For now return generic error until I have the spec from CCS.
-        // TODO: Implement full error deduction.
-        return DMEAPIError.Generic("${response.message()}")
-
         // Try to parse a digi.me error object from the response.
-//        val responseString = response.errorBody()?.string()
-//        if (responseString != null) {
-//            // Try and Gson it.
-//            val responseJSON: Map<String, Any> = Gson().fromJson(responseString, object: TypeToken<Map<String, Any>>() {}.type)
-//        }
+        val responseHeaders = response.headers().toMap()
+        val digiErrorCode = responseHeaders["X-Error-Code"]
+        val digiErrorMessage = responseHeaders["X-Error-Message"]
+        val digiErrorReference = responseHeaders["X-Error-Reference"]
+
+        return if (digiErrorMessage != null)
+            DMEAPIError.Server(digiErrorMessage, digiErrorReference, digiErrorCode)
+        else
+            DMEAPIError.Generic()
     }
 }

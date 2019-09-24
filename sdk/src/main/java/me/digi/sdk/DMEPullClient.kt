@@ -41,13 +41,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
-        getFileList { fileIds, error ->
+        getFileList { fileList, error ->
 
-            fileIds?.let { ids ->
+            val fileIds = fileList?.fileList.orEmpty().map { it.fileId }
+                var remainingFileCount = fileIds.count()
 
-                var remainingFileCount = ids.count()
-
-                for (id in ids) {
+                for (id in fileIds) {
                     getSessionData(id) { file, error ->
                         downloadHandler(file, error)
                         remainingFileCount++
@@ -56,8 +55,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                             completion(null)
                     }
                 }
-
-            } ?: run { completion(error) }
         }
     }
 
@@ -81,11 +78,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         val currentSession = sessionManager.currentSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
-            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key)) { envelope, error ->
-
-                completion(envelope?.fileIds, error)
-
-            }
+            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
         }
         else {
             completion(null, DMEAuthError.InvalidSession())
