@@ -17,11 +17,18 @@ internal class DMEFileList (
 )
 {
 
-    open class SyncState(rawValue: String) {
+    open class SyncState(val rawValue: String) {
         class PENDING: SyncState("pending")
         class RUNNING: SyncState("running")
         class COMPLETED: SyncState("completed")
         class PARTIAL: SyncState("partial")
+
+        override fun equals(other: Any?): Boolean {
+            return if (other is SyncState) {
+                other.rawValue == this.rawValue
+            }
+            else false
+        }
     }
 }
 
@@ -31,7 +38,12 @@ private class DMEFileListDeserializer: JsonDeserializer<DMEFileList> {
         (json as? JsonObject)?.let {
 
             val fileListItemsType = object: TypeToken<DMEFileListItem>() {}.type
-            val fileListItems = context?.deserialize<List<DMEFileListItem>>(it.get("fileList"), fileListItemsType) ?: emptyList()
+            val fileListItems = try {
+                context?.deserialize<List<DMEFileListItem>>(it.get("fileList"), fileListItemsType) ?: emptyList()
+            }
+            catch(e: Throwable) {
+                emptyList<DMEFileListItem>()
+            }
 
             val status = it.getAsJsonObject("status")
             val syncStateRaw = status.getAsJsonPrimitive("state").asString

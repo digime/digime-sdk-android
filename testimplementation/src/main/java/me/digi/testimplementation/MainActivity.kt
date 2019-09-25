@@ -75,9 +75,9 @@ class MainActivity : AppCompatActivity() {
             client.authorize(this) { session, error ->
                 session?.let {
                     client.getSessionData({ file, error ->
-
+                        Log.i("SDK File Received:", file.toString())
                     }) { error ->
-
+                        Log.i("SDK File Complete", "")
                     }
                 }
             }

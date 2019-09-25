@@ -31,7 +31,6 @@ class DMEAppCommunicator(val context: Context) {
     private var callbackHandlers = emptyList<DMEAppCallbackHandler>().toMutableList()
 
     fun canOpenDMEApp(): Boolean {
-//        return false
         val packageManager = context.packageManager
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 
@@ -55,7 +54,6 @@ class DMEAppCommunicator(val context: Context) {
         intent.action = action
         intent.`package` = context.getString(R.string.const_digime_app_package_name)
         intent.type = "text/plain"
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         params.forEach { intent.putExtra(it.key, it.value) }
 
         return intent
