@@ -19,6 +19,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
     private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
 
+    private var cachedFiles: List<DMEFileListItem>? = null
+
     fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
 
     fun authorize(fromActivity: Activity, scope: DMEDataRequest?, completion: DMEAuthorizationCompletion) {
@@ -41,6 +43,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
+
+        cachedFiles = emptyList()
+
         getFileList { fileList, error ->
 
             val fileIds = fileList?.fileList.orEmpty().map { it.fileId }
