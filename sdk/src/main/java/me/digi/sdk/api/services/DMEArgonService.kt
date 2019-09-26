@@ -1,7 +1,5 @@
 package me.digi.sdk.api.services
 
-import me.digi.sdk.api.envelopes.DMEFileListEnvelope
-import me.digi.sdk.entities.DMEAccount
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession

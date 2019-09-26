@@ -32,11 +32,10 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration): Intercept
 
                 t
             }.invoke()
-            
+
             // TODO: Implement error based filtering to avoid non-recoverable retries.
             waitMillis(waitTime)
             response = chain.proceed(request)
-
         }
 
         return response
