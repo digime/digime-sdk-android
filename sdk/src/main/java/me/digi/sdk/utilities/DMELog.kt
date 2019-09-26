@@ -4,10 +4,12 @@ import android.util.Log
 
 internal object DMELog {
 
+    var debugLogEnabled = false
     private const val dmeTag = "DigiMeSDK"
 
     fun d(message: String) {
-        Log.d(dmeTag, message)
+        if (debugLogEnabled)
+            Log.d(dmeTag, message)
     }
 
     fun i(message: String) {
