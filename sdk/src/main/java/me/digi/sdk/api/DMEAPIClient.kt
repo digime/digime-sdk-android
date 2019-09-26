@@ -8,6 +8,7 @@ import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
 import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
+import me.digi.sdk.api.interceptors.DMERetryInterceptor
 import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
@@ -52,6 +53,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
         val httpClientBuilder = OkHttpClient.Builder()
             .addInterceptor(DMEDefaultHeaderAppender())
+            .addInterceptor(DMERetryInterceptor(clientConfig))
             .configureCertificatePinningIfNecessary()
             .callTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
             .dispatcher(requestDispatcher)

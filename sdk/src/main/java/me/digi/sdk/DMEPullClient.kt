@@ -172,7 +172,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                 when (syncState) {
                     DMEFileList.SyncState.PENDING(),
-                    DMEFileList.SyncState.RUNNING() -> scheduleNextPoll()
+                    DMEFileList.SyncState.RUNNING() -> {
+                        DMELog.i("Sync still in progress, continuing to poll for updates.")
+                        scheduleNextPoll()
+                    }
                     else -> Unit
                 }
 
