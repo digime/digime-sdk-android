@@ -95,7 +95,7 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
         val callbacklUrlKey = ctx.getString(R.string.key_callback_url)?.orEmpty()
         val callbackUrl = ctx.getString(R.string.deeplink_guest_consent_callback)?.orEmpty() + "://?"
 
-        return Uri.parse("${baseURL}apps/quark/direct-onboarding")
+        return Uri.parse("${baseURL}apps/quark/v1/direct-onboarding")
             .buildUpon()
             .appendQueryParameter(exchangeTokenKey, session.exchangeToken)
             .appendQueryParameter(callbacklUrlKey, callbackUrl)
