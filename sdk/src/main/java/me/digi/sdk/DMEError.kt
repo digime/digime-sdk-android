@@ -36,5 +36,7 @@ sealed class DMEAPIError(override val message: String,
     class Generic(): DMEAPIError("There was a problem with your request.")
     class Server(message: String, reference: String?, code: String?): DMEAPIError(message, reference, code)
     class Unreachable(): DMEAPIError("Couldn't reach the digi.me API - please check your network connection.")
+    class InvalidSyncState(): DMEAPIError("An invalid sync state was returned - please try again.")
+    class PartialSync(): DMEAPIError("One or more accounts failed to sync. Some data has been delivered.")
 
 }

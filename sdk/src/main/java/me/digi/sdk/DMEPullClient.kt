@@ -2,24 +2,38 @@ package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import me.digi.sdk.callbacks.DMEAccountsCompletion
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
-import me.digi.sdk.callbacks.DMEFileContentCompletion
+import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
+import me.digi.sdk.utilities.DMEFileListItemCache
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
     private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
     private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
 
-    private var cachedFiles: List<DMEFileListItem>? = null
+    private var activeFileDownloadHandler: DMEFileContentCompletion? = null
+    private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
+    private var fileListItemCache: DMEFileListItemCache? = null
+    private var activeSyncState: DMEFileList.SyncState? = null
+    private var activeDownloadCount = 0
+        set(value) {
+            field = value
+            if (value == 0) {
+                when (activeSyncState) {
+                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
+                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                    else -> Unit
+                }
+            }
+        }
 
     fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
 
@@ -42,25 +56,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
-    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: (DMEError?) -> Unit) {
+    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEEmptyCompletion) {
 
-        cachedFiles = emptyList()
+        // Init state.
+        fileListItemCache = DMEFileListItemCache()
+        activeFileDownloadHandler = downloadHandler
+        activeSessionDataFetchCompletionHandler = completion
 
-        getFileList { fileList, error ->
-
-            val fileIds = fileList?.fileList.orEmpty().map { it.fileId }
-                var remainingFileCount = fileIds.count()
-
-                for (id in fileIds) {
-                    getSessionData(id) { file, error ->
-                        downloadHandler(file, error)
-                        remainingFileCount++
-
-                        if (remainingFileCount == 0)
-                            completion(null)
-                    }
-                }
-        }
+        scheduleNextPoll(true)
     }
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
@@ -115,4 +118,52 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
 
     }
+
+    private fun scheduleNextPoll(immediately: Boolean = false) {
+        val delay = (if (immediately) 0 else 3000).toLong()
+        Handler().postDelayed({
+
+            getFileList { fileList, listFetchError ->
+
+                val syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
+
+                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
+                if (updatedFileIds.count() > 0)
+                    scheduledPollDidDiscoverUpdatedFiles(updatedFileIds)
+
+                when (syncState) {
+                    DMEFileList.SyncState.PENDING(),
+                    DMEFileList.SyncState.RUNNING() -> scheduleNextPoll()
+                    else -> Unit
+                }
+
+                activeSyncState = syncState
+            }
+
+        }, delay)
+    }
+
+    private fun scheduledPollDidDiscoverUpdatedFiles(updatedFileIds: List<String>) {
+        // We have updated files, attempt to fetch them.
+
+        updatedFileIds.forEach {
+            activeDownloadCount++
+            getSessionData(it) { file, error ->
+                activeDownloadCount--
+                activeFileDownloadHandler?.invoke(file, error)
+            }
+        }
+    }
+
+    private fun completeDeliveryOfSessionData(error: DMEError?) {
+        activeSessionDataFetchCompletionHandler?.invoke(error)
+
+        // Clear state.
+        fileListItemCache = null
+        activeFileDownloadHandler = null
+        activeSessionDataFetchCompletionHandler = null
+        activeSyncState = null
+        activeDownloadCount = 0
+    }
+
 }

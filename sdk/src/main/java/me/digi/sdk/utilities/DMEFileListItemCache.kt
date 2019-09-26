@@ -6,7 +6,7 @@ internal class DMEFileListItemCache {
 
     private var cachedFileListItems = emptyList<DMEFileListItem>()
 
-    fun updateCacheWithItemsAndDetermineChangedFiles(items: List<DMEFileListItem>): List<String> {
+    fun updateCacheWithItemsAndDeduceChanges(items: List<DMEFileListItem>): List<String> {
         val cachedItemsMappedByID = cachedFileListItems.map { it.fileId to it.updatedDate }.toMap()
         val newItemsMappedByID = items.map { it.fileId to it.updatedDate }.toMap()
 
