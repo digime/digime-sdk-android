@@ -9,6 +9,7 @@ import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.entities.DMEPostbox
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.toMap
 
@@ -40,6 +41,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             DMEAppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
 
         } ?: run {
+            DMELog.e("Your session is invalid, please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
     }
@@ -52,6 +54,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
     override fun handle(intent: Intent?) {
         if (intent == null) {
             // Received no data, Android system failed to start activity.
+            DMELog.e("There was a problem launching the consent request activity.")
             pendingPostboxCallbackHandler?.invoke(null, DMEAuthError.General())
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
             pendingPostboxCallbackHandler = null
@@ -75,9 +78,18 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             DMEAuthError.General()
         }
         else when (result) {
-            ctx.getString(R.string.const_result_error) -> DMEAuthError.General()
-            ctx.getString(R.string.const_result_cancel) -> DMEAuthError.Cancelled()
-            else -> null
+            ctx.getString(R.string.const_result_error) -> {
+                DMELog.e("There was a problem requesting consent.")
+                DMEAuthError.General()
+            }
+            ctx.getString(R.string.const_result_cancel) -> {
+                DMELog.e("User rejected consent request.")
+                DMEAuthError.Cancelled()
+            }
+            else -> {
+                DMELog.i("User accepted consent request; postbox created.")
+                null
+            }
         }
 
         val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
