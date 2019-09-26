@@ -9,6 +9,7 @@ import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
+import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.toMap
 
@@ -43,6 +44,7 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
 
         if (intent == null) {
             // Received no data, Android system failed to start activity.
+            DMELog.e("There was a problem launching the guest consent browser activity.")
             pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, DMEAuthError.General())
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
             pendingAuthCallbackHandler = null
@@ -60,9 +62,18 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
             DMEAuthError.InvalidSession()
         }
         else when (result) {
-            ctx.getString(R.string.const_result_error) -> DMEAuthError.General()
-            ctx.getString(R.string.const_result_cancel) -> DMEAuthError.Cancelled()
-            else -> null
+            ctx.getString(R.string.const_result_error) -> {
+                DMELog.e("There was a problem requesting consent.")
+                DMEAuthError.General()
+            }
+            ctx.getString(R.string.const_result_cancel) -> {
+                DMELog.e("User rejected consent request.")
+                DMEAuthError.Cancelled()
+            }
+            else -> {
+                DMELog.i("User accepted consent request.")
+                null
+            }
         }
 
         pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, error)

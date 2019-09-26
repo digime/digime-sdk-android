@@ -8,6 +8,7 @@ import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.toMap
 
@@ -40,6 +41,7 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             DMEAppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
 
         } ?: run {
+            DMELog.e("Your session is invalid, please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
     }
@@ -53,6 +55,7 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
 
         if (intent == null) {
             // Received no data, Android system failed to start activity.
+            DMELog.e("There was a problem launching the consent request activity.")
             pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, DMEAuthError.General())
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
             pendingAuthCallbackHandler = null
@@ -70,9 +73,18 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             DMEAuthError.InvalidSession()
         }
         else when (result) {
-            ctx.getString(R.string.const_result_error) -> DMEAuthError.General()
-            ctx.getString(R.string.const_result_cancel) -> DMEAuthError.Cancelled()
-            else -> null
+            ctx.getString(R.string.const_result_error) -> {
+                DMELog.e("There was a problem requesting consent.")
+                DMEAuthError.General()
+            }
+            ctx.getString(R.string.const_result_cancel) -> {
+                DMELog.e("User rejected consent request.")
+                DMEAuthError.Cancelled()
+            }
+            else -> {
+                DMELog.i("User accepted consent request.")
+                null
+            }
         }
 
         pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, error)

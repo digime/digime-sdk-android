@@ -6,12 +6,14 @@ import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
+import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.entities.api.DMESessionRequest
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
@@ -20,7 +22,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import java.net.URL
+import java.time.Duration
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
@@ -43,9 +47,14 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
         }
 
+        val requestDispatcher = Dispatcher()
+        requestDispatcher.maxRequests = clientConfig.maxConcurrentRequests
+
         val httpClientBuilder = OkHttpClient.Builder()
             .addInterceptor(DMEDefaultHeaderAppender())
             .configureCertificatePinningIfNecessary()
+            .callTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
+            .dispatcher(requestDispatcher)
 
         val retrofitBuilder = Retrofit.Builder()
             .baseUrl(clientConfig.baseUrl)
@@ -57,9 +66,9 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
     }
 
     private fun OkHttpClient.Builder.configureCertificatePinningIfNecessary(): OkHttpClient.Builder {
-//        val certPinnerBuilder = DMECertificatePinnerBuilder(context, domainForBaseUrl())
-//        if (certPinnerBuilder.shouldPinCommunicationsWithDomain())
-//            this.certificatePinner(certPinnerBuilder.buildCertificatePinner())
+        val certPinnerBuilder = DMECertificatePinnerBuilder(context, domainForBaseUrl())
+        if (certPinnerBuilder.shouldPinCommunicationsWithDomain())
+            this.certificatePinner(certPinnerBuilder.buildCertificatePinner())
         return this
     }
 
@@ -83,7 +92,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
-                val genericAPIError = DMEAPIError.Generic(error.message ?: "")
+                val genericAPIError = DMEAPIError.Unreachable()
                 completion(null, genericAPIError)
             }
         })
@@ -91,15 +100,15 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
     private fun <ResponseType> deduceErrorFromResponse(response: Response<ResponseType>): DMEError {
 
-        // For now return generic error until I have the spec from CCS.
-        // TODO: Implement full error deduction.
-        return DMEAPIError.Generic("${response.message()}")
-
         // Try to parse a digi.me error object from the response.
-//        val responseString = response.errorBody()?.string()
-//        if (responseString != null) {
-//            // Try and Gson it.
-//            val responseJSON: Map<String, Any> = Gson().fromJson(responseString, object: TypeToken<Map<String, Any>>() {}.type)
-//        }
+        val responseHeaders = response.headers().toMap()
+        val digiErrorCode = responseHeaders["X-Error-Code"]
+        val digiErrorMessage = responseHeaders["X-Error-Message"]
+        val digiErrorReference = responseHeaders["X-Error-Reference"]
+
+        return if (digiErrorMessage != null)
+            DMEAPIError.Server(digiErrorMessage, digiErrorReference, digiErrorCode)
+        else
+            DMEAPIError.Generic()
     }
 }
