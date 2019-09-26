@@ -6,6 +6,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.annotations.JsonAdapter
 import com.google.gson.reflect.TypeToken
+import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
 
 @JsonAdapter(DMEFileListDeserializer::class)
@@ -37,7 +38,7 @@ private class DMEFileListDeserializer: JsonDeserializer<DMEFileList> {
 
         (json as? JsonObject)?.let {
 
-            val fileListItemsType = object: TypeToken<DMEFileListItem>() {}.type
+            val fileListItemsType = object: TypeToken<List<DMEFileListItem>>() {}.type
             val fileListItems = try {
                 context?.deserialize<List<DMEFileListItem>>(it.get("fileList"), fileListItemsType) ?: emptyList()
             }

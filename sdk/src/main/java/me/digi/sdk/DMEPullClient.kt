@@ -41,7 +41,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     private var activeDownloadCount = 0
         set(value) {
-            field = value
             if (value == 0) {
                 when (activeSyncState) {
                     DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
@@ -49,6 +48,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     else -> Unit
                 }
             }
+
+            field = value
         }
 
     fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)

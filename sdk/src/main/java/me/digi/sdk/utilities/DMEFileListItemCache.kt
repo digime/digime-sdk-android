@@ -41,9 +41,9 @@ private fun <K, V> Map<K, V>.merged(other: Map<K, V>, conflictResolver: (left: V
         }
         else {
             val resolvedValue = conflictResolver.invoke(merged[entry.key]!!, other[entry.key]!!)
-            merged[entry.key] = resolvedValue
-            if (resolvedValue == other[entry.key]!!)
+            if (resolvedValue == other[entry.key]!! && resolvedValue != merged[entry.key]!!)
                 changedKeys.add(entry.key)
+            merged[entry.key] = resolvedValue
         }
     }
 

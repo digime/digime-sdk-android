@@ -8,6 +8,5 @@ internal data class DMEFileListItem (
     @SerializedName("name")
     val fileId: String,
 
-    @SerializedName("updated")
     val updatedDate: Date
 )
