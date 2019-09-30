@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">BarebonesApp</string>
+
+    <string name="digime_application_id">GezzLqFrHUCNQSjFAREiVwOVLRBBCYBA</string>
+    <string name="digime_postbox_contract_id">Cb1JC2tIatLfF7LH1ksmdNx4AfYPszIn</string>
+    <string name="digime_contract_id">jZTRerONwxJtUpyKldEeccRXmlhWdH3U</string>
+    <string name="digime_p12_filename">production.p12</string>
+    <string name="digime_p12_password">digime</string>
+
+    <string name="empty_string" />
+
+    <string name="barebones_home_title">SDK Example Apps</string>
+    <string name="barebones_home_description">Bellow you can find some sdk example apps.\n<b><u>Give them a go!</u></b></string>
+
+
+    <string name="send_receipt">Send me the receipt</string>
+    <string name="send_receipt_description">Get a copy of your latest shopping receipt to your digi.me library</string>
+    <string name="install_digime">Please ensure you have the digi.me app installed.</string>
+    <string name="all_done">All done!</string>
+    <string name="check_library">Your purchased receipts has been sent, please check your digi.me library.</string>
+    <string name="open_digime">Open digi.me</string>
+
+
+    <string name="dont_have_digime">Don\'t have digi.me yet?</string>
+    <string name="share_via_digime">SHARE VIA DIGI.ME</string>
+    <string name="share_as_guest">SHARE AS GUEST</string>
+    <string name="share_your_data">Share your social data to get suggestions of items we think you\'ll love!</string>
+    <string name="digime_user">Already have digi.me?</string>
+    <string name="thanks_for_sharing">Thank you for sharing your data, here is a list of cool products just for you, all 50% off!</string>
+</resources>
