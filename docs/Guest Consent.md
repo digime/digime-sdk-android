@@ -1,3 +1,25 @@
+![](https://i.imgur.com/o1CNZZr.png)
+
+<p align="center">
+    <a href="https://digime-api.slack.com/">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    </a>
+    <a href="#">
+    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    </a>
+    <a href="https://swift.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://twitter.com/codevapor">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+</p>
+
+<br>
+
 # Guest Consent
 
 Whilst the true power of the digi.me Private Sharing platform lies in the user's digi.me, and as such highly encourage developers to properly utilise this, we do facilitate your app accessing the data of users, without the digi.me app. This feature is known as *Guest Consent* or *One Time Private Sharing*. It is effecively the digi.me onboarding process, within a web browser.

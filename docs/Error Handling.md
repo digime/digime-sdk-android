@@ -1,3 +1,25 @@
+![](https://i.imgur.com/o1CNZZr.png)
+
+<p align="center">
+    <a href="https://digime-api.slack.com/">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    </a>
+    <a href="#">
+    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    </a>
+    <a href="https://swift.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://twitter.com/codevapor">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+</p>
+
+<br>
+
 # Error Handling
 
 Whilst using the SDK, you may encounter a number of errors. Some of these, we will attempt to recover from on your behalf, however, there are a large number that will require you to take some kind of action.
