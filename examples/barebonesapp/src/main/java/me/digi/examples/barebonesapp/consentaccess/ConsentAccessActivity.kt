@@ -6,9 +6,8 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.consent_access_activity_layout.*
-import me.digi.barebonesapp.consentaccess.ConsentAccessFragment
-import me.digi.barebonesapp.util.ConsentAccesInProgress
 import me.digi.examples.barebonesapp.R
+import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -24,14 +23,14 @@ class ConsentAccessActivity : AppCompatActivity() {
         setContentView(R.layout.consent_access_activity_layout)
 
         pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
-                applicationContext.getString(R.string.digime_p12_filename),
-                applicationContext.getString(R.string.digime_p12_password)
+            applicationContext.getString(R.string.digime_p12_filename),
+            applicationContext.getString(R.string.digime_p12_password)
         )
 
         cfg = DMEPullConfiguration(
-                applicationContext.getString(R.string.digime_application_id),
-                applicationContext.getString(R.string.digime_contract_id),
-                pk
+            applicationContext.getString(R.string.digime_application_id),
+            applicationContext.getString(R.string.digime_contract_id),
+            pk
         )
 
         cfg.baseUrl = "https://api.digi.me/"
@@ -45,10 +44,7 @@ class ConsentAccessActivity : AppCompatActivity() {
             displayReceiving()
             shareAsGuest()
         }
-
     }
-
-
 
     private fun shareViaDigiMe() {
         var receivedFiles = 0
@@ -62,7 +58,7 @@ class ConsentAccessActivity : AppCompatActivity() {
                     Log.d("File received ", file.toString())
                 })
                 {
-                    if(receivedFiles > 0)
+                    if (receivedFiles > 0)
                         removeReceiving("")
                 }
             }
@@ -70,21 +66,22 @@ class ConsentAccessActivity : AppCompatActivity() {
         }
     }
 
-
     private fun shareAsGuest() {
-        var receivedFiles = 0
-
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 
         client.authorize(this) { session, error ->
             session?.let {
-                client.getSessionData({ file, _ ->
-                    receivedFiles++
-                    Log.d("File received ", file.toString())
+                client.getSessionData({ file, error ->
+                    if(file != null) {
+                        Log.d("File received ", file.toString())
+                        removeReceiving("")
+                    }
+                    else
+                        error?.message?.let { it1 -> removeReceiving(it1) }
                 })
                 {
-                    if(receivedFiles > 0)
+                    if(it != null)
                         removeReceiving("")
                 }
             }
@@ -101,27 +98,27 @@ class ConsentAccessActivity : AppCompatActivity() {
         val bundle = Bundle()
         bundle.putString("progressText", "Receiving data")
 
-        val sendingDataFragment = ConsentAccesInProgress()
+        val sendingDataFragment = ConsentAccessInProgress()
         sendingDataFragment.arguments = bundle
 
         supportFragmentManager.beginTransaction()
-                .addToBackStack("in_progress")
-                .replace(android.R.id.content, sendingDataFragment)
-                .commit()
+            .addToBackStack("in_progress")
+            .replace(android.R.id.content, sendingDataFragment)
+            .commit()
     }
 
     private fun displayResult() {
         supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, ConsentAccessFragment())
-                .addToBackStack("shady_car_insurance_fragment")
-                .commit()
+            .replace(android.R.id.content, ConsentAccessFragment())
+            .addToBackStack("shady_car_insurance_fragment")
+            .commit()
     }
 
     private fun removeReceiving(errorMessage: String) {
         supportFragmentManager.popBackStack()
         if (errorMessage.isNotEmpty())
             Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
-
-        displayResult()
+        else
+            displayResult()
     }
 }

@@ -1,4 +1,4 @@
-package me.digi.barebonesapp.util
+package me.digi.examples.barebonesapp.util
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import kotlinx.android.synthetic.main.data_transfer_in_progress_layout.view.*
 import me.digi.examples.barebonesapp.R
 
-class ConsentAccesInProgress() : Fragment() {
+class ConsentAccessInProgress : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?,

@@ -1,4 +1,4 @@
-package me.digi.barebonesapp.postbox
+package me.digi.examples.barebonesapp.postbox
 
 import android.os.Bundle
 import android.support.v4.app.Fragment

@@ -4,8 +4,8 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_main.*
-import me.digi.barebonesapp.postbox.PostboxActivity
 import me.digi.examples.barebonesapp.consentaccess.ConsentAccessActivity
+import me.digi.examples.barebonesapp.postbox.PostboxActivity
 
 class MainActivity : AppCompatActivity() {
 

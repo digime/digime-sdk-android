@@ -1,4 +1,4 @@
-package me.digi.barebonesapp.consentaccess
+package me.digi.examples.barebonesapp.consentaccess
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
