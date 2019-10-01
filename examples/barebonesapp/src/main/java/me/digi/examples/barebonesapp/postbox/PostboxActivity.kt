@@ -43,7 +43,7 @@ class PostboxActivity : AppCompatActivity() {
                 val fileContent = getFileContent(  "file.png")
                 val metadata = getFileContent("metadatapng.json")
 
-                client.pushDataToPostbox(
+                client.pushFileToPostbox(
                     DMEPostboxFile(
                         dmePostbox,
                         metadata,
