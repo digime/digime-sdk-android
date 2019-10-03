@@ -7,6 +7,7 @@ sealed class DMESDKError(override val message: String): DMEError(message) {
     class NoContract(): DMESDKError("Contract ID not set.")
     class InvalidContract(): DMESDKError("Contract ID is not in a valid format.")
     class DecryptionFailed(): DMESDKError("Could not decrypt the file content.")
+    class EncryptionFailed(): DMESDKError("Could not encrypt the file content.")
     class InvalidData(): DMESDKError("Could not deserialise the file content.")
     class InvalidVersion(): DMESDKError("Current version of SDK no longer supported.")
     class NoAppID(): DMESDKError("App ID not set.")

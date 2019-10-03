@@ -7,8 +7,8 @@
     <string name="key_result">result</string>
     <string name="key_app_id">appId</string>
     <string name="key_contract_id">contractId</string>
-    <string name="key_postbox_id">postboxId</string>
-    <string name="key_public_key">publicKey</string>
+    <string name="key_postbox_id">postbox_id</string>
+    <string name="key_public_key">postbox_public_key</string>
     <string name="key_app_name">appName</string>
     <string name="key_callback_url">callbackUrl</string>
     <string name="key_session_exchange_token">sessionExchangeToken</string>
