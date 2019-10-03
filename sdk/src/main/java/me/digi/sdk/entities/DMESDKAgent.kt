@@ -8,6 +8,6 @@ data class DMESDKAgent (
     val name: String = "android",
 
     @JvmField
-    val version: String = BuildConfig.VERSION_NAME
+    val version: String = BuildConfig.VERSION_NAME.split("-").first()
 
 )

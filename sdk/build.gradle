@@ -14,6 +14,7 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "$versions.sdk"
+        versionNameSuffix "-PRERELEASE"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
