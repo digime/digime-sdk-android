@@ -1,0 +1,89 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="me.digi.examples.barebonesapp"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+8-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml
+9        android:targetSdkVersion="28" />
+9-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:11:5-67
+11-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:11:22-64
+12
+13    <application
+13-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:5:5-30:19
+14        android:allowBackup="true"
+14-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:6:13-39
+15        android:appComponentFactory="android.support.v4.app.CoreComponentFactory"
+15-->[com.android.support:support-compat:28.0.0] /Users/jacob/.gradle/caches/transforms-2/files-2.1/65dad612964dd4aea0562494d8f86274/support-compat-28.0.0/AndroidManifest.xml:22:18-91
+16        android:debuggable="true"
+17        android:icon="@mipmap/ic_launcher"
+17-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:7:13-47
+18        android:label="@string/app_name"
+18-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:8:13-45
+19        android:roundIcon="@mipmap/ic_launcher_round"
+19-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:9:13-58
+20        android:supportsRtl="true"
+20-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:10:13-39
+21        android:testOnly="true"
+22        android:theme="@style/AppTheme" >
+22-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:11:13-44
+23        <activity android:name="me.digi.examples.barebonesapp.MainActivity" >
+23-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:12:9-18:20
+23-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:12:19-47
+24            <intent-filter>
+24-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:13:13-17:29
+25                <action android:name="android.intent.action.MAIN" />
+25-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:14:17-69
+25-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:14:25-66
+26
+27                <category android:name="android.intent.category.LAUNCHER" />
+27-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:16:17-77
+27-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:16:27-74
+28            </intent-filter>
+29        </activity>
+30        <activity
+30-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:20:9-23:20
+31            android:name="me.digi.examples.barebonesapp.postbox.PostboxActivity"
+31-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:21:17-56
+32            android:label="Data exporter" >
+32-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:22:17-46
+33        </activity>
+34        <activity
+34-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:25:9-28:20
+35            android:name="me.digi.examples.barebonesapp.consentaccess.ConsentAccessActivity"
+35-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:26:17-68
+36            android:label="Shady car insurance" >
+36-->/Users/jacob/Git/digime-sdk-android/examples/barebonesapp/src/main/AndroidManifest.xml:27:17-52
+37        </activity>
+38        <activity
+38-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:14:9-25:20
+39            android:name="me.digi.sdk.ui.GuestConsentBrowserActivity"
+39-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:15:13-70
+40            android:launchMode="singleTop" >
+40-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:16:13-43
+41            <intent-filter>
+41-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:17:13-24:29
+42                <action android:name="android.intent.action.VIEW" />
+42-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:18:17-69
+42-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:18:25-66
+43
+44                <category android:name="android.intent.category.DEFAULT" />
+44-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:20:17-76
+44-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:20:27-73
+45                <category android:name="android.intent.category.BROWSABLE" />
+45-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:21:17-78
+45-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:21:27-75
+46
+47                <data android:scheme="@string/deeplink_guest_consent_callback" />
+47-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:23:17-82
+47-->[:sdk] /Users/jacob/Git/digime-sdk-android/sdk/build/intermediates/library_manifest/debug/AndroidManifest.xml:23:23-79
+48            </intent-filter>
+49        </activity>
+50    </application>
+51
+52</manifest>

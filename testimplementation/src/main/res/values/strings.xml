@@ -1,8 +1,0 @@
-<resources>
-    <string name="app_name">Test Implementation</string>
-    <string name="digime_contract_id">j9pcaXD9A3krdV7BlMinrB6Kp1kxbJcU</string>
-    <string name="digime_application_id">KSDPn0Hh62eBV24pRGGBAk1lk56keb3X</string>
-    <string name="digime_p12_filename">CACert.p12</string>
-    <string name="digime_p12_password">digime</string>
-
-</resources>
