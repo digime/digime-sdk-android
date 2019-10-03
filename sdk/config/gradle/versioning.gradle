@@ -1,19 +1,8 @@
-ext.buildConfig = [
-        'buildTools': '27.0.3',
-        'compileSdk': 27,
-        'minSdk': 21,
-        'targetSdk': 26,
-
-        'version': [
-                'major': 2, //between 1-214 - with current pace (new minor every 6 weeks and upgrade major after minor equals 9), we'll reach it in the year 2300+
-                'minor': 2, //no more than 100 [0, 99] per one major
-                'patch': 0, //no more than 100 [0, 99] per one minor
-                'beta':  0, //it's just a flag for Google Play store - beta release has to always be higher than production release
-                'build': 2, //no more than 100 [0, 99] build per version - update manually with every single release/release-candidate
-        ],
-]
-
 ext.versions = [
+
+        // Main SDK
+        'sdk': '2.0.0-PRERELEASE',
+
         // Build time plugins
         'androidgradleplugin': '3.4.2',
         'buildinfoextractor': '4.5.2',
