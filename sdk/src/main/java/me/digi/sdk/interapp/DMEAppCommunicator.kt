@@ -14,6 +14,7 @@ class DMEAppCommunicator(val context: Context) {
         // Mem leak warning not an issue as we enforce the context be app context. This is always held in mem anyway.
         private lateinit var _sharedInstance: DMEAppCommunicator
 
+        @JvmStatic
         fun getSharedInstance(): DMEAppCommunicator {
             try {
                 return _sharedInstance
