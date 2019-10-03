@@ -6,7 +6,8 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.RSAPublicKeySpec
-import org.bouncycastle.asn1.ASN1InputStream
+import org.spongycastle.asn1.ASN1InputStream
+import org.spongycastle.asn1.pkcs.RSAPublicKey
 
 object DMEKeyTransformer {
 
@@ -31,8 +32,7 @@ object DMEKeyTransformer {
                 .replace("-----END RSA PUBLIC KEY-----", "")
 
         val rsaPublicKeyBytes = Base64.decode(publicKeyContent, Base64.DEFAULT)
-        val rsaPublicKey =
-            org.bouncycastle.asn1.pkcs.RSAPublicKey.getInstance(ASN1InputStream(rsaPublicKeyBytes).readObject())
+        val rsaPublicKey = RSAPublicKey.getInstance(ASN1InputStream(rsaPublicKeyBytes).readObject())
         return KeyFactory.getInstance("RSA")
             .generatePublic(RSAPublicKeySpec(rsaPublicKey.modulus, rsaPublicKey.publicExponent))
     }

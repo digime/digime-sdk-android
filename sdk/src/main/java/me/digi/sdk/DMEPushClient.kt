@@ -2,10 +2,10 @@ package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
-import me.digi.sdk.api.helpers.DMEMultipartBodyBuilder
+import me.digi.sdk.api.helpers.DMEMultipartBody
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.callbacks.DMEPostboxPushCompletion
-import me.digi.sdk.entities.DMEPostboxFile
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.DMEPushConfiguration
 import me.digi.sdk.entities.DMESDKAgent
 import me.digi.sdk.entities.api.DMESessionRequest
@@ -45,7 +45,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
         }
     }
 
-    fun pushFileToPostbox(postboxFile: DMEPostboxFile, completion: DMEPostboxPushCompletion) {
+    fun pushDataToPostbox(postboxFile: DMEPushPayload, completion: DMEPostboxPushCompletion) {
         DMELog.i("Initializing push data to postbox.")
 
         if (sessionManager.isSessionValid()) {
@@ -55,10 +55,10 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                 postboxFile.metadata
             )
 
-            val multipartBody = DMEMultipartBodyBuilder().buildMultipartRequestBody(
-                postboxFile,
-                encryptedData.fileContent
-            )
+            val multipartBody = DMEMultipartBody.Builder()
+                .postboxPushPayload(postboxFile)
+                .dataContent(encryptedData.fileContent, postboxFile.mimeType)
+                .build()
 
             apiClient.makeCall(
                 apiClient.argonService.pushData(
@@ -77,7 +77,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                     completion(error)
                 }
 
-                DMELog.i("Successfully pushed file to postbox")
+                DMELog.i("Successfully pushed data to postbox")
                 completion(null)
             }
         }

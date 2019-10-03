@@ -33,40 +33,13 @@ class ConsentAccessActivity : AppCompatActivity() {
             pk
         )
 
-        cfg.baseUrl = "https://api.digi.me/"
-
         item_ca_button_share_digime.setOnClickListener {
             displayReceiving()
             shareViaDigiMe()
         }
-
-        item_ca_button_share_guest.setOnClickListener {
-            displayReceiving()
-            shareAsGuest()
-        }
     }
 
     private fun shareViaDigiMe() {
-        var receivedFiles = 0
-
-        client = DMEPullClient(applicationContext, cfg)
-
-        client.authorize(this) { session, error ->
-            session?.let {
-                client.getSessionData({ file, _ ->
-                    receivedFiles++
-                    Log.d("File received ", file.toString())
-                })
-                {
-                    if (receivedFiles > 0)
-                        removeReceiving("")
-                }
-            }
-            error?.message?.let { it -> removeReceiving(it) }
-        }
-    }
-
-    private fun shareAsGuest() {
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 

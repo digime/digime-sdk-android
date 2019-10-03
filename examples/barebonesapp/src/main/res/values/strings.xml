@@ -9,8 +9,8 @@
 
     <string name="empty_string" />
 
-    <string name="barebones_home_title">SDK Example Apps</string>
-    <string name="barebones_home_description">Bellow you can find some sdk example apps.\n<b><u>Give them a go!</u></b></string>
+    <string name="barebones_home_title">Sdk Example Apps</string>
+    <string name="barebones_home_description">Below you can find some sdk example apps.\n<b><u>Give them a go!</u></b></string>
 
 
     <string name="send_receipt">Send me the receipt</string>
@@ -21,10 +21,8 @@
     <string name="open_digime">Open digi.me</string>
 
 
-    <string name="dont_have_digime">Don\'t have digi.me yet?</string>
-    <string name="share_via_digime">SHARE VIA DIGI.ME</string>
-    <string name="share_as_guest">SHARE AS GUEST</string>
-    <string name="share_your_data">Share your social data to get suggestions of items we think you\'ll love!</string>
-    <string name="digime_user">Already have digi.me?</string>
+    <string name="share_via_digime">PULL YOUR DATA</string>
+    <string name="share_your_data">Pull your social data to get suggestions of items we think you\'ll love!</string>
+    <string name="digime_user">Pull your data via digi.me or as guest.</string>
     <string name="thanks_for_sharing">Thank you for sharing your data, here is a list of cool products just for you, all 50% off!</string>
 </resources>

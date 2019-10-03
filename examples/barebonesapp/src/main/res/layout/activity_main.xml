@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    ​
-    ​
-
     <Button
         android:id="@+id/btnOpenPostboxEx"
         android:layout_width="0dp"
@@ -14,7 +10,7 @@
         android:layout_marginStart="60dp"
         android:layout_marginEnd="60dp"
         android:background="@drawable/bg_purple_corner_rounded"
-        android:text="Postbox"
+        android:text="Push Data to digi.me"
         android:textColor="@color/mate_white"
         app:layout_constraintBottom_toTopOf="@+id/btnOpenCAEx"
         app:layout_constraintEnd_toEndOf="parent"
@@ -30,16 +26,13 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="60dp"
         android:background="@drawable/bg_orange_rounded_corners"
-        android:text="Consent Access"
+        android:text="Pull data from digi.me"
         android:textColor="@color/mate_white"
         app:layout_constraintBottom_toBottomOf="@+id/textView10"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnOpenPostboxEx" />
     ​
-
-    ​
-
     <TextView
         android:id="@+id/textView2"
         android:layout_width="0dp"

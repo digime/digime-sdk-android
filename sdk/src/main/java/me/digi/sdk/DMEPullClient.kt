@@ -211,7 +211,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private fun completeDeliveryOfSessionData(error: DMEError?) {
 
         when {
-            error != null -> DMELog.e("An error occurred whilst fetching session data. Error: ${error.message}")
+            error != null -> DMELog.e("" +
+                    "An error occurred whilst fetching session data. Error: ${error.message}")
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 

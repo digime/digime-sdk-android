@@ -20,7 +20,7 @@ class ConsentAccessInProgress : Fragment() {
 
         view.progress_text.text = progresText
 
-        view.animatiooon.show()
+        view.loadanimation.show()
         return view
     }
 }

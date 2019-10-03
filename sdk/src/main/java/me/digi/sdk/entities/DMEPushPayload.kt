@@ -2,7 +2,7 @@ package me.digi.sdk.entities
 
 import com.google.gson.annotations.SerializedName
 
-data class DMEPostboxFile (
+data class DMEPushPayload (
 
     @JvmField
     val dmePostbox: DMEPostbox,

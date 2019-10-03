@@ -7,7 +7,7 @@ object DMEDataEncryptor {
     private const val symKeyLength = 32
     private const val ivLength = 16
 
-    data class DMEPostboxFile(
+    data class DMEEncryptedData(
 
         @SerializedName("fileContent")
         val fileContent: ByteArray,
@@ -22,13 +22,13 @@ object DMEDataEncryptor {
         val iv: String
     )
 
-    fun encryptedDataFromBytes(publicKey: String, fileContent: ByteArray, metadata: ByteArray): DMEPostboxFile {
+    fun encryptedDataFromBytes(publicKey: String, fileContent: ByteArray, metadata: ByteArray): DMEEncryptedData {
 
         val key = DMECryptoUtilities.generateSecureRandom(symKeyLength)
         val rsa = DMEKeyTransformer.publicKeyFromString(publicKey)
 
         val encryptedKey = DMECryptoUtilities.encryptRSA(key, rsa)
-        val base64EncryptedKey = org.bouncycastle.util.encoders.Base64.toBase64String(encryptedKey)
+        val base64EncryptedKey = org.spongycastle.util.encoders.Base64.toBase64String(encryptedKey)
 
         val iv = DMECryptoUtilities.generateSecureRandom(ivLength)
 
@@ -36,9 +36,9 @@ object DMEDataEncryptor {
 
         val encryptedMetaData = DMECryptoUtilities.encryptAES(metadata, key, iv)
         val base64encodedMetadata =
-            org.bouncycastle.util.encoders.Base64.toBase64String(encryptedMetaData)
+            org.spongycastle.util.encoders.Base64.toBase64String(encryptedMetaData)
 
-        return DMEPostboxFile(
+        return DMEEncryptedData(
             encryptedData,
             base64encodedMetadata,
             base64EncryptedKey,

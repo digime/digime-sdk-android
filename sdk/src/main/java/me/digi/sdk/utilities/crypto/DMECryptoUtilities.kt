@@ -4,7 +4,6 @@ import android.content.Context
 import me.digi.sdk.DMESDKError
 import org.spongycastle.crypto.InvalidCipherTextException
 import org.spongycastle.crypto.engines.AESEngine
-import org.spongycastle.crypto.engines.AESFastEngine
 import org.spongycastle.crypto.modes.CBCBlockCipher
 import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.spongycastle.crypto.params.KeyParameter
@@ -53,9 +52,9 @@ class DMECryptoUtilities(val context: Context) {
             Security.addProvider(BouncyCastleProvider())
 
             try {
-                val rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding",  BouncyCastleProvider.PROVIDER_NAME)
-                rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
-                return rsaCipher.doFinal(data)
+                val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding",  "SC")
+                cipher.init(Cipher.ENCRYPT_MODE, publicKey)
+                return cipher.doFinal(data)
             } catch (e: Exception) {
                 throw DMESDKError.EncryptionFailed()
             }
@@ -86,7 +85,7 @@ class DMECryptoUtilities(val context: Context) {
 
         internal fun encryptAES(data: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): ByteArray {
             try {
-                val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESFastEngine()))
+                val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
 
                 cipher.init(true, ParametersWithIV(KeyParameter(keyBytes), ivBytes))
                 val outBuf = ByteArray(cipher.getOutputSize(data.size))
@@ -99,7 +98,6 @@ class DMECryptoUtilities(val context: Context) {
             }
 
         }
-
 
         internal fun hashData(data: ByteArray) =
             MessageDigest

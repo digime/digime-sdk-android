@@ -26,7 +26,6 @@ class PostboxActivity : AppCompatActivity() {
             applicationContext.getString(R.string.digime_postbox_contract_id)
         )
 
-        cfg.baseUrl = "https://api.digi.me/"
         client = DMEPushClient(applicationContext, cfg)
 
         item_postbox_button.setOnClickListener {
@@ -40,11 +39,11 @@ class PostboxActivity : AppCompatActivity() {
         client.createPostbox(this) { dmePostbox, error ->
             if (dmePostbox != null) {
 
-                val fileContent = getFileContent(  "file.png")
+                val fileContent = getFileContent("file.png")
                 val metadata = getFileContent("metadatapng.json")
 
-                client.pushFileToPostbox(
-                    DMEPostboxFile(
+                client.pushDataToPostbox(
+                    DMEPushPayload(
                         dmePostbox,
                         metadata,
                         fileContent,
