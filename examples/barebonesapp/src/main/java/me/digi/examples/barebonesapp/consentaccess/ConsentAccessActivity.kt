@@ -18,6 +18,7 @@ class ConsentAccessActivity : AppCompatActivity() {
     private lateinit var pk: String
     private lateinit var cfg: DMEPullConfiguration
 
+    @ExperimentalStdlibApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.consent_access_activity_layout)
@@ -39,25 +40,32 @@ class ConsentAccessActivity : AppCompatActivity() {
         }
     }
 
+    @ExperimentalStdlibApi
     private fun shareViaDigiMe() {
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 
         client.authorize(this) { session, error ->
             session?.let {
-                client.getSessionData({ file, error ->
-                    if (file != null) {
-                        Log.d("File received ", file.toString())
-                        removeReceiving("")
-                    } else
-                        error?.message?.let { it1 -> removeReceiving(it1) }
-                })
-                {
-                    if (it == null)
-                        removeReceiving("")
-                    else
-                        removeReceiving(it.message)
+                client.getSessionAccounts { accounts, error ->
+                    if (accounts!= null)
+                        Log.d("aaaaaaaa", accounts.toString())
+                    if(error != null)
+                        Log.d("aaaaaaaa", error.message)
                 }
+//                client.getSessionData({ file, error ->
+//                    if (file != null) {
+//                        Log.d("File received ", file.toString())
+//                        removeReceiving("")
+//                    } else
+//                        error?.message?.let { it1 -> removeReceiving(it1) }
+//                })
+//                {
+//                    if (it == null)
+//                        removeReceiving("")
+//                    else
+//                        removeReceiving(it.message)
+//                }
             }
             error?.message?.let { it -> removeReceiving(it) }
         }
