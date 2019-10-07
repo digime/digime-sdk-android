@@ -3,6 +3,7 @@ package me.digi.sdk.api.interceptors
 import me.digi.sdk.entities.DMEClientConfiguration
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.internal.lockAndWaitNanos
 import okhttp3.internal.waitMillis
 
 class DMERetryInterceptor(private val config: DMEClientConfiguration): Interceptor {
@@ -34,7 +35,9 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration): Intercept
             }.invoke()
 
             // TODO: Implement error based filtering to avoid non-recoverable retries.
-            waitMillis(waitTime)
+            synchronized(request) {
+                request.waitMillis(waitTime)
+            }
             response = chain.proceed(request)
         }
 
