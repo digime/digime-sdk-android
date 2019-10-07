@@ -1,4 +1,4 @@
-![](https://i.imgur.com/o1CNZZr.png)
+![](https://i.imgur.com/zAHoOwe.png)
 
 <p align="center">
     <a href="https://digime-api.slack.com/">
@@ -66,7 +66,7 @@ var retryWithExponentialBackOff: Boolean = true
 // How many times a request should be retried before ultimately failing.
 var maxRetryCount: Int = 5
 ```
-You can also see the defaults assigned to each property above, should you not explicitly override this.
+You can also see the defaults assigned to each property above, should you need to explicitly override this.
 
 ## Troubleshooting Common Issues
 
@@ -99,4 +99,4 @@ Below are the 5 most common errors you could run into, and the steps you should 
 
 ## Further Issues
 
-If, after reading this section, your issue persists, please contact digi.me developer support. The easiest way to do this is via our [Slack Workspace](). Here you can speak directly with other developers working with us, as well as digi.me's own development team.
+If, after reading this section, your issue persists, please contact digi.me developer support. The easiest way to do this is via our [Slack Workspace](https://digime-api.slack.com/). Here you can speak directly with other developers working with us, as well as digi.me's own development team.
