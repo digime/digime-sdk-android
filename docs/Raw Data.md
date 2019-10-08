@@ -1,3 +1,25 @@
+![](https://i.imgur.com/zAHoOwe.png)
+
+<p align="center">
+    <a href="https://digime-api.slack.com/">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    </a>
+    <a href="#">
+    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    </a>
+    <a href="https://swift.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://twitter.com/codevapor">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+</p>
+
+<br>
+
 # Raw Data
 
 ## Introduction
@@ -6,7 +28,7 @@ digi.me prides itself in normalising data from a huge array of sources into comm
 
 ## Pulling Raw Data
 
-The facility to pull raw data is, much like any data type, bound by one's contract. Please [contact support]() to discuss having the raw data entitlement added to your contract.
+The facility to pull raw data is, much like any data type, bound by one's contract. Please [contact support](https://developers.digi.me/contact-us) to discuss having the raw data entitlement added to your contract.
 
 ### Mime Types:
 
@@ -22,4 +44,4 @@ For any other mime type, `fileContentAsJSON` will throw an exception. In such ca
 
 If you push data to a Postbox that isn't pre-mapped to our [Ontology](https://developers.digi.me/reference-api), it will be treated as raw data and pushed into a user's digi.me as such. The metadata supplied with the push will be used to deduce the data's mime type going forward (IE the mime type the file has when pulled back down).
 
-Please see the [Postbox Documentation]() for more information on pushing data into digi.me.
+Please see the [Postbox Documentation](Postbox.md) for more information on pushing data into digi.me.
