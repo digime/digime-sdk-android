@@ -8,6 +8,6 @@ data class DMEServiceDescriptor (
     val name: String,
 
     @SerializedName("logo")
-    val logo: String
+    val logoUrl: String
 
 )
