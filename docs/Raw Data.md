@@ -13,7 +13,7 @@
     <a href="https://swift.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
     </a>
-    <a href="https://twitter.com/codevapor">
+    <a href="https://developer.digi.me">
         <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
     </a>
 </p>
