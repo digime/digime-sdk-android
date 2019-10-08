@@ -133,7 +133,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion(null, error)
                 }
 
-                val accountsFileJSON = file?.fileContentAsJSON(DMEAccountList::class.java)
+                val accountsFileJSON = file?.fileContentAs(DMEAccountList::class.java)
                 val accounts = accountsFileJSON?.accounts
 
                 DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
