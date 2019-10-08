@@ -45,7 +45,7 @@ digi.me can also act as a vault for data that does not fit within our current on
 
 ## Pushing Data - 5 Simple Steps
 
-The digi.me Private Sharing SDK makes it easy to create a postbox to push data to. Similarly to requesting data, you can achieve by utilising a client object as follows:
+The digi.me Private Sharing SDK makes it easy to create a postbox to push data to. Similarly to requesting data, you can achieve this by utilising a client object as follows:
 
 ### 1. Obtaining your Contract ID & Application ID:
 
