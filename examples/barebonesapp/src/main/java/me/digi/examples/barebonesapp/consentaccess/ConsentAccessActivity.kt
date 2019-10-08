@@ -46,16 +46,17 @@ class ConsentAccessActivity : AppCompatActivity() {
         client.authorize(this) { session, error ->
             session?.let {
                 client.getSessionData({ file, error ->
-                    if(file != null) {
+                    if (file != null) {
                         Log.d("File received ", file.toString())
                         removeReceiving("")
-                    }
-                    else
+                    } else
                         error?.message?.let { it1 -> removeReceiving(it1) }
                 })
                 {
-                    if(it != null)
+                    if (it == null)
                         removeReceiving("")
+                    else
+                        removeReceiving(it.message)
                 }
             }
             error?.message?.let { it -> removeReceiving(it) }
