@@ -92,7 +92,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
-            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId), completion)
+            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId)) { file, error ->
+                file?.identifier = fileId
+                completion(file, error)
+            }
 
         }
         else {
