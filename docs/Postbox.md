@@ -39,7 +39,7 @@ When pushing data to Postbox you have two main options:
 
 digi.me publishes it's data ontology [here](https://developers.digi.me/reference-api) for the various data types. When making a submission, if you push data normalised to this format, it will be displayed in the digi.me more appropriately, with UI specifically engineered to maximise the value of that data. It also means that when you or another third party requests this data via pull, it can be included within a collection of data points of the same type.
 
-#### Unmapped data ([Raw Data]()):
+#### Unmapped data ([Raw Data](Raw%20Data.md)):
 
 digi.me can also act as a vault for data that does not fit within our current ontology, whether to collate user data together in one place or to act as a conduit between a data provider and data consumer. When data that doesn't correspond to one of digi.me's object types is pushed, this will be rendered within digi.me as a raw 'data drop'. If we can deserialise this to JSON, we will show the raw JSON tree, otherwise there will be no facility to preview the data - this is for security reasons.
 
@@ -97,7 +97,7 @@ To push data, you need to build a `DMEPushPayload`, which you can then send to y
 
 ```kotlin
 val data = ... // Obtain the data you wish to post, as a ByteArray.
-val metadata = ... // All Postbox submissions must be pushed with appropriate metadata. See the example apps for mor details.
+val metadata = ... // All Postbox submissions must be pushed with appropriate metadata. See the example apps for more details.
 val mimeType = DMEMimeType.APPLICATION_JSON // This tells digi.me how to treat your push. JSON can be displayed in the digi.me client, other types cannot. Please use the most appropriate mime type.
 val payload = DMEPushPayload(postbox, data, metadata, mimeType)
 
