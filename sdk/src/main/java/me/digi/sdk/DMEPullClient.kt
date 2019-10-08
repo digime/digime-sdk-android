@@ -3,8 +3,6 @@ package me.digi.sdk
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
@@ -132,14 +130,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion(null, error)
                 }
 
-                val accountsFileJSON = file?.fileContentAsJSON()
-                val accountsType = object: TypeToken<List<DMEAccount>>(){}.type
+                val accountsFileJSON = file?.fileContentAsJSON(DMEAccountList::class.java)
+                val accounts = accountsFileJSON?.accounts
 
-                val accounts = try { Gson().fromJson<List<DMEAccount>>(accountsFileJSON, accountsType) } catch( e: Throwable) { emptyList<DMEAccount>() }
-                DMELog.i("Successfully fetched accounts: ${accounts.map { it.identifier }}")
+                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
                 completion(accounts, error)
             }
-
         }
         else {
             DMELog.e("Your session is invalid; please request a new one.")

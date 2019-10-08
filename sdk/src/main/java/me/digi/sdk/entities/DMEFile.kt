@@ -1,9 +1,7 @@
 package me.digi.sdk.entities
 
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
-import com.google.gson.reflect.TypeToken
 
 data class DMEFile (
 
@@ -20,6 +18,6 @@ data class DMEFile (
 
     lateinit var identifier: String
 
-    fun fileContentAsJSON() = Gson().toJsonTree(content)
+    fun <T> fileContentAsJSON(type: Class<T>) = Gson().fromJson(String(content), type)
 
 }
