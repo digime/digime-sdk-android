@@ -37,8 +37,71 @@ When pushing data to Postbox you have two main options:
 
 #### Data pre-mapped into digi.me's ontology:
 
-digi.me publishes it's data ontology [here]() for the various data types. When making a submission, if you push data normalised to this format, it will be displayed in the digi.me more appropriately, with UI specifically engineered to maximise the value of that data. It also means that when you or another third party requests this data via pull, it can be included within a collection of data points of the same type.
+digi.me publishes it's data ontology [here](https://developers.digi.me/reference-api) for the various data types. When making a submission, if you push data normalised to this format, it will be displayed in the digi.me more appropriately, with UI specifically engineered to maximise the value of that data. It also means that when you or another third party requests this data via pull, it can be included within a collection of data points of the same type.
 
 #### Unmapped data ([Raw Data]()):
 
-digi.me can also act as a vault for data that does not fit within our current ontology, whether to collate user data together in one place or to act as a conduit between a data provider and data consumer.
+digi.me can also act as a vault for data that does not fit within our current ontology, whether to collate user data together in one place or to act as a conduit between a data provider and data consumer. When data that doesn't correspond to one of digi.me's object types is pushed, this will be rendered within digi.me as a raw 'data drop'. If we can deserialise this to JSON, we will show the raw JSON tree, otherwise there will be no facility to preview the data - this is for security reasons.
+
+## Pushing Data - 5 Simple Steps
+
+The digi.me Private Sharing SDK makes it easy to create a postbox to push data to. Similarly to requesting data, you can achieve by utilising a client object as follows:
+
+### 1. Obtaining your Contract ID & Application ID:
+
+Postbox uses the same means of authentication as pulling user data.
+
+To access the digi.me platform, you need to obtain an `AppID` for your application. You can get yours by filling out the registration form [here](https://go.digi.me/developers/register).
+
+In a production environment, you will also be required to obtain your own `Contract ID` from digi.me support. However, for sandbox purposes, we provide the following example value:
+
+**Example Contract ID:** `Cb1JC2tIatLfF7LH1ksmdNx4AfYPszIn`
+
+### 2. Configuring Callback Forwarding:
+
+Because the digi.me Private Sharing SDK communicates with the digi.me app, you are required to forward invocations of `onActivityResult` through to the SDK so that it may process responses. In any activity that will be resposible for invoking methods on the SDK, override `onActivityResult` as below:
+
+```kotlin
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+	super.onActivityResult(requestCode, responseCode, data)
+	DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, responseCode, data)
+}
+```
+
+### 3. Configuring the `DMEPushClient` object:
+`DMEPushClient` is the object you will primarily interface with to use the SDK. It is instantiated with a context, and a `DMEPushConfiguration` object. **The provided context should always be the main application context.**
+
+The `DMEPushConfiguration` object is instantiated with your `AppID` and `Private Key` in hex format. The below code snippet shows you how to combine all this to get a configured `DMEPushClient`:
+
+```kotlin
+val configuration = DMEPushConfiguration("app-id", "contract-id")
+val pushClient = DMEPushClient(applicationContext, configuration)
+```
+
+### 4. Requesting Consent:
+
+Before you can push data into a user's digi.me, you must obtain their consent. This is achieved by calling `createPostbox` on your client object:
+
+```kotlin
+pushClient.createPostbox(this) { postbox, error ->
+
+}
+```
+*NB: `this` represents the activity which is setup to forward `onActivityResult`, as above.*
+
+If a user grants consent, a Postbox will be created and returned; this is used by subsequent calls to push data. If the user denies consent, an error stating this is returned. See [Handling Errors](#).
+
+### 5. Pushing Data:
+
+To push data, you need to build a `DMEPushPayload`, which you can then send to your Postbox. An example showing Postbox creation and push can be seen below.:
+
+```kotlin
+val data = ... // Obtain the data you wish to post, as a ByteArray.
+val metadata = ... // All Postbox submissions must be pushed with appropriate metadata. See the example apps for mor details.
+val mimeType = DMEMimeType.APPLICATION_JSON // This tells digi.me how to treat your push. JSON can be displayed in the digi.me client, other types cannot. Please use the most appropriate mime type.
+val payload = DMEPushPayload(postbox, data, metadata, mimeType)
+
+pushClient.pushDataToPostbox(payload) { error ->
+    // Handle error, if any.
+}
+```
