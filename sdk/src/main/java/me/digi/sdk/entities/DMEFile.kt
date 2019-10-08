@@ -9,17 +9,19 @@ data class DMEFile (
     @JvmField
     val metadata: DMEFileMetadata?,
 
+    @JvmField
     @SerializedName("mimetype")
     val mimeType: DMEMimeType,
 
     @JvmField
-    val content: ByteArray
+    @SerializedName("content")
+    val fileContent: ByteArray
 
 ) {
 
     lateinit var identifier: String
 
-    internal fun <T> fileContentAs(type: Class<T>) = Gson().fromJson(String(content), type)
-    fun fileContentAsJSON(): JsonElement? = Gson().toJsonTree(String(content))
+    internal fun <T> fileContentAs(type: Class<T>) = Gson().fromJson(String(fileContent), type)
+    fun fileContentAsJSON(): JsonElement? = Gson().toJsonTree(String(fileContent))
 
 }
