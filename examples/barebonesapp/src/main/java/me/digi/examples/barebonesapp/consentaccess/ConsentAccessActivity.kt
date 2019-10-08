@@ -18,7 +18,6 @@ class ConsentAccessActivity : AppCompatActivity() {
     private lateinit var pk: String
     private lateinit var cfg: DMEPullConfiguration
 
-    @ExperimentalStdlibApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.consent_access_activity_layout)
@@ -40,7 +39,6 @@ class ConsentAccessActivity : AppCompatActivity() {
         }
     }
 
-    @ExperimentalStdlibApi
     private fun shareViaDigiMe() {
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
