@@ -38,7 +38,7 @@ For example, `DMEFile` has a `mimeType` property. This will be one case of the `
 
 Most instances of raw data will have the `APPLICATION_JSON` mime type, symbolising JSON data which didn't fit within existing digi.me ontology. In this case, you can invoke `fileContentAsJSON` just as you would for mapped data.
 
-For any other mime type, `fileContentAsJSON` will throw an exception. In such cases, it should not be used and you should instead access the `ByteArray` file content directly with the `content` property and handle it how you see fit for your use case.
+For any other mime type, `fileContentAsJSON` will throw an exception. In such cases, it should not be used and you should instead access the `ByteArray` file content directly with the `fileContent` property and handle it how you see fit for your use case.
 
 ## Pushing Raw Data
 
