@@ -12,7 +12,7 @@ The facility to pull raw data is, much like any data type, bound by one's contra
 
 When pulling raw data from the Private Sharing platform, any `DMEFile` containing raw data should be handled appropriately for that data.
 
-For example, `DMEFile` has a `metadata` property which in turn has a `mimeType` property. This will be one case of the `DMEMimeType` enum (see [DMEMimeType.kt]()).
+For example, `DMEFile` has a `mimeType` property. This will be one case of the `DMEMimeType` enum (see [DMEMimeType.kt]()).
 
 Most instances of raw data will have the `APPLICATION_JSON` mime type, symbolising JSON data which didn't fit within existing digi.me ontology. In this case, you can invoke `fileContentAsJSON` just as you would for mapped data.
 
