@@ -1,20 +1,23 @@
-![](https://i.imgur.com/o1CNZZr.png)
+![](https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png)
 
 <p align="center">
-    <a href="https://digime-api.slack.com/">
+    <a href="https://bit.ly/2LM4GFS">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
-    <a href="LICENSE">
-        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
     </a>
     <a href="#">
     	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
     </a>
-    <a href="https://swift.org">
+    <a href="https://kotlinlang.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
     </a>
-    <a href="https://twitter.com/codevapor">
+    <a href="https://developers.digi.me">
         <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+    <a href="https://digime.freshdesk.com/support/home">
+        <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
     </a>
 </p>
 
@@ -26,11 +29,11 @@ Whilst the true power of the digi.me Private Sharing platform lies in the user's
 
 ## How to Use
 
-Guest Consent is disabled by default. This is because we believe utilising digi.me properly provides a superior user experience, and encourage it.
+Guest Consent is enabled by default. Nonetheless, we believe utilising digi.me properly provides a superior user experience, and encourage it.
 
-If the digi.me app is not installed, the default behaviour is to open the relevant app store listing for the user to subsequently download and set up digi.me.
+If the digi.me app is not installed, the default behaviour launch digi.me guest onboarding via a browser to initiate a one time private share.
 
-Guest Consent can be enabled when configuring your `DMEPullClient` by setting the `guestEnabled` property of `DMEPullConfiguration` to `true`. This changes the behaviour to, in the event that the digi.me app isn't installed, use the web Guest Consent flow.
+Guest Consent can be disabled when configuring your `DMEPullClient` by setting the `guestEnabled` property of `DMEPullConfiguration` to `false`. This changes the behaviour to, in the event that the digi.me app isn't installed, the Play Store will be launched at the digi.me installation page.
 
 Note that even if Guest Consent is enabled, if the digi.me app is present on the device, we will always process the consent request through the native app.
 

@@ -1,11 +1,11 @@
-![](https://i.imgur.com/zAHoOwe.png)
+![](https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png)
 
 <p align="center">
     <a href="https://bit.ly/2LM4GFS">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
-    <a href="https://github.com/digime/digime-sdk-android/refs/master/LICENSE">
-        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
     </a>
     <a href="#">
     	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
@@ -13,10 +13,10 @@
     <a href="https://kotlinlang.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
     </a>
-    <a href="https://digi.me">
+    <a href="https://developers.digi.me">
         <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
     </a>
-    <a href="https://twitter.com/codevapor">
+    <a href="https://digime.freshdesk.com/support/home">
         <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
     </a>
 </p>
@@ -25,7 +25,7 @@
 
 # Limiting Scope
 
-Sometimes you may only want to retrieve a subset of data. This is governed at two levels. At the top are any scope limitations dictated by your contract; these can only be changed by digi.me support so please [contact support]() if you want to discuss this further.
+Sometimes you may only want to retrieve a subset of data. This is governed at two levels. At the top are any scope limitations dictated by your contract; these can only be changed by digi.me support so please [contact support](https://developers.digi.me/contact-us) if you want to discuss this further.
 
 At a code level, you can restrict the scope of a Private Sharing session by passing in a custom `DMEScope`.
 
@@ -81,6 +81,6 @@ When calling `authorize` on your `DMEPullClient`, simply pass in your `DMEScope`
 val scope = DMEScope(listOf(DMETimeRange(last = "6m")))
 pullClient.authorize(this, scope)
 ```
-*NB: `this` represents the activity which is setup to forward `onActivityResult`, as described in [Getting Started]().*
+*NB: `this` represents the activity which is setup to forward `onActivityResult`, as described in [Getting Started](./Getting%20Started.md).*
 
 The data received from any subsequent calls to `getSessionData` will be limited by the scope of the session defined above.

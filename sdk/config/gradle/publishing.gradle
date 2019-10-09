@@ -83,8 +83,8 @@ publishing {
             url = 'https://repository.sysdigi.net/m2/libs-release-local/'
 
             credentials {
-                username = 'USER-HERE'
-                password = 'PASS-HERE'
+                username = 'jacob'
+                password = 'AP27QDvqZbsDaUKtjcaDtFCQJU7'
             }
 
         }

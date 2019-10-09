@@ -44,6 +44,23 @@ android {
         abortOnError false
     }
 
+    assemble.dependsOn 'sourcesJar'
+    tasks.whenTaskAdded { task ->
+        if (task.name == 'assembleRelease') {
+            task.dependsOn 'sourcesJar'
+        }
+    }
+
+    task sourcesJar(type: Jar) {
+        archiveName = 'sources.jar'
+        archiveClassifier = 'sources'
+        from sourceSets.main.kotlin
+    }
+
+    artifacts {
+        archives sourcesJar
+    }
+
 }
 
 dependencies {
@@ -68,8 +85,11 @@ dependencies {
     androidTestImplementation "com.android.support.test:runner:$versions.testrunner"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$versions.espresso"
 }
+
 repositories {
     mavenCentral()
 }
+
+
 
 apply from: project.file('../sdk/config/gradle/publishing.gradle')

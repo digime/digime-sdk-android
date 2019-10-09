@@ -1,20 +1,23 @@
-![](https://i.imgur.com/zAHoOwe.png)
+![](https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png)
 
 <p align="center">
-    <a href="https://digime-api.slack.com/">
+    <a href="https://bit.ly/2LM4GFS">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
-    <a href="LICENSE">
-        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
     </a>
     <a href="#">
     	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
     </a>
-    <a href="https://swift.org">
+    <a href="https://kotlinlang.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
     </a>
-    <a href="https://twitter.com/codevapor">
+    <a href="https://developers.digi.me">
         <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+    <a href="https://digime.freshdesk.com/support/home">
+        <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
     </a>
 </p>
 
@@ -26,7 +29,7 @@ Whilst using the SDK, you may encounter a number of errors. Some of these, we wi
 
 ## Error Types
 
-All invocations of the SDK that can return some form of error will return an instance of `DMEError` (or one of it's subclasses. These are detailed in [DMEError.kt](); all errors come with a message explaining the reason behind them. There are 3 subclasses: `DMESDKError`, `DMEAuthError` and `DMEAPIError`. Let's break them down:
+All invocations of the SDK that can return some form of error will return an instance of `DMEError` (or one of it's subclasses. These are detailed in [DMEError.kt](../../sdk/src/main/java/me/digi/sdk/DMEError.kt); all errors come with a message explaining the reason behind them. There are 3 subclasses: `DMESDKError`, `DMEAuthError` and `DMEAPIError`. Let's break them down:
 
 ### DMESDKError
 
@@ -89,11 +92,11 @@ Below are the 5 most common errors you could run into, and the steps you should 
 
 #### `DMESDKError.P12ParsingError()`:
 **Encountered**: When the SDK fails to parse the P12 file you specified with the password you specified.<br>
-**Resolution**: Ensure that the P12 file exists in your project's `assets` folder, and that the name matches the one you specified. Ensure that the password is the one given to you by digi.me support, or, in sandbox, the one provided in the [README]().
+**Resolution**: Ensure that the P12 file exists in your project's `assets` folder, and that the name matches the one you specified. Ensure that the password is the one given to you by digi.me support, or, in sandbox, the one provided in the [README](../../README.md).
 
 #### `DMESDKError.DigiMeAppNotFound()`:
 **Encountered**: When the user doesn't have the digi.me application installed, and you haven't enabled guest consent in the client config.
-**Resolution**: Enable guest consent mode (generally not recommended, see [Guest Consent]() for more info), or, direct the user to install the digi.me app.
+**Resolution**: Enable guest consent mode (generally not recommended, see [Guest Consent](../Guest%20Consent.md) for more info), or, direct the user to install the digi.me app.
 
 *Please Note: The SDK will automatically open the store listing for the digi.me app if this error is encountered and guest consent is disabled.*
 
