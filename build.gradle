@@ -1,28 +1,82 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
 
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
+apply from: 'config/gradle/versioning.gradle'
+
+apply from: 'config/gradle/checkstyle.gradle'
 
 buildscript {
-    ext.kotlin_version = '1.3.41'
+    // Gradle will not find vars defined in an external file when referring to them
+    // in the buildscript block, unless you link it from the buildscript block, too.
+    apply from: 'config/gradle/versioning.gradle'
+
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.9.9"
+        classpath "com.android.tools.build:gradle:$versions.androidGradlePlugin"
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:$versions.buildInfoExtractor"
         classpath 'digital.wup:android-maven-publish:3.6.2'
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     }
 }
 
 allprojects {
+    group = 'me.digi'
     repositories {
         google()
         jcenter()
-        maven { url "https://repository.sysdigi.net/m2/libs-internal" }
+        maven { url "https://repository.sysdigi.net/m2/libs-release" }
     }
+    project.ext {
+        globalVersion = "unspecified"
+    }
+}
+
+def projectVersion() {
+    def versionClass = file('sdk/src/main/java/me/digi/sdk/core/DigiMeSDKVersion.java')
+    def outVersion = null
+    versionClass.eachLine{
+        def regex = (it =~ /(?:.*VERSION = \")(.*)(?:\".*)/)
+        if (regex.matches()) {
+            outVersion = regex[0][1]
+        }
+    }
+    return outVersion
+}
+
+ext.VERSION_NAME = projectVersion()
+
+println "SDK version is ${ext.VERSION_NAME}"
+
+def updateReadmeVersion() {
+    //UPDATE readme only when dev is working with new production version
+    def appVersionName = ext.VERSION_NAME
+    if (appVersionName.contains("SNAPSHOT"))
+        return
+    println "Updating readme file with $appVersionName"
+    def readmeFile = file('README.md')
+    StringBuilder outContent = new StringBuilder()
+    boolean shouldWrite = false
+    readmeFile.eachLine {
+        def regex = (it =~ /(?:.*me.digi:sdk:)(.*)(?:\'.*)/)
+        if (regex.matches() && !appVersionName.equals(regex[0][1])) {
+            shouldWrite = true
+            outContent.append(it.replace(regex[0][1], appVersionName)).append("\n")
+        } else {
+            outContent.append(it).append("\n")
+        }
+    }
+    if (shouldWrite) {
+        readmeFile.write(outContent.toString().trim(), "UTF-8")
+    }
+}
+
+updateReadmeVersion()
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

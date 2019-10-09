@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+  -->
+
+<lint>
+    <issue id="InvalidPackage">
+        <ignore regexp=".*okio.*" />
+        <ignore regexp=".*retrofit.*" />
+        <ignore regexp=".*JndiDANEFetcherFactory.*" />
+    </issue>
+    <issue id="AllowBackup">
+        <ignore path="src/main/AndroidManifest.xml"/>
+    </issue>
+    <issue id="GoogleAppIndexingWarning">
+        <ignore path="src/main/AndroidManifest.xml"/>
+    </issue>
+</lint>

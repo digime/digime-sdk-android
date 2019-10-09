@@ -1,23 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+  -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="me.digi.sdk">
+          package="me.digi.sdk.core">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application android:label="@string/app_name">
 
+        <provider
+                android:authorities="${applicationId}.DigiMeStartupProvider"
+                android:exported="false"
+                android:enabled="true"
+                android:name=".internal.DigiMeStartupProvider" />
+
         <activity
-                android:name=".ui.GuestConsentBrowserActivity"
-                android:launchMode="singleTop">
-
+            android:name=".internal.quark.QuarkBrowserActivity"
+            android:launchMode="singleTop">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="@string/deeplink_guest_consent_callback"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/quark_callback_scheme" />
             </intent-filter>
-
         </activity>
 
     </application>
-
-    <uses-permission android:name="android.permission.INTERNET"/>
 
 </manifest>

@@ -1,0 +1,57 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply from: project.file('../config/shared/shared.gradle')
+
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'digital.wup.android-maven-publish'
+
+def repositoryUrl = "https://repository.sysdigi.net/m2/"
+def repositoryKey = getRepositoryKey()
+def repositoryUsername = project.ext.fetchWithThrow('../config/properties/publish.properties', "REPO_USERNAME", "")
+def repositoryPassword = project.ext.fetchWithThrow('../config/properties/publish.properties', "REPO_PASSWORD", "")
+
+def getRepositoryKey() {
+    if ("api.digi.me" == project.ext.exports.endpointUrl) {
+        return "libs-release-local"
+    } else {
+        return "libs-internal-local"
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            if (components.hasWithName("java")) {
+                from components.java
+            } else if (components.hasWithName("android")) {
+                from components.android
+            }
+            version = "${VERSION_NAME}"
+            if (project.ext.exports.endpointName) {
+                //TODO "SNAPSHOT" must go last
+                //version = "${VERSION_NAME}-${project.ext.exports.endpointName}"
+            }
+            println "Artifactory publication version is ${version}"
+        }
+    }
+}
+
+artifactory {
+    contextUrl = repositoryUrl
+    publish {
+        repository {
+            repoKey = repositoryKey
+            username = repositoryUsername
+            password = repositoryPassword
+        }
+        defaults {
+            publications('maven')
+            publishArtifacts = true
+
+            properties = ['qa.level': 'basic', 'dev.team': 'core']
+            publishPom = true
+        }
+    }
+}

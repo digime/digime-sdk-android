@@ -1,0 +1,38 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply plugin: 'checkstyle'
+
+checkstyle {
+    toolVersion = "8.7"
+}
+
+task checkstyle(type: Checkstyle) {
+    description 'Runs Checkstyle inspection against Android sourcesets.'
+    group = 'Verification'
+
+    ignoreFailures = false
+    showViolations = true
+    source "$project.rootDir/"
+    include '**/*.java'
+    include '**/*.kt'
+    include '**/*.xml'
+    include '**/*.gradle'
+    include '**/*.properties'
+
+    exclude '**/build/**'
+    exclude '.idea/**'
+    exclude '.gradle/**'
+    exclude 'repo/**'
+    exclude 'local.properties'
+    classpath = files()
+    configFile = file("$project.rootDir/config/checkstyle/checkstyle.xml")
+
+    configProperties.lineWidth = 120
+}
+project.afterEvaluate {
+    project.tasks.findAll {it.name.contains("lint")}.forEach { task ->
+        task.dependsOn("checkstyle")
+    }
+}

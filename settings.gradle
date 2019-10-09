@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
 include ':sdk'
-include ':examples:barebonesapp'
+include ':sdk-lib-models'
+include ':sdk-lib-crypto'
+include ':examples:consent-access'
+include ':examples:consent-access-no-sdk'
+include ':examples:postbox'
 

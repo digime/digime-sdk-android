@@ -3,14 +3,19 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <option name="disableWrapperSourceDistributionNotification" value="true" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/examples" />
-            <option value="$PROJECT_DIR$/examples/barebonesapp" />
+            <option value="$PROJECT_DIR$/examples/consent-access" />
+            <option value="$PROJECT_DIR$/examples/consent-access-no-sdk" />
+            <option value="$PROJECT_DIR$/examples/postbox" />
             <option value="$PROJECT_DIR$/sdk" />
+            <option value="$PROJECT_DIR$/sdk-lib-crypto" />
+            <option value="$PROJECT_DIR$/sdk-lib-models" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

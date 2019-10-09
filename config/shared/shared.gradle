@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+ext.relativePathToProject = {fileName ->
+    def workingDir = new File(projectDir.canonicalPath, fileName.take(fileName.lastIndexOf('/'))).canonicalFile
+    return workingDir.absolutePath + '/' + fileName.substring(fileName.lastIndexOf("/")+1)
+}
+
+//Load value from properties, return defaut if it doesn't exist
+ext.fetchProp = {props = new Properties(), propFile, key, defaultVal ->
+    if (file(propFile).exists()) {
+        try {
+            props.load(file(propFile).newDataInputStream())
+        } catch(Exception ignored) {
+            println("Failed to load properties file: " + relativePathToProject(propFile))
+        }
+        if (props.get(key) != null) {
+            return props.get(key)
+        }
+        return defaultVal
+    } else {
+        println("Properties file: " + relativePathToProject(propFile) + " does not exist. Loading defaults...")
+        return defaultVal
+    }
+}
+
+//Load value from properties, throw if not exists
+ext.fetchWithThrow = {props = new Properties(), propFile, key, throwMessage ->
+    try {
+        props.load(file(propFile).newDataInputStream())
+    } catch(Exception ignored) {
+        throw new GradleException("Can't find " + relativePathToProject(propFile) + ". " + throwMessage)
+    }
+    if (props.get(key) != null) {
+        return props.get(key)
+    }
+    throw new GradleException("Property " + key + " not set! " + throwMessage)
+}

@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply plugin: 'com.android.application'
+apply from: project.file('../../config/gradle/quality.gradle')
+
+android {
+    compileSdkVersion buildConfig.compileSdk
+    buildToolsVersion buildConfig.buildTools
+
+    defaultConfig {
+        applicationId "me.digi.examples.ca"
+        minSdkVersion buildConfig.minSdk
+        targetSdkVersion buildConfig.targetSdk
+        versionCode 1
+        versionName "1.0"
+
+        /*
+         * Consent Access Configuration parameters:
+         * The following lines set parameters necessary for initialization and usage of the CA API (through SDK):
+         * App ID, Contract ID, Private Key file and Private Key file password if any;
+         * These are helper resource constructors which get injected into AndroidManifest.xml
+         * For further details how these are mapped to meta-data used by the SDK, look at AndroidManifest.xml at the section marked with <DIGI.ME SDK CONFIGURATION PARAMS BEGIN>
+         */
+
+        resValue "string", "APP_ID", "your_real_app_id" // <- sample: "gDdQfubl66rj07webI92m4afPL9va9Z1" (32 characters hex string given by digi.me support)
+        resValue "string", "P12_KEYSTORE_PASSWORD", "your_real_key_password" // <- sample: "20ov;p-1Fi3oL" (the password that goes with your private key). You will need to request the key password from dev support if using pre-set contract ID.
+
+        resValue "string", "CONTRACT_ID", "fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF" // <- demo contract ID for testing purposes
+        resValue "string", "P12_KEYSTORE_FILENAME", "CA_RSA_PRIVATE_KEY.p12" // <- demo private key in assets folder, accompanying the demo contract ID
+    }
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    lintOptions {
+        lintConfig project.file('../../gradle/lint.xml')
+        disable 'LogConditional', 'GradleCompatible', 'IconLauncherShape', 'OldTargetApi'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    /**
+     * replace with implementation "me.digi:sdk:${version}" if you want to use library from local or remote repository instead
+     */
+    implementation project(path: ':sdk')
+
+    implementation "com.android.support:appcompat-v7:$versions.supportLibrary"
+    implementation "com.android.support:design:$versions.supportLibrary"
+    implementation "com.android.support.constraint:constraint-layout:$versions.constraintLayout"
+
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+
+    testImplementation "junit:junit:$versions.junit"
+}

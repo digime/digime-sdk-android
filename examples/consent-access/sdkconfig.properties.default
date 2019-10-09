@@ -1,0 +1,6 @@
+#
+# Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+#
+#Contract ID provisioned by gradle to accommodate automatic bootstrapping
+digimeConsentAccessContractId=<your contract here>
+digimeConsentAccessP12Keystore=<path to your p12 file in assets>

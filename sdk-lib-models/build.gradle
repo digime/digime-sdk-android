@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply plugin: 'java-library'
+apply plugin: "kotlin"
+apply plugin: "kotlin-kapt"
+
+dependencies {
+    implementation "com.squareup.moshi:moshi-kotlin:$versions.moshi"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
+
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi")
+
+    testImplementation "junit:junit:$versions.junit"
+    testImplementation "org.skyscreamer:jsonassert:$versions.jsonAssert"
+}
+
+apply from: project.file('../config/gradle/config-environment.gradle')
+apply from: project.file('../config/gradle/publishing.gradle')
+
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"

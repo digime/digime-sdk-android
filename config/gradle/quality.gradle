@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+android {
+    lintOptions {
+        warning 'InvalidPackage'
+        abortOnError true
+        checkAllWarnings true
+        ignoreWarnings false
+        checkReleaseBuilds true
+        htmlReport true
+        xmlReport true
+        disable 'NewerVersionAvailable', // Can't have lint failing every time a new version of a library is out.
+                'GradleDependency' // Can't have lint failing every time a new version of a library is out.
+    }
+}

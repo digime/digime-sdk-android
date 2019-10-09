@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+  -->
+
+<!--suppress AndroidDomInspection -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="me.digi.examples.postbox">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--<DIGI.ME SDK CONFIGURATION PARAMS BEGIN>-->
+        <meta-data
+            android:name="me.digi.sdk.AppName"
+            android:value="@string/app_name" />
+        <meta-data
+            android:name="me.digi.sdk.AppId"
+            android:value="@string/APP_ID" />
+        <meta-data
+            android:name="me.digi.sdk.PostboxContracts"
+            android:resource="@string/POSTBOX_CONTRACT_ID" />
+
+        <!--<DIGI.ME SDK CONFIGURATION PARAMS END>-->
+
+    </application>
+
+</manifest>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+  -->
+
+<resources>
+    <string name="app_name">Consent Access Demo</string>
+    <string name="title_activity_callback">Demo Using Callbacks</string>
+    <string name="title_activity_listener">Demo Using Listeners</string>
+    <string name="select_authorization_flow">Select authorization flow</string>
+    <string name="starting">Starting…</string>
+    <string name="authorize_with_listener">Authorize with Listener</string>
+    <string name="authorize_with_callback">Authorize with Callback</string>
+    <string name="authorize_guest_with_listener">Authorize Guest with Listener</string>
+    <string name="authorize_guest_with_callback">Authorize Guest with Callback</string>
+    <string name="fetch_accounts">Fetching service account details…</string>
+    <plurals name="files_retrieved">
+        <item quantity="one">File list retrieved: %d file</item>
+        <item quantity="other">File list retrieved: %d files</item>
+    </plurals>
+</resources>

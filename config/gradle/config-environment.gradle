@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply from: project.file('../config/shared/shared.gradle')
+
+//default configuration - `production` environment
+ext.exports = [
+    endpointName: fetchWithThrow('../config/properties/production.properties', 'ENDPOINT_NAME', ""),
+    endpointUrl: fetchWithThrow('../config/properties/production.properties', 'ENDPOINT_URL', "")
+]
+
+//development configuration - `non-production` environment
+/**
+ * To change the environment used by SDK create a copy of `production.properties` file and rename it
+ * to `internal.properties` and modify its properties accordingly
+ */
+def nonProductionEnvPropertiesFilePath = '../config/properties/internal.properties'
+if (file(nonProductionEnvPropertiesFilePath).exists()) {
+    ext.exports = [
+        endpointName: fetchWithThrow(nonProductionEnvPropertiesFilePath, 'ENDPOINT_NAME', ""),
+        endpointUrl: fetchWithThrow(nonProductionEnvPropertiesFilePath, 'ENDPOINT_URL', "")
+    ]
+    println "Configuring SDK to work with ${ext.exports.endpointName} (${ext.exports.endpointUrl}) environment"
+}

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">postbox</string>
+
+    <string name="create_postbox_button">Create Postbox</string>
+    <string name="postbox_id_label">Postbox ID</string>
+    <string name="postbox_public_key_label">Postbox Public Key</string>
+
+</resources>

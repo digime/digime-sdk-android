@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply plugin: 'com.android.library'
+apply from: project.file('../config/gradle/quality.gradle')
+apply from: project.file('../config/gradle/config-environment.gradle')
+
+android {
+    compileSdkVersion buildConfig.compileSdk
+    buildToolsVersion buildConfig.buildTools
+
+    defaultConfig {
+        minSdkVersion buildConfig.minSdk
+        targetSdkVersion buildConfig.targetSdk
+
+        versionName VERSION_NAME
+        versionCode 1
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'proguard-rules.pro'
+    }
+
+    lintOptions {
+        warning 'InvalidPackage'
+        disable 'Registered', 'TrulyRandom'
+
+        lintConfig project.file('../gradle/lint.xml')
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        unitTests.all {
+            testLogging {
+                events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "DEV_VERSION", "true")
+            buildConfigField("boolean", "ENABLE_DEBUG_TOOLS", "true")
+            versionNameSuffix "-SNAPSHOT"
+        }
+        release {
+            buildConfigField("boolean", "DEV_VERSION", "false")
+            buildConfigField("boolean", "ENABLE_DEBUG_TOOLS", "false")
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.android.support:support-annotations:$versions.supportLibrary"
+    implementation 'com.madgag.spongycastle:prov:1.56.0.0'
+    implementation 'com.madgag.spongycastle:core:1.56.0.0'
+    implementation 'com.madgag.spongycastle:pkix:1.54.0.0'
+
+    //tests
+    testImplementation "junit:junit:$versions.junit"
+
+    androidTestImplementation "com.google.code.gson:gson:$versions.gson"
+    androidTestImplementation "com.android.support:support-annotations:$versions.supportLibrary"
+    androidTestImplementation "com.android.support.test:runner:$versions.testSupportLibrary"
+    androidTestImplementation "com.android.support.test:rules:$versions.testSupportLibrary"
+    androidTestImplementation "org.hamcrest:hamcrest-library:$versions.hamcrest"
+}
+
+apply from: project.file('../config/gradle/publishing.gradle')

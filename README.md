@@ -1,141 +1,407 @@
-![](https://i.imgur.com/o1CNZZr.png)
+# digi.me SDK for Android
 
-<p align="center">
-    <a href="https://digime-api.slack.com/">
-        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
-    </a>
-    <a href="LICENSE">
-        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="MIT License">
-    </a>
-    <a href="#">
-    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
-    </a>
-    <a href="https://swift.org">
-        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
-    </a>
-    <a href="https://twitter.com/codevapor">
-        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
-    </a>
-</p>
+## DEPRECATION
 
-<br>
+Legacy v1.6.1 of the digi.me Private Sharing SDK for Android. Please use v2.0.0 onwards for the best we have to offer and for priority support.
+We recommend using the master branch as this always reflects the latest release.
 
-## Introduction
+## Preamble
 
-The digi.me private sharing platform empowers developers to make use of user data from thousands of sources in a way that fully respects a user's privacy, and whilst conforming to GDPR. Our consent driven solution allows you to define exactly what terms you want data by, and the user to see these completely transparently, allowing them to make an informed choice as to whether to grant consent or not.
+The Digi.me SDK for Android is a multi-module library that allows seamless authentication with `digi.me Private Sharing`. For details on the API and general `Private Sharing` architecture, visit the [Dev Support Docs](https://developers.digi.me/consent-access).
 
-## Requirements
 
-### Development
-- Android Studio 3.0 or newer.
-- Gradle 5.0 or newer.
-- Kotlin 1.30 or newer. **\***
+## Table of Contents
 
-**\*** The SDK is written entirely in Kotlin, but is compatible with Java projects.
-
-### Deployment
-- Android 5.1 or newer (API Level 21).
+  * [Installation](#installation)
+     * [Using Gradle](#using-gradle)
+     * [Directly From Source Code (downloaded or git submodule)](#directly-from-source-code-downloaded-or-git-submodule)
+  * [Proguard Setup](#proguard-setup)
+  * [Configuring SDK](#configuring-sdk)
+     * [Obtaining your Contract ID and App ID](#obtaining-your-contract-id-and-app-id)
+     * [Configuring DigiMeClient](#configuring-digimeclient)
+  * [Callbacks & Responses](#callbacks-&-responses)
+     * [SDKCallback](#sdkcallback)
+     * [SDKListener](#sdklistener)
+  * [Authorization](#authorization)
+     * [Authorization Flow](#authorization-flow)
+     * [authorize() specifics](#authorize-specifics)
+     * [Guest Authorization Flow](#guest-authorization-flow)
+  * [Fetching Data](#fetching-data)
+     * [Handling Failures & Automatic Exponential Backoff](#handling-failures-&-automatic-exponential-backoff)
+     * [Fetching Account Metadata](#fetching-account-metadata)
+     * [Fetching Data in a Given Time Range](#fetching-data-in-a-given-time-range)
+     * [Decryption](#decryption)
 
 ## Installation
 
-### Gradle/Maven
+### Using Gradle:
 
-1. Add the digi.me repository to your root `build.gradle` file:
+1. Set minSdkVersion to 21 in build.gradle.
 
-	`maven { url https://repository.sysdigi.me/m2/libs-release }`
-	
-2. Include the digi.me SDK as a dependency in your app `build.gradle` file:
+2. In your project build.gradle (for example, app.build.gradle), add the sdk dependency:
 
-	`implementation "me.digi:sdk:1.0.0"`
+```gradle
 
-### Manual
+   dependencies {
+        implementation 'me.digi:sdk:1.6.2'
+   }
+```
 
-1. Download the source code for the SDK.
-2. In Android Studio, import the SDK as a module.
-3. In your app `build.gradle`, include the module as a dependency:
+You should now be able to import `me.digi.sdk.core.DigiMeClient`.
 
-	`implementation project(":sdk")`
-	
-## Getting Started - 5 Simple Steps!
 
-We have taken the most common use case for the digi.me Private Sharing SDK and compiled a quick start guide, which you can find below. Nonetheless, we implore you to [explore the documentation further](docs).
+### Directly From Source Code (downloaded or git submodule):
 
-This example will show you how to configure the SDK, and get you up and running with **retrieving user data**.
+1. Download the source code.
 
-### 1. Obtaining your Contract ID, Application ID & Private Key:
+2. Set minSdkVersion to 21 in build.gradle.
 
-To access the digi.me platform, you need to obtain an `AppID` for your application. You can get yours by filling out the registration form [here](https://go.digi.me/developers/register).
+3. In Android Studio, go to File > New > New Module, select "Import Existing Project as Module".
 
-In a production environment, you will also be required to obtain your own `Contract ID` and `Private Key` from digi.me support. However, for sandbox purposes, we provide the following example values:
+4. Specify the location of the downloaded code.
 
-**Example Contract ID:** `fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF `
-<br>
-**Example Private Key:**
-	<br>&nbsp;&nbsp;&nbsp;&nbsp;Download: [P12 Key Store]()
-	<br>&nbsp;&nbsp;&nbsp;&nbsp;Password: `monkey periscope`
-	
-You should include the P12 file in your project assets folder.
+5. Go to File > Project Structure, then add the SDK module as a dependency for your project.
 
-### 2. Configuring Callback Forwarding:
+6. You should now be able to import `me.digi.sdk.core.DigiMeClient`.
 
-Because the digi.me Private Sharing SDK communicates with the digi.me app, you are required to forward invocations of `onActivityResult` through to the SDK so that it may process responses. In any activity that will be resposible for invoking methods on the SDK, override `onActivityResult` as below:
 
-```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-	super.onActivityResult(requestCode, responseCode, data)
-	DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, responseCode, data)
+## _Proguard_ setup
+
+If _Proguard_ is enabled in the project, you might need to add following parameters to _Proguard_ configuration:
+
+```proguard
+-dontwarn retrofit2.**
+-dontwarn javax.naming.**
+-keep class retrofit2.** { *; }
+-keepattributes Signature
+
+-keepattributes *Annotation*
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn`` okhttp3.**
+-dontwarn okio.**
+
+-dontwarn com.google.gson.**
+-dontwarn org.spongycastle.**
+```
+
+
+## Configuring SDK
+
+### Obtaining your Contract ID and App ID
+
+Before accessing the APIs, you'll need a consent contract. A contract details exactly what data will be supplied, and the terms on which this happens. It also specifies how the data is encrypted in transit. We provide an example contract as part of the example project, this can be used for testing.
+
+In addition to a contract, you'll require a unique app ID. You can obtain one [here](https://go.digi.me/developers/register).
+
+### Configuring DigiMeClient
+
+**DigiMeClient** is the main hub for all the interaction with the SDK. You access it through it's singleton accessor:
+ 
+```java
+DigiMeClient.getInstance()
+```
+
+DigiMeClient is automatically bootstrapped so there is no need to initialize it onCreate.
+However, before you start interacting with it in your app, you will need to configure it with your **contractId** and **appId**, as well as your private key. Contracts are created in tandem with a cryptographic key pair - the data is encrypted in transit with this key pair and as such you must provide the SDK with the private key to facilitate decryption. For convenience, this key is stored in a PKCS#12 file.
+
+We recommend creating entries in your `strings.xml` file for these; for example:
+
+```xml
+<string name="digime_contract_id">YOUR-CONTRACT-ID</string>
+<string name="digime_application_id">YOUR-APP-ID</string>
+<string name="digime_p12_filename">YOUR-P12-NAME-AND-EXTENSION</string>
+<string name="digime_p12_password">YOUR-P12-PASSWORD</string>
+```
+
+Once added to the project resources, these can be referenced in your manifest file:
+
+```xml
+<application>
+...
+    <meta-data android:name="me.digi.sdk.Contracts" android:value="@string/digime_contract_id"/>
+    <meta-data android:name="me.digi.sdk.AppId" android:value="@string/digime_application_id"/>
+    <meta-data android:name="me.digi.sdk.AppName" android:value="@string/app_name"/>
+    <meta-data android:name="me.digi.sdk.Keys" android:value="@string/digime_p12_filename"/>
+    <meta-data android:name="me.digi.sdk.KeysPassphrase" android:value="@string/digime_p12_password"/>
+...
+</application>
+```
+(Specifying your app name is optional.)
+
+
+The SDK needs to communicate with our servers, as such, it requires the `INTERNET` permission. Add this to your manifest file if it's not already there:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+
+Since DigiMeClient calls out to _digi.me_ app to let the user authorize your request for data, you need to add the following `intent-filter` to your manifest file:
+ 
+ ```xml
+<intent-filter>
+    <action android:name="android.intent.action.MAIN" />
+    <category android:name="android.intent.category.LAUNCHER" />
+</intent-filter>
+ ```
+
+## Callbacks & Responses
+ 
+Digi.me SDK is built to be asynchronous and thread-safe and as such it provides a couple of mechanisms of redirecting results back to the application.
+For that purpose the SDK provides the **SDKCallback** interface and the **SDKListener** interface. 
+
+Both of them are interchangeable and can be used depending on preference.
+ 
+### SDKCallback
+
+Each call has an optional `SDKCallback` parameter which can either be passed or nulled, depending on whether you're using the callback or listener pattern. `SDKCallback` wraps the response type of the given call. For example:
+
+```java
+import me.digi.sdk.core.DigiMeClient;
+import me.digi.sdk.core.SDKCallback;
+import me.digi.sdk.core.errorhandling.SDKException;
+import me.digi.sdk.core.SDKResponse;
+
+DigiMeClient.getInstance().getFileList(new SDKCallback<CAFiles>() {
+    @Override
+    public void succeeded(SDKResponse<CAFiles> result) {
+                CAFiles files = result.body;
+    }
+            
+    @Override
+    public void failed(SDKException exception)  {
+        //Handle exception or error response
+    }
+});
+```
+
+### SDKListener
+
+`SDKListener` provides a central listening pipe for all the relevant SDK events.
+ 
+To start listening you must implement the `SDKListener` interface (most frequently in your Launch Activity) and register it with the DigiMeClient (for example, in the `onCreate` method of your Launch Activity).
+
+The listener methods represent the success/failure callbacks of the various SDK methods.
+ 
+```java
+public class MainActivity extends ... implements SDKListener {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ...
+        DigiMeClient.getInstance().addListener(this);
+    }
 }
 ```
 
-### 3. Configuring the `DMEPullClient` object:
-`DMEPullClient` is the object you will primarily interface with to use the SDK. It is instantiated with a context, and a `DMEPullConfiguration` object. **The provided context should always be the main application context.**
+## Authorization
 
-The `DMEPullConfiguration` object is instantiated with your `AppID`, `Contract ID` and `Private Key` in hex format. We provide a convenience method to extract the private key. The below code snippet shows you how to combine all this to get a configured `DMEPullClient`:
+To start getting data into your application, you'll need to authorize a session.
 
-```kotlin
-val privateKeyHex = DMECryptoUtilities(applicationContext).privateKeyHexFrom("p12-filename", "p12-password")
-val configuration = DMEPullConfiguration("app-id", "contract-id", privateKeyHex)
-val pullClient = DMEPullClient(applicationContext, configuration)
+### Authorization Flow
+
+The authorization flow is separated into two phases:
+
+1. Initialize a session with the digi.me API (returns a `CASession` object)
+
+2. Authorize session with the digi.me app and prepare data if the user accepts.
+
+SDK starts and handles these steps automatically by calling the `authorize(Activity, SDKCallback)` method.
+This method expects a reference to the calling activity and optionally a callback.
+
+```java
+DigiMeClient.getInstance().authorize(this, new SDKCallback<CASession>() {
+    @Override
+    public void succeeded(SDKResponse<CASession> result) {
+                
+    }
+
+    @Override
+    public void failed(SDKException exception) {
+
+    }
+});
 ```
 
-### 4. Requesting Consent:
+On success, it returns a `CASession` object in your callback, which encapsulates the session data required for further calls.
 
-Before you can access a user's data, you must obtain their consent. This is achieved by calling `authorize` on your client object:
+Since `authorize()` automatically calls into digi.me app, you'll need some way of handling the switch back to your app.
+You will accomplish this by overriding `onActivityResult` for your Activity.
 
-```kotlin
-pullClient.authorize(this) { session, error ->
-
+```java
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    DigiMeClient.getInstance().getCAAuthManager().onActivityResult(requestCode, resultCode, data);
 }
 ```
-*NB: `this` represents the activity which is setup to forward `onActivityResult`, as above.*
 
-If a user grants consent, a session will be created and returned; this is used by subsequent calls to get data. If the user denies consent, an error stating this is returned. See [Handling Errors](#).
+### `authorize()` Specifics
 
-### 5. Fetching Data:
+If you're using the SDKListener interface instead of callbacks, it will trigger these events:
 
-Once you have a session, you can request data. We strive to make this as simple as possible, so expose a single method to do so: 
+```java
+void sessionCreated(CASession session);
+void sessionCreateFailed(SDKException reason);
 
-```kotlin
-pullClient.getSessionData({ file, error ->
-    // Handle each downloaded file here.
-}) { error ->
-    // Any errors interupting the flow of data will be directed here, or null once all files are retrieved.
-}
+/*
+ * User approved in the digi.me app and data ready
+ */
+void authorizeSucceeded(CASession session);
+/*
+ * User declined 
+ */
+void authorizeDenied(AuthorizationException reason);
+/*
+ * Activity passed a wrong request code, most likely from another application
+ */
+void authorizeFailedWithWrongRequestCode();
 ```
 
-For each file, the first 'file handler' block will be called. If the download was successful, you will receive a `DMEFile` object. If the download fails, an error. 
+### Guest Authorization Flow
 
-Once all files are downloaded, the second block will be invoked to inform you of this. In the case that the data stream is interrupted, or if the session obtained above isn't valid (it may have expired, for example), you will receive an error in the second block. See [Handling Errors](#).
+The guest authorization flow is separated into two phases:
 
-`DMEFile` exposes the method `fileContentAsJSON` which attempts to decode the binary file into a JSON map, so that you can easily extract the values you need to power your app. Not all files can be represented as JSON, see [Raw Data]() for details.
-## Contributions
+1. Initialize a session with digi.me API (returns a `CASession` object)
 
-digi.me prides itself in offering our SDKs completely open source, under the [Apache 2.0 Licence](LICENCE); we welcome contributions from all developers.
+2. Authorize session with digi.me web app for guests and prepare data if the user accepts.
 
-We ask that when contributing, you ensure your changes meet our [Contribution Guidelines]() before submitting a pull request.
+Our SDK orchestrates this when you call the `authorizeGuest(Activity, SDKCallback)` method.
+This method expects a reference to the calling activity and optionally a callback.
 
-## Further Reading
+```java
+DigiMeClient.getInstance().authorizeGuest(this, new SDKCallback<CASession>() {
+    @Override
+    public void succeeded(SDKResponse<CASession> result) {
 
-The topics discussed under [Quick Start]() are just a small part of the power digi.me Private Sharing gives to data consumers such as yourself. We highly encourage you to explore the [Documentation]() for more in-depth examples and guides, as well as troubleshooting advice and showcases of the plethora of capabilities on offer.
+    }
 
-Additionally, there are a number of example apps built on digi.me in the examples folder. Feel free to have a look at those to get an insight into the power of Private Sharing.
+    @Override
+    public void failed(SDKException exception) {
+
+    }
+});
+```
+
+On success, it returns a `CASession` in your callback, which encapsulates the session data required for further calls.
+
+The switch back to your activity and the format of the (optional) callback is the same as for the regular authorize(Activity, SDKCallback) flow.
+
+## Fetching Data
+
+Upon successful authorization, you can request user's files. 
+To fetch the list of available files for your contract, do the following:
+
+```java
+ /* @param callback reference to the SDKCallback<CAFiles> or null if using SDKListener
+  */
+DigiMeClient.getInstance().getFileList(callback)
+```
+
+Upon success, `DigiMeClient` returns a `CAFiles` object which contains a single field `fileIds`, a list of file IDs.
+
+You can then use the returned file IDs to fetch the file data in JSON format:
+
+```java
+ /* @param fileId ID of the file to retrieve
+  * @param callback Reference to the SDKCallback<JsonElement> or null if using SDKListener
+  */
+DigiMeClient.getInstance().getFile(fileId, callback)
+```
+
+Generally, you'll want to parse the returned JSON for a `fileContent` key. The value of this will, in most cases, be of JSON format and you can run it straight into a JSON parser.
+
+The exception to this rule is when handling raw data, in which case you'll also want to parse the `fileMetadata` key (also JSON), and then read `mimeType` from it. You should use this mime type to determine the best course of action for the bytes contained in `fileContent`.
+
+### Handling Failures & Automatic Exponential Backoff
+ 
+Due to the asynchronous nature of Private Sharing, it is possible for our servers to return a 404 when requesting a file. 
+
+404 errors in this context indicate that **the file is not yet ready**. In other words, our servers are still in the process of copying and encrypting the data requested by your session.
+ 
+The digi.me SDK handles those errors internally and retries such requests with an exponential backoff policy. 
+The defaults are set to 3 retries with base lower interval of 500ms.
+
+**In the event that content is not ready even after retrying, SDK will return an exception to the appropriate callback/listener.**
+
+All of these parameters can be adjusted globally, including toggling the backoff policy on and off.
+
+Connection timeout in seconds:
+```java
+    int globalConnectTimeout;
+```
+
+Connection read/write IO timeout in seconds:
+```java
+    int globalReadWriteTimeout;
+```
+
+Controls retries globally, toggling automatic retries on/off:
+```java
+    boolean retryOnFail;
+```
+
+Minimal base delay for retries:
+```java
+    long minRetryPeriod;
+```
+
+Toggle exponential backoff policy on/off:
+```java
+    boolean retryWithExponentialBackoff;
+```
+
+Maximum number of times to retry before failing. 0 uses per call defaults, >0 sets a global hard limit. Defaults to 0:
+```java
+    int maxRetryCount;
+```
+
+
+These configuration options are set statically on `DigiMeClient`:
+
+```java
+    // Set base delay to 1000 ms
+    DigiMeClient.minRetryPeriod = 1000;
+```
+
+### Fetching Account Metadata
+
+DigiMeSDK also provides relevant metadata about any **service accounts** linked to returned file content.
+You can fetch account details after obtaining a valid authorized session key with:
+
+```java
+ /* 
+  * @param callback         reference to the SDKCallback<CAAccounts> or null if using SDKListener
+  */
+DigiMeClient.getInstance().getAccounts(callback)
+```
+
+Upon success, DigiMeClient returns a `CAAccounts` object which contains `List<>` of `CAAccount` objects.
+
+Among others, most notable properties of`CAAccount` object are `service.name`, the name of the underlying service, and `accountId`, the identifier which can be used to link the returned entities to a specific account.
+
+### Fetching Data in a Given Time Range
+
+Every Contract will define a time range that restricts your data access. The default `authorize(Activity, SDKCallback)` method will provide access to the whole of this time range.
+Depending on your context or whether you have previously cached data, it may be desirable to only request data within a narrower time range (less data == faster response).
+Use this alternative `authorize` method to achieve this:
+
+```java
+authorize(@NonNull Activity activity, TimeRange timeRange, @Nullable SDKCallback<CASession> callback)
+```
+
+Create your `TimeRange` with one of these:
+
+```java
+public static TimeRange from(@NonNull Long from)
+public static TimeRange priorTo(@NonNull Long priorTo)
+public static TimeRange fromTo(@NonNull Long from, @NonNull Long to)
+public static TimeRange last(int x, @NonNull Unit unit)
+```
+
+The timestamps are in the UNIX EPOCH timestamp format, relative to UTC.
+Please note that due to the fact that files are sharded by month, this is the lowest amound of granularity we can offer at this time. With this in mind, a timestamp is fuzzy to the month in which it falls.
+
+## Resources
+
+The digi.me developer docs contain a plethora of useful resources. You can check them out [here](https://developers.digi.me).

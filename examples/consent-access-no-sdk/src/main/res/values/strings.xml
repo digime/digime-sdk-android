@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+  -->
+
+<resources>
+    <string name="app_name">digi.me Permissions</string>
+    <string name="permission_granted_label">Request Accepted</string>
+    <string name="view_file_label">File Viewer</string>
+
+    <string name="menu_show_console_title">Show console</string>
+    <string name="menu_hide_console_title">Hide console</string>
+    <string name="menu_clear_console_title">Clear console</string>
+
+    <string name="main_requesting_data_title">Data to be requested:</string>
+    <string name="main_requesting_data">&#8226; All Social</string>
+
+    <string name="permission_granted_data_files">Data Files</string>
+    <string name="permission_granted_total_count">Total Files: %1$d</string>
+
+    <string name="loading_getting_session_key">"Getting session key…"</string>
+    <string name="loading_getting_data">"Getting data…"</string>\
+    <string name="loading_getting_file_data">"Getting file JSON…"</string>
+</resources>

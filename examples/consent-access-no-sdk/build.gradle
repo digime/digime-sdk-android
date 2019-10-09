@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2009-2019 digi.me Limited. All rights reserved.
+ */
+
+apply plugin: 'com.android.application'
+apply from: project.file('../../config/gradle/quality.gradle')
+
+repositories {
+    maven { url "https://repository.sysdigi.net/m2/libs-release"}
+}
+
+android {
+    compileSdkVersion buildConfig.compileSdk
+    buildToolsVersion buildConfig.buildTools
+
+    defaultConfig {
+        applicationId "me.digi.examples.ca_no_sdk"
+        minSdkVersion buildConfig.minSdk
+        targetSdkVersion buildConfig.targetSdk
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            buildConfigField "boolean", "CA_ENCRYPTED",  "true"
+        }
+
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "boolean", "CA_ENCRYPTED",  "true"
+            signingConfig signingConfigs.debug
+        }
+    }
+    /*
+    * Consent Access Configuration parameters:
+    * The following lines set parameters necessary for initialization and usage of the CA API (through SDK):
+    * App ID, Contract ID, Private Key file and Private Key file password if any;
+    */
+    flavorDimensions "environment"
+
+    productFlavors {
+        live {
+            buildConfigField "String", "API_URL",  '"https://api.digi.me/"'
+            
+            buildConfigField "String", "APP_ID",  '"your_real_app_id"' // <- sample: "gDdQfubl66rj07webI92m4afPL9va9Z1" (32 characters hex string given by digi.me support)
+            buildConfigField "String", "CONTRACT_ID",  '"fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF"'
+            buildConfigField "String", "P12_STORE",  '"CA_RSA_PRIVATE_KEY.p12"'
+            buildConfigField "String", "P12_PASS",  '"<Replace with p12 file password if any>"' // <- sample: "20ov;p-1Fi3oL" (the password that goes with your private key). You will need to request the key password from dev support if using pre-set contract ID.
+
+            dimension "environment"
+        }
+        sandbox {
+            buildConfigField "String", "API_URL",  '"https://api.consentaccess.sandboxdigi.me/"'
+
+            buildConfigField "String", "APP_ID",  '"your_real_app_id"' // <- sample: "gDdQfubl66rj07webI92m4afPL9va9Z1" (32 characters hex string given by digi.me support)
+            buildConfigField "String", "CONTRACT_ID",  '"<Replace with sandbox contract ID>"' //Replace with your sandbox contract ID
+            buildConfigField "String", "P12_STORE",  '"<Replace with p12 file path in assets>"'
+            buildConfigField "String", "P12_PASS",  '"<Replace with p12 file password if any>"' // <- sample: "20ov;p-1Fi3oL" (the password that goes with your private key). You will need to request the key password from dev support if using pre-set contract ID.
+
+            dimension "environment"
+        }
+    }
+
+    lintOptions {
+        lintConfig project.file('../../gradle/lint.xml')
+        disable 'SetTextI18n', 'SelectableText', 'GradleCompatible', 'IconLauncherShape', 'OldTargetApi'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+dependencies {
+    implementation project(":sdk-lib-crypto")
+
+    implementation "com.android.support:appcompat-v7:$versions.supportLibrary"
+    implementation "com.android.support:design:$versions.supportLibrary"
+    implementation "com.android.support:cardview-v7:$versions.supportLibrary"
+
+    implementation "com.google.code.gson:gson:$versions.gson"
+
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+
+    implementation "com.squareup.okhttp3:logging-interceptor:$versions.okhttp"
+
+    testImplementation "junit:junit:$versions.junit"
+}
