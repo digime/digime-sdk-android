@@ -112,7 +112,7 @@
 <h4 id='data-pre-mapped-into-digi-me-39-s-ontology' class='heading'>Data pre-mapped into digi.me&rsquo;s ontology:</h4>
 
 <p>digi.me publishes it&rsquo;s data ontology <a href="https://developers.digi.me/reference-api">here</a> for the various data types. When making a submission, if you push data normalised to this format, it will be displayed in the digi.me more appropriately, with UI specifically engineered to maximise the value of that data. It also means that when you or another third party requests this data via pull, it can be included within a collection of data points of the same type.</p>
-<h4 id='unmapped-data-a-href-raw-20data-md-raw-data-a' class='heading'>Unmapped data (<a href="./Raw%20Data.md">Raw Data</a>):</h4>
+<h4 id='unmapped-data-a-href-raw-data-html-raw-data-a' class='heading'>Unmapped data (<a href="./raw-data.html">Raw Data</a>):</h4>
 
 <p>digi.me can also act as a vault for data that does not fit within our current ontology, whether to collate user data together in one place or to act as a conduit between a data provider and data consumer. When data that doesn&rsquo;t correspond to one of digi.me&rsquo;s object types is pushed, this will be rendered within digi.me as a raw &lsquo;data drop&rsquo;. If we can deserialise this to JSON, we will show the raw JSON tree, otherwise there will be no facility to preview the data - this is for security reasons.</p>
 <h2 id='pushing-data-5-simple-steps' class='heading'>Pushing Data - 5 Simple Steps</h2>
@@ -153,7 +153,7 @@
 
 <p><em>NB: <code>this</code> represents the activity which is setup to forward <code>onActivityResult</code>, as above.</em></p>
 
-<p>If a user grants consent, a Postbox will be created and returned; this is used by subsequent calls to push data. If the user denies consent, an error stating this is returned. See <a href="./Error%20Handling.md">Handling Errors</a>.</p>
+<p>If a user grants consent, a Postbox will be created and returned; this is used by subsequent calls to push data. If the user denies consent, an error stating this is returned. See <a href="./error-handling.html">Handling Errors</a>.</p>
 <h3 id='5-pushing-data' class='heading'>5. Pushing Data:</h3>
 
 <p>To push data, you need to build a <code>DMEPushPayload</code>, which you can then send to your Postbox. An example showing Postbox creation and push can be seen below.:</p>

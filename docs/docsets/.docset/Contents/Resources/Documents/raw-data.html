@@ -111,7 +111,7 @@
 
 <p>When pulling raw data from the Private Sharing platform, any <code>DMEFile</code> containing raw data should be handled appropriately for that data.</p>
 
-<p>For example, <code>DMEFile</code> has a <code>mimeType</code> property. This will be one case of the <code>DMEMimeType</code> enum (see <a href="../../sdk/src/main/java/me/digi/sdk/entities/DMEMimeType.kt">DMEMimeType.kt</a>).</p>
+<p>For example, <code>DMEFile</code> has a <code>mimeType</code> property. This will be one case of the <code>DMEMimeType</code> enum (see <a href="https://github.com/digime/digime-sdk-android/blob/master/sdk/src/main/java/me/digi/sdk/entities/DMEMimeType.kt">DMEMimeType.kt</a>).</p>
 
 <p>Most instances of raw data will have the <code>APPLICATION_JSON</code> mime type, symbolising JSON data which didn&rsquo;t fit within existing digi.me ontology. In this case, you can invoke <code>fileContentAsJSON</code> just as you would for mapped data.</p>
 
@@ -120,7 +120,7 @@
 
 <p>If you push data to a Postbox that isn&rsquo;t pre-mapped to our <a href="https://developers.digi.me/reference-api">Ontology</a>, it will be treated as raw data and pushed into a user&rsquo;s digi.me as such. The metadata supplied with the push will be used to deduce the data&rsquo;s mime type going forward (IE the mime type the file has when pulled back down).</p>
 
-<p>Please see the <a href="./Postbox.md">Postbox Documentation</a> for more information on pushing data into digi.me.</p>
+<p>Please see the <a href="./postbox.html">Postbox Documentation</a> for more information on pushing data into digi.me.</p>
 
           </div>
         </section>
