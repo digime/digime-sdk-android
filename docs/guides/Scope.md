@@ -81,6 +81,6 @@ When calling `authorize` on your `DMEPullClient`, simply pass in your `DMEScope`
 val scope = DMEScope(listOf(DMETimeRange(last = "6m")))
 pullClient.authorize(this, scope)
 ```
-*NB: `this` represents the activity which is setup to forward `onActivityResult`, as described in [Getting Started](./Getting%20Started.md).*
+*NB: `this` represents the activity which is setup to forward `onActivityResult`, as described in [Getting Started](./getting-started.html).*
 
 The data received from any subsequent calls to `getSessionData` will be limited by the scope of the session defined above.

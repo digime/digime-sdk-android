@@ -29,7 +29,7 @@ Whilst using the SDK, you may encounter a number of errors. Some of these, we wi
 
 ## Error Types
 
-All invocations of the SDK that can return some form of error will return an instance of `DMEError` (or one of it's subclasses. These are detailed in [DMEError.kt](../../sdk/src/main/java/me/digi/sdk/DMEError.kt); all errors come with a message explaining the reason behind them. There are 3 subclasses: `DMESDKError`, `DMEAuthError` and `DMEAPIError`. Let's break them down:
+All invocations of the SDK that can return some form of error will return an instance of `DMEError` (or one of it's subclasses. These are detailed in [DMEError.kt](https://github.com/digime/digime-sdk-android/blob/master/sdk/src/main/java/me/digi/sdk/DMEError.kt); all errors come with a message explaining the reason behind them. There are 3 subclasses: `DMESDKError`, `DMEAuthError` and `DMEAPIError`. Let's break them down:
 
 ### DMESDKError
 
@@ -92,11 +92,11 @@ Below are the 5 most common errors you could run into, and the steps you should 
 
 #### `DMESDKError.P12ParsingError()`:
 **Encountered**: When the SDK fails to parse the P12 file you specified with the password you specified.<br>
-**Resolution**: Ensure that the P12 file exists in your project's `assets` folder, and that the name matches the one you specified. Ensure that the password is the one given to you by digi.me support, or, in sandbox, the one provided in the [README](../../README.md).
+**Resolution**: Ensure that the P12 file exists in your project's `assets` folder, and that the name matches the one you specified. Ensure that the password is the one given to you by digi.me support, or, in sandbox, the one provided in [Getting Started](./getting-started.html).
 
 #### `DMESDKError.DigiMeAppNotFound()`:
 **Encountered**: When the user doesn't have the digi.me application installed, and you haven't enabled guest consent in the client config.
-**Resolution**: Enable guest consent mode (generally not recommended, see [Guest Consent](../Guest%20Consent.md) for more info), or, direct the user to install the digi.me app.
+**Resolution**: Enable guest consent mode (generally not recommended, see [Guest Consent](./guest-consent.html) for more info), or, direct the user to install the digi.me app.
 
 *Please Note: The SDK will automatically open the store listing for the digi.me app if this error is encountered and guest consent is disabled.*
 
