@@ -4,6 +4,6 @@ interface DMEDataRequest {
 
     var timeRanges: List<DMETimeRange>
 
-    var context: String
+    val context: String
 
 }
