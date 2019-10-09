@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
     </a>
     <a href="#">
-    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg">
     </a>
     <a href="https://kotlinlang.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">

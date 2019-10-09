@@ -64,7 +64,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     Pair(true, true),
                     Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
                     Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
-                    Pair(false, false) -> completion(null, DMESDKError.DigiMeAppNotFound())
+                    Pair(false, false) -> {
+                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            nativeConsentManager.beginAuthorization(fromActivity, completion)
+                        }
+                    }
                 }
             }
             else {
