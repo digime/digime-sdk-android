@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Guest Consent  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+
+    <a title="Guest Consent  Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="index.html">
+           Docs
+        </a>
+         (0% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+    
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="index.html"> Reference</a>
+      <img class="carat" src="img/carat.png" />
+      Guest Consent  Reference
+    </p>
+
+    <div class="content-wrapper">
+      <nav class="navigation">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Guides.html">Guides</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="error-handling.html">Error Handling</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="getting-started.html">Getting Started</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="guest-consent.html">Guest Consent</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="migration-tips.html">Migration Tips</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="postbox.html">Postbox</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="raw-data.html">Raw Data</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="scope.html">Scope</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+
+        <section class="section">
+          <div class="section-content">
+            
+            <p><img src="https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png" alt=""></p>
+
+<p align="center">
+    <a href="https://bit.ly/2LM4GFS">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
+    </a>
+    <a href="#">
+        <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    </a>
+    <a href="https://kotlinlang.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://developers.digi.me">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+    <a href="https://digime.freshdesk.com/support/home">
+        <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
+    </a>
+</p>
+
+<p><br></p>
+<h1 id='guest-consent' class='heading'>Guest Consent</h1>
+
+<p>Whilst the true power of the digi.me Private Sharing platform lies in the user&rsquo;s digi.me, and as such highly encourage developers to properly utilise this, we do facilitate your app accessing the data of users, without the digi.me app. This feature is known as <em>Guest Consent</em> or <em>One Time Private Sharing</em>. It is effecively the digi.me onboarding process, within a web browser.</p>
+<h2 id='how-to-use' class='heading'>How to Use</h2>
+
+<p>Guest Consent is enabled by default. Nonetheless, we believe utilising digi.me properly provides a superior user experience, and encourage it.</p>
+
+<p>If the digi.me app is not installed, the default behaviour launch digi.me guest onboarding via a browser to initiate a one time private share.</p>
+
+<p>Guest Consent can be disabled when configuring your <code>DMEPullClient</code> by setting the <code>guestEnabled</code> property of <code>DMEPullConfiguration</code> to <code>false</code>. This changes the behaviour to, in the event that the digi.me app isn&rsquo;t installed, the Play Store will be launched at the digi.me installation page.</p>
+
+<p>Note that even if Guest Consent is enabled, if the digi.me app is present on the device, we will always process the consent request through the native app.</p>
+<h2 id='considerations' class='heading'>Considerations</h2>
+
+<p>Guest Consent removes the need for your user to have the digi.me app on their device. Whilst this might sound like a positive, there are a number of drawbacks to Guest Consent.</p>
+<h4 id='drawbacks' class='heading'>Drawbacks:</h4>
+
+<ul>
+<li>Guest Consent is a notably slower experience. This is due to the fact that we must virtualise a cloud storage medium in order to facilitate a data conduit to you, the data consumer.</li>
+<li>Any data the user imports is lost after your SDK session expires. Data is temporarily cached in memory (RAM is volatile, which is important as we don&rsquo;t see, touch or hold user data), as such, this is lost once the corresponding session container is invalidated.</li>
+<li>Ongoing shares are not available through Guest Consent, due to aforementioned loss of data once a session has lapsed.</li>
+<li>Whilst data is transferred over HTTPS with full TLS 1.2, we are unable to verify the server&rsquo;s certificate client side and as such, we can&rsquo;t guarentee the integrity of the data served. The digi.me client is fully certificate pinned and has a strict trust policy enforced.</li>
+</ul>
+
+          </div>
+        </section>
+
+
+      </article>
+    </div>
+    <section class="footer">
+      <p>&copy; 2019 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2019-10-09)</p>
+      <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.11.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>
