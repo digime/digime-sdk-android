@@ -3,9 +3,13 @@ package me.digi.sdk.interapp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.support.annotation.StringRes
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
+import android.support.v4.content.ContextCompat.startActivity
+
+
 
 class DMEAppCommunicator(val context: Context) {
 
@@ -40,6 +44,22 @@ class DMEAppCommunicator(val context: Context) {
         }
         catch (error: Throwable) {
             return false
+        }
+    }
+
+    fun requestInstallOfDMEApp(from: Activity, installCallback: () -> Unit) {
+
+        DMEInstallHandler.registerNewInstallHandler(installCallback)
+
+        val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
+
+        try {
+            val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$digiMeAppPackageName"))
+            from.startActivity(playStoreIntent)
+        }
+        catch (e: Throwable) {
+            val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$digiMeAppPackageName"))
+            from.startActivity(playStoreIntent)
         }
     }
 
