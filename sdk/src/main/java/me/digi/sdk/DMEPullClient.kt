@@ -205,8 +205,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     else -> DMELog.e("Failed to download updates for file with ID: $it.")
                 }
 
-                activeDownloadCount--
                 activeFileDownloadHandler?.invoke(file, error)
+                activeDownloadCount--
             }
         }
     }
