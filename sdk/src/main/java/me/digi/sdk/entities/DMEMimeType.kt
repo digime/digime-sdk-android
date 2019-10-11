@@ -10,6 +10,8 @@ enum class DMEMimeType(val stringValue: String) {
     @SerializedName("application/octet-stream")
     APPLICATION_OCTECTSTREAM("application/octet-stream"),
 
+    @SerializedName("application/pdf")
+    APPLICATION_PDF("application/pdf"),
 
     @SerializedName("image/jpeg")
     IMAGE_JPEG("image/jpeg"),
