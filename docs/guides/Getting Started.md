@@ -47,7 +47,7 @@ The digi.me private sharing platform empowers developers to make use of user dat
 	
 2. Include the digi.me SDK as a dependency in your app `build.gradle` file:
 
-	`implementation "me.digi:sdk:2.0.0"`
+	`implementation "me.digi:sdk:2.0.1"`
 
 ### Manual
 

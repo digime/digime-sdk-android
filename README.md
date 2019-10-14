@@ -8,7 +8,7 @@
         <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
     </a>
     <a href="#">
-    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg" 
+    	<img src="https://img.shields.io/badge/build-passing-brightgreen.svg">
     </a>
     <a href="https://kotlinlang.org">
         <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
@@ -47,7 +47,7 @@ The digi.me private sharing platform empowers developers to make use of user dat
 	
 2. Include the digi.me SDK as a dependency in your app `build.gradle` file:
 
-	`implementation "me.digi:sdk:2.0.0"`
+	`implementation "me.digi:sdk:2.0.1"`
 
 ### Manual
 

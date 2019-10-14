@@ -45,7 +45,7 @@ digi.me can also act as a vault for data that does not fit within our current on
 
 ## Pushing Data - 5 Simple Steps
 
-The digi.me Private Sharing SDK makes it easy to create a postbox to push data to. Similarly to requesting data, you can achieve by utilising a client object as follows:
+The digi.me Private Sharing SDK makes it easy to create a postbox to push data to. Similarly to requesting data, you can achieve this by utilising a client object as follows:
 
 ### 1. Obtaining your Contract ID & Application ID:
 
@@ -97,7 +97,7 @@ To push data, you need to build a `DMEPushPayload`, which you can then send to y
 
 ```kotlin
 val data = ... // Obtain the data you wish to post, as a ByteArray.
-val metadata = ... // All Postbox submissions must be pushed with appropriate metadata. See the example apps for mor details.
+val metadata = ... // All Postbox submissions must be pushed with appropriate metadata. See the example apps for more details.
 val mimeType = DMEMimeType.APPLICATION_JSON // This tells digi.me how to treat your push. JSON can be displayed in the digi.me client, other types cannot. Please use the most appropriate mime type.
 val payload = DMEPushPayload(postbox, data, metadata, mimeType)
 
