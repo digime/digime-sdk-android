@@ -19,7 +19,7 @@ publishing {
             // Configure core metadata.
             groupId = 'me.digi'
             artifactId = 'sdk'
-            version = "2.0.0"
+            version = android.defaultConfig.versionName
 
             // Configure extra POM metadata.
             pom {
@@ -67,8 +67,8 @@ publishing {
 
         maven {
 
-            name = 'sonatype'
-            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            name = 'DigiMeSnapshot'
+            url = 'https://repository.sysdigi.net/m2/libs-snapshot-local/'
 
             credentials {
                 username = 'USER-HERE'
@@ -79,12 +79,12 @@ publishing {
 
         maven {
 
-            name = 'digiMe'
+            name = 'DigiMeRelease'
             url = 'https://repository.sysdigi.net/m2/libs-release-local/'
 
             credentials {
-                username = 'jacob'
-                password = 'AP27QDvqZbsDaUKtjcaDtFCQJU7'
+                username = 'USER-HERE'
+                password = 'PASS-HERE'
             }
 
         }
@@ -94,4 +94,25 @@ publishing {
 
 signing {
     sign publishing.publications.sdk
+}
+
+tasks.register("artifactoryPublish", GradleBuild.class) {
+
+    group = 'publishing'
+    description = 'Prepares a clean release build and publishes to the appropriate repository.'
+
+    def version = android.defaultConfig.versionName
+
+    def publishTask
+
+    if (version.endsWith('SNAPSHOT')) {
+        // Deploy to snapshot repo.
+        publishTask = 'publishAllPublicationsToDigiMeSnapshotRepository'
+    }
+    else {
+        // Deploy to main repo.
+        publishTask = 'publishAllPublicationsToDigiMeReleaseRepository'
+    }
+
+    tasks = ['clean', 'assembleRelease', 'sourcesJar', publishTask]
 }

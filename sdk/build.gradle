@@ -14,7 +14,6 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "$versions.sdk"
-        versionNameSuffix "-SNAPSHOT"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -42,13 +41,6 @@ android {
 
     lintOptions {
         abortOnError false
-    }
-
-    assemble.dependsOn 'sourcesJar'
-    tasks.whenTaskAdded { task ->
-        if (task.name == 'assembleRelease') {
-            task.dependsOn 'sourcesJar'
-        }
     }
 
     task sourcesJar(type: Jar) {
