@@ -29,7 +29,10 @@ class PostboxActivity : AppCompatActivity() {
         client = DMEPushClient(applicationContext, cfg)
 
         item_postbox_button.setOnClickListener {
-            createPostbox()
+            if(DMEAppCommunicator.getSharedInstance().canOpenDMEApp())
+                createPostbox()
+            else
+                Toast.makeText(this, "Please install digi.me in order to continue", Toast.LENGTH_SHORT).show()
         }
     }
 
