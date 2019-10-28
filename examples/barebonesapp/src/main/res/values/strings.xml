@@ -2,7 +2,7 @@
 <string name="app_name">BarebonesApp</string>
 
 <string name="digime_application_id">GezzLqFrHUCNQSjFAREiVwOVLRBBCYBA</string>
-<string name="digime_postbox_contract_id">j9pcaXD9A3krdV7BlMinrB6Kp1kxbJcU</string>
+<string name="digime_postbox_contract_id">Cb1JC2tIatLfF7LH1ksmdNx4AfYPszIn</string>
 <string name="digime_contract_id">jZTRerONwxJtUpyKldEeccRXmlhWdH3U</string>
 <string name="digime_p12_filename">production.p12</string>
 <string name="digime_p12_password">digime</string>

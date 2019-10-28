@@ -38,6 +38,8 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration): Intercept
             synchronized(request) {
                 request.waitMillis(waitTime)
             }
+
+            response.close()
             response = chain.proceed(request)
         }
 
