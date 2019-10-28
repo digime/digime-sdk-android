@@ -21,7 +21,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var activeSyncState: DMEFileList.SyncState? = null
+    private var activeSyncStatus: DMEFileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -29,8 +29,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                    DMEFileList.SyncStatus.COMPLETED() -> completeDeliveryOfSessionData(null)
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
                     else -> Unit
                 }
             }
@@ -40,9 +40,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
-                when (activeSyncState) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                when (activeSyncStatus) {
+                    DMEFileList.SyncStatus.COMPLETED() -> completeDeliveryOfSessionData(null)
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
                     else -> Unit
                 }
             }
@@ -162,27 +162,27 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             getFileList { fileList, listFetchError ->
 
                 when {
-                    fileList != null -> DMELog.d("File list obtained; Sync state is ${fileList.state.rawValue}.")
+                    fileList != null -> DMELog.d("File list obtained; Sync state is ${fileList.syncStatus.rawValue}.")
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
 
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
                 if (updatedFileIds.count() > 0)
                     scheduledPollDidDiscoverUpdatedFiles(updatedFileIds)
 
-                when (syncState) {
-                    DMEFileList.SyncState.PENDING(),
-                    DMEFileList.SyncState.RUNNING() -> {
+                when (syncStatus) {
+                    DMEFileList.SyncStatus.PENDING(),
+                    DMEFileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
                     else -> Unit
                 }
 
-                activeSyncState = syncState
+                activeSyncStatus = syncStatus
             }
 
         }, delay)
@@ -225,7 +225,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fileListItemCache = null
         activeFileDownloadHandler = null
         activeSessionDataFetchCompletionHandler = null
-        activeSyncState = null
+        activeSyncStatus = null
         activeDownloadCount = 0
     }
 
