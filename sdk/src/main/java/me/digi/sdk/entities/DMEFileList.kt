@@ -10,7 +10,7 @@ import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
 
 @JsonAdapter(DMEFileListDeserializer::class)
-internal class DMEFileList (
+class DMEFileList (
 
     val fileList: List<DMEFileListItem>,
     val state: SyncState

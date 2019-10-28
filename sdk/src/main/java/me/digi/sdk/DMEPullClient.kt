@@ -109,7 +109,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    internal fun getFileList(completion: DMEFileListCompletion) {
+    fun getFileList(completion: DMEFileListCompletion) {
 
         val currentSession = sessionManager.currentSession
 
