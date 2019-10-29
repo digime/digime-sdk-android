@@ -9,7 +9,7 @@ class DMEPullConfiguration (
 ): DMEClientConfiguration(appId, contractId) {
 
     var guestEnabled = true
-    var pollingDelay = 3
-    var pollingRetryCount = 100
+    var pollInterval = 3
+    var maxStalePolls = 100
 
 }
