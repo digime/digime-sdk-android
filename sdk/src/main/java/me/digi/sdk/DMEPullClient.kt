@@ -13,6 +13,7 @@ import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import kotlin.math.min
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
@@ -155,10 +156,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         fileListUpdateHandler = updateHandler
         fileListCompletionHandler = {
+            val err = if (it is DMESDKError.FileListPollingTimeout) null else it
             if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
-                completeDeliveryOfSessionData(it)
+                completeDeliveryOfSessionData(err)
             }
-            completion(it)
+            completion(err)
         }
 
         if (activeSyncStatus == null) {
@@ -214,7 +216,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.d("Session data poll scheduled.")
 
-        val delay = (if (immediately) 0 else (configuration.pollInterval * 1000)).toLong()
+        val delay = (if (immediately) 0 else (min(configuration.pollInterval, 1) * 1000)).toLong()
         Handler().postDelayed({
 
             DMELog.d("Fetching file list.")
@@ -225,7 +227,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                var syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncState.RUNNING()
 
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
@@ -234,8 +236,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
                 }
-                else if (++stalePollCount == configuration.maxStalePolls){
-                    syncState = DMEFileList.SyncState.PARTIAL() // Force sync to end as partial.
+                else if (++stalePollCount == min(configuration.maxStalePolls, 20)) {
+                    fileListCompletionHandler?.invoke(DMESDKError.FileListPollingTimeout())
+                    return@getFileList
                 }
 
                 when (syncState) {

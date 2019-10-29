@@ -16,6 +16,7 @@ sealed class DMESDKError(override val message: String): DMEError(message) {
     class DigiMeAppNotFound(): DMESDKError("Querying digime schema failed. (digi.me app not installed.)")
     class CommunicatorNotInitialized(): DMESDKError("DMEAppCommunicator shared instance accessed before initialization.")
     class InvalidContext(): DMESDKError("Given context is not the application context; ONLY the application context may be used.")
+    class FileListPollingTimeout(): DMESDKError("File List time out has been reached as there have been no changes during the number of retries specified in `DMEPullConfiguration`.")
 
 }
 
