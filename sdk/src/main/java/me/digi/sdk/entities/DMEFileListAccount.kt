@@ -4,7 +4,7 @@ data class DMEFileListAccount (
 
     val identifier: String,
 
-    val syncState: DMEFileList.SyncState,
+    val syncStatus: DMEFileList.SyncStatus,
 
     val error: Map<String, Any>?
 

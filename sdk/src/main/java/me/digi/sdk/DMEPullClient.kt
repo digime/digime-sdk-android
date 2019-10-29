@@ -25,16 +25,16 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
     private var fileListCompletionHandler: DMEEmptyCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var activeSyncStatus: DMEFileList.SyncState? = null
+    private var activeSyncStatus: DMEFileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
-                DMELog.d("Sync state changed. Previous: ${previousValue.rawValue}. New: ${value.rawValue}.")
+                DMELog.d("Sync syncStatus changed. Previous: ${previousValue.rawValue}. New: ${value.rawValue}.")
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncState.COMPLETED(),
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -45,8 +45,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
-                    DMEFileList.SyncState.COMPLETED(),
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -164,7 +164,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
 
         if (activeSyncStatus == null) {
-            // Init state.
+            // Init syncStatus.
             fileListItemCache = DMEFileListItemCache()
             scheduleNextPoll(true)
         }
@@ -223,11 +223,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             getFileList { fileList, listFetchError ->
 
                 when {
-                    fileList != null -> DMELog.d("File list obtained; Sync state is ${fileList.state.rawValue}.")
+                    fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncState.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
 
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
@@ -241,18 +241,18 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     return@getFileList
                 }
 
-                when (syncState) {
-                    DMEFileList.SyncState.PENDING(),
-                    DMEFileList.SyncState.RUNNING() -> {
+                when (syncStatus) {
+                    DMEFileList.SyncStatus.PENDING(),
+                    DMEFileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
-                    DMEFileList.SyncState.COMPLETED() -> fileListCompletionHandler?.invoke(null)
-                    DMEFileList.SyncState.PARTIAL() -> fileListCompletionHandler?.invoke(DMEAPIError.PartialSync())
+                    DMEFileList.SyncStatus.COMPLETED() -> fileListCompletionHandler?.invoke(null)
+                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(DMEAPIError.PartialSync())
                     else -> Unit
                 }
 
-                activeSyncStatus = syncState
+                activeSyncStatus = syncStatus
             }
 
         }, delay)
@@ -268,7 +268,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         activeSessionDataFetchCompletionHandler?.invoke(error)
 
-        // Clear state.
+        // Clear syncStatus.
         fileListItemCache = null
         activeFileDownloadHandler = null
         activeSessionDataFetchCompletionHandler = null
