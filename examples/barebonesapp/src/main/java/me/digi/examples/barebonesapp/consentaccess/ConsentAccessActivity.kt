@@ -42,6 +42,7 @@ class ConsentAccessActivity : AppCompatActivity() {
     private fun shareViaDigiMe() {
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
+        cfg.pollingRetryCount = 5
 
         client.authorize(this) { session, error ->
             session?.let {

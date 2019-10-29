@@ -21,6 +21,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
+    private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
+    private var fileListCompletionHandler: DMEEmptyCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
     private var activeSyncStatus: DMEFileList.SyncState? = null
         set(value) {
@@ -50,6 +52,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
             field = value
         }
+
+    private var stalePollCount = 0
 
     fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
 
@@ -97,12 +101,35 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.i("Starting fetch of session data.")
 
-        // Init state.
-        fileListItemCache = DMEFileListItemCache()
+
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
 
-        scheduleNextPoll(true)
+        getSessionFileList({ fileList, updatedFileIds ->
+
+            updatedFileIds.forEach {
+
+                activeDownloadCount++
+                DMELog.d("Downloading file with ID: $it.")
+
+                getSessionData(it) { file, error ->
+
+                    when {
+                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                    }
+
+                    downloadHandler?.invoke(file, error)
+                    activeDownloadCount--
+                }
+            }
+
+        }) { error ->
+            if (error != null) {
+                completion(error) // We only want to push this if the error exists, else
+                // it'll cause a premature loop exit.
+            }
+        }
     }
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
@@ -122,6 +149,23 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             completion(null, DMEAuthError.InvalidSession())
         }
 
+    }
+
+    fun getSessionFileList(updateHandler: DMEIncrementalFileListUpdate, completion: DMEEmptyCompletion) {
+
+        fileListUpdateHandler = updateHandler
+        fileListCompletionHandler = {
+            if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
+                completeDeliveryOfSessionData(it)
+            }
+            completion(it)
+        }
+
+        if (activeSyncStatus == null) {
+            // Init state.
+            fileListItemCache = DMEFileListItemCache()
+            scheduleNextPoll(true)
+        }
     }
 
     fun getFileList(completion: DMEFileListCompletion) {
@@ -170,7 +214,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.d("Session data poll scheduled.")
 
-        val delay = (if (immediately) 0 else 3000).toLong()
+        val delay = (if (immediately) 0 else (configuration.pollingDelay * 1000)).toLong()
         Handler().postDelayed({
 
             DMELog.d("Fetching file list.")
@@ -181,12 +225,18 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
+                var syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
 
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
-                if (updatedFileIds.count() > 0)
-                    scheduledPollDidDiscoverUpdatedFiles(updatedFileIds)
+
+                if (updatedFileIds.count() > 0 && fileList != null) {
+                    fileListUpdateHandler?.invoke(fileList, updatedFileIds)
+                    stalePollCount = 0
+                }
+                else if (++stalePollCount == configuration.pollingRetryCount){
+                    syncState = DMEFileList.SyncState.PARTIAL() // Force sync to end as partial.
+                }
 
                 when (syncState) {
                     DMEFileList.SyncState.PENDING(),
@@ -194,6 +244,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
+                    DMEFileList.SyncState.COMPLETED() -> fileListCompletionHandler?.invoke(null)
+                    DMEFileList.SyncState.PARTIAL() -> fileListCompletionHandler?.invoke(DMEAPIError.PartialSync())
                     else -> Unit
                 }
 
@@ -201,29 +253,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
 
         }, delay)
-    }
-
-    private fun scheduledPollDidDiscoverUpdatedFiles(updatedFileIds: List<String>) {
-        // We have updated files, attempt to fetch them.
-
-        DMELog.i("Discovered files with updates.")
-
-        updatedFileIds.forEach {
-
-            activeDownloadCount++
-            DMELog.d("Downloading file with ID: $it.")
-
-            getSessionData(it) { file, error ->
-
-                when {
-                    file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                    else -> DMELog.e("Failed to download updates for file with ID: $it.")
-                }
-
-                activeFileDownloadHandler?.invoke(file, error)
-                activeDownloadCount--
-            }
-        }
     }
 
     private fun completeDeliveryOfSessionData(error: DMEError?) {
