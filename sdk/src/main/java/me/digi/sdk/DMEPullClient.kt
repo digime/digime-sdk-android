@@ -199,7 +199,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.d("Session data poll scheduled.")
 
-        val delay = (if (immediately) 0 else (configuration.pollingDelay * 1000)).toLong()
+        val delay = (if (immediately) 0 else (configuration.pollInterval * 1000)).toLong()
         Handler().postDelayed({
 
             DMELog.d("Fetching file list.")
@@ -219,7 +219,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
                 }
-                else if (++stalePollCount == configuration.pollingRetryCount){
+                else if (++stalePollCount == configuration.maxStalePolls){
                     syncStatus = DMEFileList.SyncState.PARTIAL() // Force sync to end as partial.
                 }
 
