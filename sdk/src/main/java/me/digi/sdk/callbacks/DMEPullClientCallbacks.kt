@@ -13,3 +13,5 @@ typealias DMEFileListCompletion = (fileList: DMEFileList?, error: DMEError?) -> 
 typealias DMEFileContentCompletion = (file: DMEFile?, error: DMEError?) -> Unit
 
 typealias DMEAccountsCompletion = (accounts: List<DMEAccount>?, error: DMEError?) -> Unit
+
+typealias DMEIncrementalFileListUpdate = (fileList: DMEFileList, updatedFileIds: List<String>) -> Unit

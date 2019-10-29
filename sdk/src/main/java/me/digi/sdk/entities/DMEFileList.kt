@@ -12,19 +12,20 @@ import java.lang.reflect.Type
 class DMEFileList (
 
     val fileList: List<DMEFileListItem>,
-    val syncStatus: SyncStatus
+    val syncState: SyncState,
+    val accounts: List<DMEFileListAccount>?
 
 )
 {
 
-    open class SyncStatus(val rawValue: String) {
-        class PENDING: SyncStatus("pending")
-        class RUNNING: SyncStatus("running")
-        class COMPLETED: SyncStatus("completed")
-        class PARTIAL: SyncStatus("partial")
+    open class SyncState(val rawValue: String) {
+        class PENDING: SyncState("pending")
+        class RUNNING: SyncState("running")
+        class COMPLETED: SyncState("completed")
+        class PARTIAL: SyncState("partial")
 
         override fun equals(other: Any?): Boolean {
-            return if (other is SyncStatus) {
+            return if (other is SyncState) {
                 other.rawValue == this.rawValue
             }
             else false
@@ -47,9 +48,19 @@ private class DMEFileListDeserializer: JsonDeserializer<DMEFileList> {
 
             val status = it.getAsJsonObject("status")
             val syncStateRaw = status.getAsJsonPrimitive("state").asString
-            val syncState = DMEFileList.SyncStatus(syncStateRaw)
+            val syncState = DMEFileList.SyncState(syncStateRaw)
 
-            return DMEFileList(fileListItems, syncState)
+            val accountsRaw = status.getAsJsonObject("details")
+            val accountIds = accountsRaw.keySet()
+            val accounts = accountIds.map { accountId ->
+                val accountRaw = accountsRaw.getAsJsonObject(accountId)
+                val accSyncStateRaw = accountRaw.getAsJsonPrimitive("state").asString
+                val accSyncState = DMEFileList.SyncState(accSyncStateRaw)
+                val accError = context?.deserialize<Map<String, Any>?>(accountRaw.getAsJsonObject("error"), Map::class.java)
+                DMEFileListAccount(accountId, accSyncState, accError)
+            }
+
+            return DMEFileList(fileListItems, syncState, accounts)
 
         } ?: run { throw IllegalArgumentException() }
     }
