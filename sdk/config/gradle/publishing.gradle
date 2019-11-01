@@ -89,6 +89,17 @@ publishing {
             }
 
         }
+
+        maven {
+
+            name = 'UBDI'
+            url = 'https://repository.sysdigi.net/m2/ubdi'
+
+            credentials {
+                username = project.ext.DIGIME_REPO_USER
+                password = project.ext.DIGIME_REPO_PASS
+            }
+        }
     }
 }
 
@@ -111,12 +122,9 @@ tasks.register("updateInstallationGuideVersion") {
     group = 'publishing'
 
     doLast {
-        def appVersionName = ext.VERSION_NAME
+        def appVersionName = android.defaultConfig.versionName
 
-        if (appVersionName.contains("SNAPSHOT"))
-            return
-
-        def readmeFile = file('README.md')
+        def readmeFile = file('../README.md')
 
         StringBuilder outContent = new StringBuilder()
         boolean shouldWrite = false
@@ -151,7 +159,11 @@ tasks.register("artifactoryPublish", GradleBuild.class) {
 
     def publishTask
 
-    if (version.endsWith('SNAPSHOT')) {
+    if (version.endsWith('UBDI')) {
+        // Deploy to UBDI repo.
+        publishTask = 'publishAllPublicationsToUBDIRepository'
+    }
+    else if (version.endsWith('SNAPSHOT')) {
         // Deploy to snapshot repo.
         publishTask = 'publishAllPublicationsToDigiMeSnapshotRepository'
     }
@@ -160,7 +172,7 @@ tasks.register("artifactoryPublish", GradleBuild.class) {
         publishTask = 'publishAllPublicationsToDigiMeReleaseRepository'
     }
 
-    tasks = ['clean', 'assembleRelease', 'sourcesJar', 'updateInstallationGuideVersion', 'updateDocs', publishTask]
+    tasks = ['clean', 'assembleRelease', 'sourcesJar', publishTask]
 }
 
 tasks.register("localPublish", GradleBuild.class) {

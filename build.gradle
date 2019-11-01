@@ -23,6 +23,13 @@ allprojects {
     repositories {
         google()
         jcenter()
-        maven { url "https://repository.sysdigi.net/m2/libs-internal" }
+        maven {
+            url = "https://repository.sysdigi.net/m2/ubdi"
+
+            credentials {
+                username = 'ubdi'
+                password = 'DigiMe2019'
+            }
+        }
     }
 }
