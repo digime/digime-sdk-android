@@ -28,4 +28,6 @@ internal interface DMEArgonService {
                  @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>
 
 
+    @POST("v1.4/permission-access/session/refresh")
+    fun refreshSession()
 }
