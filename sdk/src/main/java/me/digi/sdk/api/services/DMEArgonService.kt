@@ -3,6 +3,7 @@ package me.digi.sdk.api.services
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession
+import me.digi.sdk.entities.api.DMESessionRefreshRequest
 import me.digi.sdk.entities.api.DMESessionRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -27,7 +28,6 @@ internal interface DMEArgonService {
                  @Header("iv") iv: String, @Header("metadata") metadata: String,
                  @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>
 
-
     @POST("v1.4/permission-access/session/refresh")
-    fun refreshSession()
+    fun refreshSession(@Body sessionRefreshRequest: DMESessionRefreshRequest): Call<DMESession>
 }

@@ -8,6 +8,8 @@ import me.digi.sdk.entities.DMESession
 
 typealias DMEAuthorizationCompletion = (session: DMESession?, error: DMEError?) -> Unit
 
+typealias DMEOngoingAuthorizationCompletion = (session: DMESession?, accessToken: String?, refreshToken: String?, error: DMEError?) -> Unit
+
 internal typealias DMEFileListCompletion = (fileList: DMEFileList?, error: DMEError?) -> Unit
 
 typealias DMEFileContentCompletion = (file: DMEFile?, error: DMEError?) -> Unit

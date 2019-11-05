@@ -61,6 +61,10 @@ class ConsentAccessActivity : AppCompatActivity() {
             }
             error?.message?.let { it -> removeReceiving(it) }
         }
+
+        client.getSessionAccounts { accounts, error ->
+
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -13,7 +13,9 @@ data class DMESession (
     val exchangeToken: String,
 
     @SerializedName("expiry")
-    val expiryDate: Date
+    val expiryDate: Date,
+
+    val grant: DMESessionGrant
 
 ) {
 
@@ -21,5 +23,7 @@ data class DMESession (
     var scope: DMEDataRequest? = null
     private var sessionManager: WeakReference<String>? = null
     var metadata: Map<String, Any> = emptyMap()
+
+
 
 }

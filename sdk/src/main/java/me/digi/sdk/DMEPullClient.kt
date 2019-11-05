@@ -3,6 +3,8 @@ package me.digi.sdk
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
+import com.google.gson.*
+import com.google.gson.reflect.TypeToken
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
@@ -12,6 +14,7 @@ import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import java.lang.reflect.Type
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
@@ -76,6 +79,40 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 completion(null, error)
             }
         }
+    }
+
+    fun authorizeOngoingAccess(fromActivity: Activity, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) =
+        authorizeOngoingAccess(fromActivity, null, accessToken, refreshToken, completion)
+
+    fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest?, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) {
+
+        DMELog.i("Launching user consent request.")
+
+        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
+        sessionManager.getSession(req) { session, error ->
+
+            val consentCompletion: (DMESession?, DMEError?) -> Unit = { conSession, conError ->
+
+            }
+
+            if (session != null) {
+                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+                    Pair(true, true),
+                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, consentCompletion)
+                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, consentCompletion)
+                    Pair(false, false) -> {
+                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            nativeConsentManager.beginAuthorization(fromActivity, completion)
+                        }
+                    }
+                }
+            }
+            else {
+                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
+                completion(null, error)
+            }
+        }
+
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEEmptyCompletion) {
@@ -148,7 +185,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
-
+        
     }
 
     private fun scheduleNextPoll(immediately: Boolean = false) {

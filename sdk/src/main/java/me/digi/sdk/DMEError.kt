@@ -32,12 +32,16 @@ sealed class DMEAPIError(override val message: String,
                          internal val reference: String? = null,
                          internal val code: String? = null): DMEError(message) {
 
-
-
     class Generic(): DMEAPIError("There was a problem with your request.")
     class Server(message: String, reference: String?, code: String?): DMEAPIError(message, reference, code)
     class Unreachable(): DMEAPIError("Couldn't reach the digi.me API - please check your network connection.")
     class InvalidSyncState(): DMEAPIError("An invalid sync state was returned - please try again.")
     class PartialSync(): DMEAPIError("One or more accounts failed to sync. Some data has been delivered.")
+    class TokenInvalid(): DMEAPIError("The provided refresh token is invalid.")
+    class TokenNotYetValid(): DMEAPIError("The provided token is not yet valid.")
+    class TooManyRequest(): DMEAPIError("Rate limiting is enforced and this request exceeds the configured limit.")
+    class SessionInvalid(): DMEAPIError("Session state does not exist.")
+    class SessionUsed(): DMEAPIError("Session has already been consumed.")
+    class SessionUpdateFailed(): DMEAPIError("Unable to update the PUA object.")
 
 }
