@@ -67,6 +67,9 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
         val params = intent.extras?.toMap() ?: emptyMap()
         val result = params[ctx.getString(R.string.key_result)] as? String
 
+        val authorizationCode = params[ctx.getString(R.string.key_authorization_code)] as? String
+        sessionManager.currentSession?.authorizationCode = authorizationCode
+
         extractAndAppendMetadata(params)
 
         val error = if (!sessionManager.isSessionValid()) {

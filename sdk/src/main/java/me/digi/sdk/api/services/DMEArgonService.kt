@@ -30,4 +30,7 @@ internal interface DMEArgonService {
 
     @POST("v1.4/permission-access/session/refresh")
     fun refreshSession(@Body sessionRefreshRequest: DMESessionRefreshRequest): Call<DMESession>
+
+    @POST("v1/oauth/token")
+    fun redeemAuthCode(): Call<DMESession>
 }

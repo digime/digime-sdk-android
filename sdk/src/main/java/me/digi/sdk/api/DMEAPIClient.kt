@@ -13,7 +13,9 @@ import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEPullConfiguration
+import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -46,6 +48,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             })
         if (clientConfig is DMEPullConfiguration) {
             gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
+            gsonBuilder.registerTypeAdapter(DMEJsonWebToken::class.java, DMEJsonWebToken.Adapter(DMEKeyTransformer.javaPrivateKeyFromHex(clientConfig.privateKeyHex)))
         }
 
         val requestDispatcher = Dispatcher()

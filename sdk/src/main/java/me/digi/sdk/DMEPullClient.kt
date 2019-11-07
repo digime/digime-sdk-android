@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Handler
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
+import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
@@ -86,31 +87,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest?, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) {
 
-        DMELog.i("Launching user consent request.")
+        authorize(fromActivity, scope) { session, error ->
 
-        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
-        sessionManager.getSession(req) { session, error ->
-
-            val consentCompletion: (DMESession?, DMEError?) -> Unit = { conSession, conError ->
-
-            }
-
-            if (session != null) {
-                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-                    Pair(true, true),
-                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, consentCompletion)
-                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, consentCompletion)
-                    Pair(false, false) -> {
-                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                            nativeConsentManager.beginAuthorization(fromActivity, completion)
-                        }
-                    }
-                }
-            }
-            else {
-                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
-                completion(null, error)
-            }
         }
 
     }
@@ -266,4 +244,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         activeDownloadCount = 0
     }
 
+
+    private fun performTokenExchange(session: DMESession, completion: DMEAuthorizationCompletion) {
+
+        session.authorizationCode?.let { authCode ->
+
+            apiClient.makeCall()
+
+        } ?: run { completion(null, DMEAPIError.TokenInvalid()) }
+    }
 }
