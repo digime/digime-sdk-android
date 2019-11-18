@@ -164,7 +164,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
         else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            fileListCompletionHandler?.invoke(DMEAuthError.InvalidSession())
         }
     }
 
