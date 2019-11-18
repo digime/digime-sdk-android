@@ -19,6 +19,8 @@ data class DMESession (
 
     var refreshToken: String?,
 
+    val preauthorizationCode: String?,
+
     var authorizationCode: String?
 
 ) {

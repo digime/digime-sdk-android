@@ -14,6 +14,7 @@
     <string name="key_session_exchange_token">sessionExchangeToken</string>
     <string name="key_sdk_version">sdkVersion</string>
     <string name="key_authorization_code">authorizationCode</string>
+    <string name="key_preauthorization_code">preauthorizationCode</string>
 
     <string name="key_timing_get_all_files">timingGetAllFiles</string>
     <string name="key_timing_get_file">timingGetFile</string>

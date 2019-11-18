@@ -19,6 +19,7 @@ ext.versions = [
         'brotli': '0.1.2',
         'spongycastleprovider': '1.56.0.0',
         'spongycastlepkix': '1.54.0.0',
+        "rxkotlin": '2.4.0',
 
         // Test
         'testcore': '1.2.0',

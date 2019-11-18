@@ -142,5 +142,33 @@ internal class DMEJsonWebToken (
             val timestamp: Double
 
         ): Payload()
+
+        data class PreAuthRequest (
+
+            @SerializedName("client_id")
+            val contractId: String,
+
+            @SerializedName("code_challenge")
+            val codeChallenge: String,
+
+            @SerializedName("code_challenge_method")
+            val codeChallengeMethod: String,
+
+            val state: String,
+
+            @SerializedName("redirect_uri")
+            val redirectUri: String,
+
+            @SerializedName("response_mode")
+            val responseMode: String,
+
+            @SerializedName("response_type")
+            val responseType: String,
+
+            val nonce: String,
+
+            val timestamp: Double
+
+        ): Payload()
     }
 }

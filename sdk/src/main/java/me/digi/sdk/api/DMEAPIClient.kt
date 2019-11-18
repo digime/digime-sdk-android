@@ -2,6 +2,8 @@ package me.digi.sdk.api
 
 import android.content.Context
 import com.google.gson.*
+import io.reactivex.Observable
+import io.reactivex.Single
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
@@ -78,6 +80,17 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
     }
 
     private fun domainForBaseUrl() = URL(clientConfig.baseUrl).host
+
+    // Rx Overload
+    fun <ResponseType> makeCall(call: Call<ResponseType>) = Single.create<ResponseType> { emitter ->
+        makeCall(call) { value, error ->
+            when {
+                error != null -> emitter.onError(error)
+                value != null -> emitter.onSuccess(value)
+                else -> emitter.onError(DMEAPIError.Generic())
+            }
+        }
+    }
 
     fun <ResponseType> makeCall(call: Call<ResponseType>, completion: (ResponseType?, DMEError?) -> Unit) {
         call.enqueue(object: Callback<ResponseType> {

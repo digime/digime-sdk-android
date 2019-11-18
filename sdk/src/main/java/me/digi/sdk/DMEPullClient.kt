@@ -3,19 +3,21 @@ package me.digi.sdk
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
-import com.google.gson.*
-import com.google.gson.reflect.TypeToken
-import me.digi.sdk.api.services.DMEArgonService
+import io.reactivex.Observable
+import io.reactivex.ObservableTransformer
+import io.reactivex.Single
+import io.reactivex.SingleTransformer
+import me.digi.sdk.api.helpers.DMEAuthCodeRedemptionHelper
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
-import java.lang.reflect.Type
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
@@ -87,9 +89,86 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest?, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) {
 
-        authorize(fromActivity, scope) { session, error ->
-
+        fun requestPreauthorizationCode(helper: DMEAuthCodeRedemptionHelper): Single<String> {
+            return apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(helper.buildForPreAuthRequest(configuration.contractId)))
+                .map {
+                    when {
+                        it.payload is DMEJsonWebToken.Payload.OAuth -> it.payload.accessToken
+                        else -> throw IllegalArgumentException()
+                    }
+                }
         }
+
+        fun requestSession(req: DMESessionRequest) = Single.create<DMESession> {
+            sessionManager.getSession(req) { session, error ->
+                when {
+                    error != null -> it.onError(error)
+                    session != null -> it.onSuccess(session)
+                    else -> it.onError(java.lang.IllegalArgumentException())
+                }
+            }
+        }
+
+        fun requestConsent(fromActivity: Activity, lambda: (fromActivity: Activity, completion: DMEAuthorizationCompletion) -> Unit) = Single.create<DMESession> {
+            lambda.invoke(fromActivity) { session, error ->
+                when {
+                    error != null -> it.onError(error)
+                    session != null -> it.onSuccess(session)
+                    else -> it.onError(java.lang.IllegalArgumentException())
+                }
+            }
+        }
+
+        fun redeemForAuthCode(helper: DMEAuthCodeRedemptionHelper, preauthCode: String): Single<String> {
+            val req = helper.buildForPreAuthRequest(configuration.contractId)
+        }
+
+        val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
+        val authHelper = DMEAuthCodeRedemptionHelper()
+
+        requestSession(sessionReq)
+            .map { session -> requestPreauthorizationCode(authHelper).map { Pair(session, it) } }
+            .map {
+                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+                    Pair(true, true),
+                    Pair(true, false) -> requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+                    Pair(false, true) -> requestConsent(fromActivity, guestConsentManager::beginGuestAuthorization)
+                    Pair(false, false) -> {
+                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+                        }
+                    }
+                    else -> it.map { it.first }
+                }
+            }
+            .ma
+
+
+        sessionManager.getSession(sessionReq) { session, error ->
+
+            if (session != null) {
+                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+                    Pair(true, true),
+                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
+                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                    Pair(false, false) -> {
+                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            nativeConsentManager.beginAuthorization(fromActivity, completion)
+                        }
+                    }
+                }
+            }
+            else {
+                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
+                completion(null, error)
+            }
+        }
+
+        val ongoingAuthHelper = DMEAuthCodeRedemptionHelper()
+
+        requestPreauthorizationCode()
+            .compose(authorize())
+            .co
 
     }
 
@@ -242,15 +321,5 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         activeSessionDataFetchCompletionHandler = null
         activeSyncState = null
         activeDownloadCount = 0
-    }
-
-
-    private fun performTokenExchange(session: DMESession, completion: DMEAuthorizationCompletion) {
-
-        session.authorizationCode?.let { authCode ->
-
-            apiClient.makeCall()
-
-        } ?: run { completion(null, DMEAPIError.TokenInvalid()) }
     }
 }

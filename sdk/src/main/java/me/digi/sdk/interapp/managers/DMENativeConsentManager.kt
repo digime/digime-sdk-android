@@ -34,7 +34,11 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             val caParams = mapOf(
                 ctx.getString(R.string.key_session_key) to session.key,
                 ctx.getString(R.string.key_app_id) to appId
-            )
+            ).toMutableMap()
+
+            if (sessionManager.currentSession?.preauthorizationCode != null) {
+                caParams[ctx.getString(R.string.key_preauthorization_code)] = sessionManager.currentSession!!.preauthorizationCode!!
+            }
 
             val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_consent_access, caParams)
             pendingAuthCallbackHandler = completion
