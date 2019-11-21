@@ -1,7 +1,7 @@
 <resources>
 <string name="app_name">digi.me SDK Barebones Example</string>
 
-<string name="digime_application_id">6vA0xfLk6AysMVCBXdFnpItZrAk0aJtR</string>
+<string name="digime_application_id"></string>
 <string name="digime_postbox_contract_id">Cb1JC2tIatLfF7LH1ksmdNx4AfYPszIn</string>
 <string name="digime_contract_id">fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF</string>
 <string name="digime_p12_filename">fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF.p12</string>
