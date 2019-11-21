@@ -65,12 +65,19 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     Pair(true, true),
                     Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
                     Pair(false, true) -> {
-
                         val consentModeDialogue = ConsentModeSelectionDialogue()
+                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
+                            override fun installDigiMe() {
+                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
+                                }
+                            }
 
-                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeDialogue")
-//                        guestConsentManager.beginGuestAuthorization(fromActivity, completion)
-
+                            override fun shareAsGuest() {
+                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                            }
+                        })
+                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
                     }
                     Pair(false, false) -> {
                         DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {

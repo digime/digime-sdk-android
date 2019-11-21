@@ -102,6 +102,7 @@
                         />
 
                 <ImageView
+                        android:id="@+id/consentSelectionInstallDigiMe"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:src="@drawable/img_app_store_badge"
