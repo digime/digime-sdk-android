@@ -6,8 +6,8 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#CC000000">
-
+        android:background="#00000000"
+        tools:background="#CC000000">
 
     <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
@@ -42,8 +42,8 @@
                         android:layout_marginBottom="20dp"
                         app:layout_constraintLeft_toLeftOf="parent"
                         app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintDimensionRatio="1"
-                        app:layout_constraintWidth_percent="0.4"
+                        app:layout_constraintDimensionRatio="0.91"
+                        app:layout_constraintWidth_percent="0.3"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toTopOf="@id/consentSelectionDetail"
                         />
@@ -58,7 +58,7 @@
                         android:layout_marginBottom="20dp"
                         app:layout_constraintLeft_toRightOf="@id/consentSelectionDigiLogo"
                         app:layout_constraintDimensionRatio="1.44"
-                        app:layout_constraintWidth_percent="0.5"
+                        app:layout_constraintWidth_percent="0.4"
                         app:layout_constraintTop_toTopOf="@id/consentSelectionDigiLogo"
                         />
 
@@ -76,7 +76,6 @@
                         app:layout_constraintBottom_toBottomOf="@id/consentSelectionHalfwayGuideline"
                         app:layout_constraintVertical_bias="1"
                         />
-
 
                 <android.support.constraint.Guideline
                         android:id="@+id/consentSelectionHalfwayGuideline"
@@ -123,9 +122,6 @@
 
         </android.support.v7.widget.CardView>
 
-
-
-
         <TextView
                 android:id="@+id/consentSelectionShareAsGuest"
                 android:layout_width="wrap_content"
@@ -144,4 +140,5 @@
                 />
 
     </android.support.constraint.ConstraintLayout>
+
 </android.support.constraint.ConstraintLayout>
