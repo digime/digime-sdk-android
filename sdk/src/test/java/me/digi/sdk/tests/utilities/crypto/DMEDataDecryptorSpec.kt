@@ -1,6 +1,8 @@
 package me.digi.sdk.tests.utilities.crypto
 
 import android.util.Base64
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEMimeType
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
@@ -26,10 +28,10 @@ class DMEDataDecryptorSpec {
 
         val decrypted = DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
         val file = DMEFile(null, DMEMimeType.APPLICATION_JSON, decrypted)
-        val decryptedJSON = file.fileContentAsJSON()
+        val decryptedJSON = Gson().fromJson<List<Any>>(String(file.fileContent), object: TypeToken<List<Any>>(){}.type)
 
         Security.removeProvider("SC")
 
-        assertTrue(decryptedJSON.isJsonArray)
+        assertTrue(decryptedJSON.count() > 0)
     }
 }

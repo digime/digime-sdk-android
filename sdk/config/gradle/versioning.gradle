@@ -11,7 +11,7 @@ ext.versions = [
 
         // Libraries
         'supportannotations': '28.0.0',
-        'supportlibrary': '27.1.1',
+        'supportlibrary': '28.0.0',
         'constraintlayout': '1.1.0',
         'gson': '2.8.5',
         'okhttp': '4.0.1',
