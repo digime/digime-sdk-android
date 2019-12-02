@@ -1,7 +1,9 @@
 package me.digi.sdk
 
-import android.app.Activity
+import android.app.*
 import android.content.Context
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Handler
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion

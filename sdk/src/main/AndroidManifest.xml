@@ -16,6 +16,8 @@
 
         </activity>
 
+        <activity android:name=".utilities.DMEResumeStateActivity"/>
+
         <receiver
                 android:name=".interapp.DMEInstallHandler"
                 android:enabled="true"
