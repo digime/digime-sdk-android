@@ -18,20 +18,6 @@
 
         <activity android:name=".utilities.DMEResumeStateActivity"/>
 
-        <receiver
-                android:name=".interapp.DMEInstallHandler"
-                android:enabled="true"
-                android:exported="true">
-
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED" />
-                <action android:name="android.intent.action.PACKAGE_CHANGED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="package" />
-            </intent-filter>
-
-        </receiver>
-
     </application>
 
     <uses-permission android:name="android.permission.INTERNET"/>
