@@ -32,8 +32,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                    DMEFileList.SyncState.COMPLETED(),
+                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -44,8 +44,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         set(value) {
             if (value == 0) {
                 when (activeSyncState) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                    DMEFileList.SyncState.COMPLETED(),
+                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -126,7 +126,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    internal fun getFileList(completion: DMEFileListCompletion) {
+    fun getFileList(completion: DMEFileListCompletion) {
 
         val currentSession = sessionManager.currentSession
 
