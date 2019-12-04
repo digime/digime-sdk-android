@@ -1,16 +1,20 @@
 package me.digi.sdk.interapp.managers
 
-import android.app.Activity
+import android.app.*
+import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
+import android.os.Build
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.*
+import me.digi.sdk.utilities.DMEDrawableUtils
 import me.digi.sdk.utilities.DMELog
-import me.digi.sdk.utilities.DMESessionManager
-import me.digi.sdk.utilities.toMap
 
 class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
 
@@ -39,6 +43,46 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_consent_access, caParams)
             pendingAuthCallbackHandler = completion
             DMEAppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
+
+            // For Android 10 and above, backgrounded tasks can no longer start
+            // activities. As such, we can't trigger CA led onboarding when digi.me
+            // installation finishes. As a workaround (sort of), we will pop a
+            // notification inviting the user to tap it. This will wake the app
+            // and allow the flow to resume.
+            if (Build.VERSION.SDK_INT >= 29) {
+
+                // Configure manager.
+                val notificationManager = fromActivity.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+
+                // Configure channel.
+                val notificationChannelId = fromActivity.getString(R.string.const_android10_notification_channel_id)
+                val notificationChannelName = fromActivity.getString(R.string.const_android10_notification_channel_name)
+                val notificationChannel = NotificationChannel(notificationChannelId, notificationChannelName, NotificationManager.IMPORTANCE_HIGH)
+                notificationManager?.createNotificationChannel(notificationChannel)
+
+                // Configure notification.
+                val relaunchIntent = Intent(fromActivity, DMEResumeStateActivity::class.java)
+                val pendingIntent = PendingIntent.getActivity(fromActivity, 0, relaunchIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                val hostAppName = fromActivity.getString(fromActivity.applicationInfo.labelRes)
+                val notificationTitle = fromActivity.getString(R.string.const_android10_notification_title)
+                val notificationBody = fromActivity.getString(R.string.const_android10_notification_body)
+                val notificationAction = fromActivity.getString(R.string.const_android10_notification_action, hostAppName.toUpperCase())
+                val notificationIconDrawable = fromActivity.applicationInfo.loadIcon(fromActivity.packageManager)
+                val notificationIconBitmap = DMEDrawableUtils.createBitmap(notificationIconDrawable)
+
+                val notification = Notification.Builder(fromActivity, notificationChannelId)
+                    .setContentTitle(notificationTitle)
+                    .setContentText(notificationBody)
+                    .setPriority(Notification.PRIORITY_HIGH)
+                    .setSmallIcon(Icon.createWithBitmap(notificationIconBitmap))
+                    .setLargeIcon(notificationIconBitmap)
+                    .setContentIntent(pendingIntent)
+                    .addAction(fromActivity.applicationInfo.icon, notificationAction, pendingIntent)
+                    .build()
+
+                // Show notification.
+                notificationManager?.notify(0, notification)
+            }
 
         } ?: run {
             DMELog.e("Your session is invalid, please request a new one.")

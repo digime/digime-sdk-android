@@ -1,7 +1,9 @@
 package me.digi.sdk
 
-import android.app.Activity
+import android.app.*
 import android.content.Context
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Handler
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
@@ -10,6 +12,7 @@ import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
+import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
 
@@ -63,7 +66,21 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
                     Pair(true, true),
                     Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
-                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                    Pair(false, true) -> {
+                        val consentModeDialogue = ConsentModeSelectionDialogue()
+                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
+                            override fun installDigiMe() {
+                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
+                                }
+                            }
+
+                            override fun shareAsGuest() {
+                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                            }
+                        })
+                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
+                    }
                     Pair(false, false) -> {
                         DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
                             nativeConsentManager.beginAuthorization(fromActivity, completion)

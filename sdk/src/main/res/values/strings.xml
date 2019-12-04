@@ -52,5 +52,15 @@
 
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>
+    <string name="const_android10_notification_channel_id">DigiMeCommunications</string>
+    <string name="const_android10_notification_channel_name">digi.me Communications</string>
+    <string name="const_android10_notification_title">digi.me is now installed!</string>
+    <string name="const_android10_notification_body">Tap here to finish onboarding.</string>
+    <string name="const_android10_notification_action">OPEN %1$s</string>
+
+    <!-- Consent Mode Selection -->
+    <string name="consent_mode_selection_heading"><b>Save time! Stay in control!</b></string>
+    <string name="consent_mode_selection_detail">Create your own digi.me to make sharing data faster, more secure and always under your control.</string>
+    <string name="consent_mode_selection_share_as_guest"><b>Not now, I\'ll share as a guest</b></string>
 
 </resources>
