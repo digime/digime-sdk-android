@@ -157,10 +157,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fileListUpdateHandler = updateHandler
         fileListCompletionHandler = {
             val err = if (it is DMESDKError.FileListPollingTimeout) null else it
+            completion(err)
             if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
                 completeDeliveryOfSessionData(err)
             }
-            completion(err)
         }
 
         if (activeSyncStatus == null) {
@@ -247,8 +247,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
-                    DMEFileList.SyncStatus.COMPLETED() -> fileListCompletionHandler?.invoke(null)
-                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(DMEAPIError.PartialSync())
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(null)
                     else -> Unit
                 }
 
