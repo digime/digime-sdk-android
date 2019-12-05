@@ -13,6 +13,7 @@ import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import kotlin.math.max
 import kotlin.math.min
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
@@ -216,7 +217,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.d("Session data poll scheduled.")
 
-        val delay = (if (immediately) 0 else (min(configuration.pollInterval, 1) * 1000)).toLong()
+        val delay = (if (immediately) 0 else (max(configuration.pollInterval, 3) * 1000).toLong())
         Handler().postDelayed({
 
             DMELog.d("Fetching file list.")
@@ -236,7 +237,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
                 }
-                else if (++stalePollCount == min(configuration.maxStalePolls, 20)) {
+                else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
                     fileListCompletionHandler?.invoke(DMESDKError.FileListPollingTimeout())
                     return@getFileList
                 }

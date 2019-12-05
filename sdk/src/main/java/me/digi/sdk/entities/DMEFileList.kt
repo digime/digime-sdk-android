@@ -47,14 +47,14 @@ private class DMEFileListDeserializer: JsonDeserializer<DMEFileList> {
             }
 
             val status = it.getAsJsonObject("status")
-            val syncStateRaw = status.getAsJsonPrimitive("syncStatus").asString
+            val syncStateRaw = status.getAsJsonPrimitive("state").asString
             val syncState = DMEFileList.SyncStatus(syncStateRaw)
 
             val accountsRaw = status.getAsJsonObject("details")
             val accountIds = accountsRaw.keySet()
             val accounts = accountIds.map { accountId ->
                 val accountRaw = accountsRaw.getAsJsonObject(accountId)
-                val accSyncStateRaw = accountRaw.getAsJsonPrimitive("syncStatus").asString
+                val accSyncStateRaw = accountRaw.getAsJsonPrimitive("state").asString
                 val accSyncState = DMEFileList.SyncStatus(accSyncStateRaw)
                 val accError = context?.deserialize<Map<String, Any>?>(accountRaw.getAsJsonObject("error"), Map::class.java)
                 DMEFileListAccount(accountId, accSyncState, accError)
