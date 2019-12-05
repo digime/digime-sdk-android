@@ -2,8 +2,6 @@ package me.digi.sdk
 
 import android.app.*
 import android.content.Context
-import android.graphics.drawable.Icon
-import android.os.Build
 import android.os.Handler
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
@@ -24,7 +22,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var activeSyncState: DMEFileList.SyncState? = null
+    private var activeSyncStatus: DMEFileList.SyncState? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -43,7 +41,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
-                when (activeSyncState) {
+                when (activeSyncStatus) {
                     DMEFileList.SyncState.COMPLETED(),
                     DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
@@ -199,7 +197,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     else -> Unit
                 }
 
-                activeSyncState = syncState
+                activeSyncStatus = syncState
             }
 
         }, delay)
@@ -242,7 +240,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fileListItemCache = null
         activeFileDownloadHandler = null
         activeSessionDataFetchCompletionHandler = null
-        activeSyncState = null
+        activeSyncStatus = null
         activeDownloadCount = 0
     }
 
