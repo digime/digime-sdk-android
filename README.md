@@ -119,8 +119,9 @@ Once you have a session, you can request data. We strive to make this as simple 
 ```kotlin
 pullClient.getSessionData({ file, error ->
     // Handle each downloaded file here.
-}) { error ->
+}) { fileList, error ->
     // Any errors interupting the flow of data will be directed here, or null once all files are retrieved.
+    // The file list here will represent the complete list of files that were downloaded.
 }
 ```
 

@@ -16,6 +16,7 @@ sealed class DMESDKError(override val message: String): DMEError(message) {
     class DigiMeAppNotFound(): DMESDKError("Querying digime schema failed. (digi.me app not installed.)")
     class CommunicatorNotInitialized(): DMESDKError("DMEAppCommunicator shared instance accessed before initialization.")
     class InvalidContext(): DMESDKError("Given context is not the application context; ONLY the application context may be used.")
+    class FileListPollingTimeout(): DMESDKError("File List time out has been reached as there have been no changes during the number of retries specified in `DMEPullConfiguration`.")
 
 }
 
@@ -37,7 +38,7 @@ sealed class DMEAPIError(override val message: String,
     class Generic(): DMEAPIError("There was a problem with your request.")
     class Server(message: String, reference: String?, code: String?): DMEAPIError(message, reference, code)
     class Unreachable(): DMEAPIError("Couldn't reach the digi.me API - please check your network connection.")
-    class InvalidSyncState(): DMEAPIError("An invalid sync state was returned - please try again.")
+    class InvalidSyncState(): DMEAPIError("An invalid sync syncStatus was returned - please try again.")
     class PartialSync(): DMEAPIError("One or more accounts failed to sync. Some data has been delivered.")
 
 }
