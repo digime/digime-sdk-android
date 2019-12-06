@@ -24,7 +24,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
     private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
-    private var fileListCompletionHandler: DMEEmptyCompletion? = null
+    private var fileListCompletionHandler: DMEFileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
     private var latestFileList: DMEFileList? = null
     private var activeSyncStatus: DMEFileList.SyncStatus? = null
@@ -108,7 +108,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
 
-        getSessionFileList({ fileList, updatedFileIds ->
+        getSessionFileList({ _, updatedFileIds ->
 
             updatedFileIds.forEach {
 
@@ -122,14 +122,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         else -> DMELog.e("Failed to download updates for file with ID: $it.")
                     }
 
-                    downloadHandler?.invoke(file, error)
+                    downloadHandler.invoke(file, error)
                     activeDownloadCount--
                 }
             }
 
-        }) { error ->
+        }) { fileList, error ->
             if (error != null) {
-                completion(null, error) // We only want to push this if the error exists, else
+                completion(fileList, error) // We only want to push this if the error exists, else
                 // it'll cause a premature loop exit.
             }
         }
@@ -154,12 +154,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    fun getSessionFileList(updateHandler: DMEIncrementalFileListUpdate, completion: DMEEmptyCompletion) {
+    fun getSessionFileList(updateHandler: DMEIncrementalFileListUpdate, completion: DMEFileListCompletion) {
 
         fileListUpdateHandler = updateHandler
-        fileListCompletionHandler = {
-            val err = if (it is DMESDKError.FileListPollingTimeout) null else it
-            completion(err)
+        fileListCompletionHandler = { fileList, error ->
+            val err = if (error is DMESDKError.FileListPollingTimeout) null else error
+            completion(fileList, err)
             if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
                 completeDeliveryOfSessionData(err)
             }
@@ -240,7 +240,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     stalePollCount = 0
                 }
                 else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                    fileListCompletionHandler?.invoke(DMESDKError.FileListPollingTimeout())
+                    fileListCompletionHandler?.invoke(fileList, DMESDKError.FileListPollingTimeout())
                     return@getFileList
                 }
 
@@ -251,7 +251,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         scheduleNextPoll()
                     }
                     DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(null)
+                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(fileList, null)
                     else -> Unit
                 }
 
