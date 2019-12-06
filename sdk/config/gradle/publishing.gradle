@@ -112,11 +112,11 @@ tasks.register("updateInstallationGuideVersion") {
 
     doLast {
         def appVersionName = android.defaultConfig.versionName
-        def readmeFile = new File('./docs/guides/Getting Started.md')
+        def gettingStartedFile = new File('./docs/guides/Getting Started.md')
         StringBuilder outContent = new StringBuilder()
         boolean shouldWrite = false
 
-        readmeFile.eachLine {
+        gettingStartedFile.eachLine {
             def regex = (it =~ /(?<=implementation "me\.digi:sdk:)(\d\.\d\.\d)(?=")/)
             if (regex.find() && regex.size() > 0 && appVersionName != regex[0][1]) {
                 shouldWrite = true
@@ -127,11 +127,9 @@ tasks.register("updateInstallationGuideVersion") {
         }
 
         if (shouldWrite) {
-            readmeFile.write(outContent.toString().trim(), "UTF-8")
+            gettingStartedFile.write(outContent.toString().trim(), "UTF-8")
+            new File('./README.md').bytes = gettingStartedFile.bytes
         }
-
-        // Re-symlink README to Getting Started guide.
-        "rm README.md && ln './docs/guides/Getting Started.md' README.md".execute()
     }
 }
 
@@ -139,7 +137,7 @@ tasks.register("generateDocs", Exec.class) {
 
     group = 'publishing'
 
-    './docs/generateDocs.sh'.execute()
+    './docs/generateDocs.sh'
 }
 
 tasks.register("artifactoryPublish", GradleBuild.class) {
