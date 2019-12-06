@@ -22,10 +22,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
-    private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
+    private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
     private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
     private var fileListCompletionHandler: DMEEmptyCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
+    private var latestFileList: DMEFileList? = null
     private var activeSyncStatus: DMEFileList.SyncStatus? = null
         set(value) {
             val previousValue = field
@@ -99,7 +100,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
-    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEEmptyCompletion) {
+    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEFileListCompletion) {
 
         DMELog.i("Starting fetch of session data.")
 
@@ -128,7 +129,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         }) { error ->
             if (error != null) {
-                completion(error) // We only want to push this if the error exists, else
+                completion(null, error) // We only want to push this if the error exists, else
                 // it'll cause a premature loop exit.
             }
         }
@@ -230,6 +231,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                 val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
 
+                latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
 
@@ -267,10 +269,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 
-        activeSessionDataFetchCompletionHandler?.invoke(error)
+        activeSessionDataFetchCompletionHandler?.invoke(latestFileList, error)
 
         // Clear syncStatus.
         fileListItemCache = null
+        latestFileList = null
         activeFileDownloadHandler = null
         activeSessionDataFetchCompletionHandler = null
         activeSyncStatus = null

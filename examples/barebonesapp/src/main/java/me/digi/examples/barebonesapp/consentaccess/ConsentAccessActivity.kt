@@ -51,11 +51,11 @@ class ConsentAccessActivity : AppCompatActivity() {
                     } else
                         error?.message?.let { it1 -> removeReceiving(it1) }
                 })
-                {
-                    if (it == null)
+                { fileList, error ->
+                    if (error == null)
                         removeReceiving("")
                     else
-                        removeReceiving(it.message)
+                        removeReceiving(error.message)
                 }
             }
             error?.message?.let { it -> removeReceiving(it) }
