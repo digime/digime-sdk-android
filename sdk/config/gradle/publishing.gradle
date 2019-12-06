@@ -128,8 +128,10 @@ tasks.register("updateInstallationGuideVersion") {
 
         if (shouldWrite) {
             gettingStartedFile.write(outContent.toString().trim(), "UTF-8")
-            new File('./README.md').bytes = gettingStartedFile.bytes
         }
+
+        // Ensure README is always synced with Getting Started.
+        new File('./README.md').bytes = gettingStartedFile.bytes
     }
 }
 
@@ -158,7 +160,7 @@ tasks.register("artifactoryPublish", GradleBuild.class) {
         publishTask = 'publishAllPublicationsToDigiMeReleaseRepository'
     }
 
-    tasks = ['clean', 'assembleRelease', 'sourcesJar', 'updateInstallationGuideVersion', 'updateDocs', publishTask]
+    tasks = ['clean', 'assembleRelease', 'sourcesJar', 'updateInstallationGuideVersion', 'generateDocs', publishTask]
 }
 
 tasks.register("localPublish", GradleBuild.class) {

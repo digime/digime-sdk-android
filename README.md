@@ -1,7 +1,7 @@
 ![](https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png)
 
 <p align="center">
-    <a href="https://bit.ly/2LM4GFS">
+    <a href="https://developers.digi.me/slack/join">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
     <a href="../../LICENSE">

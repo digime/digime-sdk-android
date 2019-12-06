@@ -1,7 +1,7 @@
 ![](https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png)
 
 <p align="center">
-    <a href="https://bit.ly/2LM4GFS">
+    <a href="https://developers.digi.me/slack/join">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
     <a href="../../LICENSE">
@@ -47,7 +47,7 @@ The digi.me private sharing platform empowers developers to make use of user dat
 	
 2. Include the digi.me SDK as a dependency in your app `build.gradle` file:
 
-	`implementation "me.digi:sdk:2.0.2"`
+	`implementation "me.digi:sdk:2.1.0-SNAPSHOT"`
 
 ### Manual
 
@@ -119,8 +119,9 @@ Once you have a session, you can request data. We strive to make this as simple 
 ```kotlin
 pullClient.getSessionData({ file, error ->
     // Handle each downloaded file here.
-}) { error ->
+}) { fileList, error ->
     // Any errors interupting the flow of data will be directed here, or null once all files are retrieved.
+    // The file list here will represent the complete list of files that were downloaded.
 }
 ```
 
