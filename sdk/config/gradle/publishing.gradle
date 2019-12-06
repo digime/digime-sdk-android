@@ -133,11 +133,11 @@ tasks.register("updateInstallationGuideVersion") {
     }
 }
 
-tasks.register("generateDocs", Exec.class) {
+tasks.register("generateDocs") {
 
     group = 'publishing'
 
-    './docs/generateDocs.sh'
+    './docs/generateDocs.sh'.execute()
 }
 
 tasks.register("artifactoryPublish", GradleBuild.class) {
