@@ -75,7 +75,7 @@ Valid configurations are:
 
 ### _Scoping by service group, service type or object type:_
 
-To restrict scope at an object level, your scope must be 'fully described'; that is to say that a service group most comprise at least one service type, which must comprise at least one object type. Furthermore, a service group may only contain service types belonging to it and said service types may only contain object types belonging to them.
+To restrict scope at an object level, your scope must be 'fully described'; that is to say that a service group must comprise at least one service type, which must comprise at least one object type. Furthermore, a service group may only contain service types belonging to it and said service types may only contain object types belonging to them.
 
 Service Groups, Service Types and Objects are all listed [here](https://developers.digi.me/reference-objects) in the developer documentation. Their relationships are also shown (what belongs to what).
 

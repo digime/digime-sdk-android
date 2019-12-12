@@ -117,7 +117,7 @@ tasks.register("updateInstallationGuideVersion") {
         boolean shouldWrite = false
 
         gettingStartedFile.eachLine {
-            def regex = (it =~ /(?<=implementation "me\.digi:sdk:)(\d\.\d\.\d)(?=")/)
+            def regex = (it =~ /(?<=implementation "me\.digi:sdk:)((\d\.\d\.\d)(?:-SNAPSHOT)?)(?=")/)
             if (regex.find() && regex.size() > 0 && appVersionName != regex[0][1]) {
                 shouldWrite = true
                 outContent.append(it.replace(regex[0][1], appVersionName)).append("\n")
