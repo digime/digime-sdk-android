@@ -22,7 +22,10 @@ import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import me.digi.sdk.utilities.crypto.DMEByteTransformer
+import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.jwt.PreauthorizationRequestJWT
 import kotlin.math.max
 import kotlin.math.min
 
@@ -113,8 +116,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest? = null, credentials: DMEOAuthToken? = null, completion: DMEOngoingAuthorizationCompletion) {
 
         fun requestPreauthorizationCode(helper: DMEAuthCodeRedemptionHelper): Single<String> {
-            val jwt = helper.buildForPreAuthRequest(configuration.contractId, configuration.appId)
-            val authHeader = jwt.tokenise(DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex))
+
+            val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+
+            val codeVerifier = DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+            val jwt = PreauthorizationRequestJWT(configuration.appId, configuration.contractId, codeVerifier)
+
+            val authHeader = jwt.sign(signingKey).tokenize()
+
             return apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(authHeader))
                 .map {
                     when {
