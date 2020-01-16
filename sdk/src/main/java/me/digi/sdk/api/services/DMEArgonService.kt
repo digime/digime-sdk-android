@@ -36,5 +36,5 @@ internal interface DMEArgonService {
     fun redeemAuthCode(): Call<DMESession>
 
     @POST("v1/oauth/authorize")
-    fun getPreauthorizionCode(@Body jwt: DMEJsonWebToken): Call<DMEJsonWebToken>
+    fun getPreauthorizionCode(@Header("Authorization") jwt: String): Call<DMEJsonWebToken>
 }

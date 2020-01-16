@@ -6,6 +6,6 @@ class DMETimeRange (
 
     val from: Date?,
     val to: Date?,
-    val last: String?
-
+    val last: String?,
+    val type: String?
 )

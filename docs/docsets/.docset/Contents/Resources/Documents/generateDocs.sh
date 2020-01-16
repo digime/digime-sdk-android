@@ -1,3 +1,4 @@
+cd $(dirname $0)
 jazzy --objc --umbrella-header ~/Desktop/jazzy\ test/Header.h \
 -o . \
 --documentation="guides/*.md" \

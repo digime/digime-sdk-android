@@ -91,7 +91,7 @@
             <p><img src="https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png" alt=""></p>
 
 <p align="center">
-    <a href="https://bit.ly/2LM4GFS">
+    <a href="https://developers.digi.me/slack/join">
         <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
     </a>
     <a href="../../LICENSE">
@@ -119,8 +119,8 @@
 <p>At a code level, you can restrict the scope of a Private Sharing session by passing in a custom <code>DMEScope</code>.</p>
 <h2 id='defining-code-dmescope-code' class='heading'>Defining <code>DMEScope</code></h2>
 
-<p><code>DMEScope</code> is comprised of two properties. <code>timeRanges</code> is a list of <code>DMETimeRange</code> objects (more on this below) to limit the breadth of time for which applicable data will be returned. <code>context</code> is not currently used and should be left as the default.</p>
-<h3 id='code-dmetimerange-code' class='heading'><code>DMETimeRange</code>:</h3>
+<p><code>DMEScope</code> is comprised of three properties. <code>timeRanges</code> is a list of <code>DMETimeRange</code> objects (more on this below) to limit the breadth of time for which applicable data will be returned. <code>serviceGroups</code> is a list of <code>DMEServiceGroup</code> objects, which nests it&rsquo;s own list of <code>DMEServiceType</code> objects, nesting <code>DMEObjectType</code> objects; this is also detailed below. <code>context</code> is not currently used and should be left as the default.</p>
+<h3 id='em-scoping-by-time-range-em' class='heading'><em>Scoping by time range</em>:</h3>
 
 <p><code>DMETimeRange</code> has 3 properties. <code>fromDate</code>, <code>toDate</code> and <code>last</code>. These are all optional but <strong>at least one is required.</strong>
 <br>
@@ -155,6 +155,23 @@ Valid configurations are:</p>
 <code>last</code>: A string literal describing the period of time back from now you wish to allow.</p>
 
 <p><em>NB: Valid <code>last</code> strings take the format of a integer followed by <code>d</code>, <code>m</code>, <code>y</code>, representing days, months and years respectively. For example: <code>6m</code>.</em></p>
+<h3 id='em-scoping-by-service-group-service-type-or-object-type-em' class='heading'><em>Scoping by service group, service type or object type:</em></h3>
+
+<p>To restrict scope at an object level, your scope must be &lsquo;fully described&rsquo;; that is to say that a service group must comprise at least one service type, which must comprise at least one object type. Furthermore, a service group may only contain service types belonging to it and said service types may only contain object types belonging to them.</p>
+
+<p>Service Groups, Service Types and Objects are all listed <a href="https://developers.digi.me/reference-objects">here</a> in the developer documentation. Their relationships are also shown (what belongs to what).</p>
+
+<p>Below is an example of a valid scope to retrive only <code>Playlists</code> and <code>Followed Artists</code> from <code>Spotify</code>:</p>
+<pre class="highlight kotlin"><code><span class="kd">val</span> <span class="py">playlistObjectType</span> <span class="p">=</span> <span class="nc">DMEServiceObjectType</span><span class="p">(</span><span class="m">403</span><span class="p">)</span> <span class="c1">// 403 is the ID for a Playlist object.</span>
+<span class="kd">val</span> <span class="py">followedArtistObjectType</span> <span class="p">=</span> <span class="nc">DMEServiceObjectType</span><span class="p">(</span><span class="m">407</span><span class="p">)</span> <span class="c1">// 407 is the ID for a Followed Artist object.</span>
+
+<span class="kd">val</span> <span class="py">spotifyServiceType</span> <span class="p">=</span> <span class="nc">DMEServiceType</span><span class="p">(</span><span class="m">19</span><span class="p">,</span> <span class="nf">listOf</span><span class="p">(</span><span class="n">playlistObjectType</span><span class="p">,</span> <span class="n">followedArtistObjectType</span><span class="p">))</span> <span class="c1">// 19 is the ID for Spotify.</span>
+
+<span class="kd">val</span> <span class="py">entertainmentServiceGroup</span> <span class="p">=</span> <span class="nc">DMEServiceGroup</span><span class="p">(</span><span class="m">5</span><span class="p">,</span> <span class="nf">listOf</span><span class="p">(</span><span class="n">spotifyServiceType</span><span class="p">))</span> <span class="c1">// 5 is the ID for Entertainment.</span>
+
+<span class="kd">val</span> <span class="py">scope</span> <span class="p">=</span> <span class="nc">DMEScope</span><span class="p">()</span> <span class="c1">// This scope is valid, as no restrictions have been imposed.</span>
+<span class="n">scope</span><span class="p">.</span><span class="n">serviceGroups</span> <span class="p">=</span> <span class="nf">listOf</span><span class="p">(</span><span class="n">entertainmentServiceGroup</span><span class="p">)</span> <span class="c1">// The scope is still valid, as it conforms to the rules listed above.</span>
+</code></pre>
 <h2 id='providing-code-dmescope-code' class='heading'>Providing <code>DMEScope</code></h2>
 
 <p>When calling <code>authorize</code> on your <code>DMEPullClient</code>, simply pass in your <code>DMEScope</code> object:</p>
@@ -173,7 +190,7 @@ Valid configurations are:</p>
       </article>
     </div>
     <section class="footer">
-      <p>&copy; 2019 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2019-10-14)</p>
+      <p>&copy; 2020 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2020-01-16)</p>
       <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.11.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
     </section>
   </body>

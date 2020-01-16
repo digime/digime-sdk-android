@@ -4,8 +4,8 @@ import android.util.Base64
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
-import java.lang.IllegalArgumentException
 import java.lang.reflect.Type
+import java.net.URLEncoder
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.spec.MGF1ParameterSpec
@@ -15,25 +15,19 @@ import java.util.*
 internal class DMEJsonWebToken (
 
     val header: Header,
-    val payload: Payload,
-
-    signature: String
+    val payload: Payload
 
 ) {
 
-    var signature: String
-        get() {
-            if (field != "")
-                return field
+    fun tokenise(key: PrivateKey): String {
 
-            // Annoyingly, to generate a signature we have to compile the whole JWT together.
-            return Gson().toJson(this).split(".").last()
-        }
+        val serialized = GsonBuilder()
+            .registerTypeAdapter(DMEJsonWebToken::class.java, Adapter(key))
+            .create()
+            .toJsonTree(this)
+            .asString
 
-    constructor(header: Header, payload: Payload): this(header, payload, "")
-
-    init {
-        this.signature = signature
+        return "Bearer $serialized"
     }
 
     internal class Adapter(val signingKey: PrivateKey): JsonSerializer<DMEJsonWebToken>, JsonDeserializer<DMEJsonWebToken> {
@@ -43,22 +37,25 @@ internal class DMEJsonWebToken (
                 return JsonObject()
             }
 
+            val jwtEncodingFlags = Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP
+
             val header = context.serialize(src.header)
             val payload = context.serialize(src.payload)
 
-            val headerEnc = Base64.encodeToString(header.asString.toByteArray(), Base64.DEFAULT)
-            val payloadEnc = Base64.encodeToString(payload.asString.toByteArray(), Base64.DEFAULT)
+            val headerEnc = Base64.encodeToString(header.toString().toByteArray(), jwtEncodingFlags)
+            val payloadEnc = Base64.encodeToString(payload.toString().toByteArray(), jwtEncodingFlags)
 
-            val signer = Signature.getInstance("SHA512withRSA", "SC")
+            val signer = Signature.getInstance("SHA512withRSA/PSS", "SC")
             val parameter = PSSParameterSpec(MGF1ParameterSpec.SHA512.digestAlgorithm, "MGF1", MGF1ParameterSpec.SHA512, 64, 1)
             signer.setParameter(parameter)
             signer.initSign(signingKey)
 
-            val signable = headerEnc + payloadEnc
+            val signable = "$headerEnc.$payloadEnc"
             signer.update(signable.toByteArray())
 
-            val signature = Base64.encodeToString(signer.sign(), Base64.DEFAULT)
-            val jwt = signable + signature
+            val signature = Base64.encodeToString(signer.sign(),
+                jwtEncodingFlags)
+            val jwt = "$signable.$signature"
 
             return JsonPrimitive(jwt)
         }
@@ -83,7 +80,7 @@ internal class DMEJsonWebToken (
             val payload = context.deserialize<Payload.OAuth>(payloadJson, object: TypeToken<Payload.OAuth>(){}.type)
             val signature = JsonPrimitive(String(Base64.decode(signatureEnc, Base64.DEFAULT))).asString
 
-            return DMEJsonWebToken(header, payload, signature)
+            return DMEJsonWebToken(header, payload)
         }
     }
 
@@ -146,7 +143,7 @@ internal class DMEJsonWebToken (
         data class PreAuthRequest (
 
             @SerializedName("client_id")
-            val contractId: String,
+            val clientId: String,
 
             @SerializedName("code_challenge")
             val codeChallenge: String,

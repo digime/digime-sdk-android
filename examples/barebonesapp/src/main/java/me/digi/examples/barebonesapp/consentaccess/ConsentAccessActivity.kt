@@ -32,6 +32,7 @@ class ConsentAccessActivity : AppCompatActivity() {
             applicationContext.getString(R.string.digime_contract_id),
             pk
         )
+        cfg.baseUrl = "https://api.integration.devdigi.me/"
 
         item_ca_button_share_digime.setOnClickListener {
             displayReceiving()
@@ -41,30 +42,33 @@ class ConsentAccessActivity : AppCompatActivity() {
 
     private fun shareViaDigiMe() {
         client = DMEPullClient(applicationContext, cfg)
-        cfg.guestEnabled = true
 
-        client.authorize(this) { session, error ->
-            session?.let {
-                client.getSessionData({ file, error ->
-                    if (file != null) {
-                        Log.d("File received ", file.toString())
-                        removeReceiving("")
-                    } else
-                        error?.message?.let { it1 -> removeReceiving(it1) }
-                })
-                {
-                    if (it == null)
-                        removeReceiving("")
-                    else
-                        removeReceiving(it.message)
-                }
-            }
-            error?.message?.let { it -> removeReceiving(it) }
-        }
-
-        client.getSessionAccounts { accounts, error ->
+        client.authorizeOngoingAccess(this) { session, creds, error ->
 
         }
+
+//        client.authorize(this) { session, error ->
+//            session?.let {
+//                client.getSessionData({ file, error ->
+//                    if (file != null) {
+//                        Log.d("File received ", file.toString())
+//                        removeReceiving("")
+//                    } else
+//                        error?.message?.let { it1 -> removeReceiving(it1) }
+//                })
+//                { fileList, error ->
+//                    if (error == null)
+//                        removeReceiving("")
+//                    else
+//                        removeReceiving(error.message)
+//                }
+//            }
+//            error?.message?.let { it -> removeReceiving(it) }
+//        }
+//
+//        client.getSessionAccounts { accounts, error ->
+//
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

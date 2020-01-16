@@ -1,12 +1,15 @@
 package me.digi.sdk
 
-import android.app.Activity
+import android.app.*
 import android.content.Context
 import android.os.Handler
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import io.reactivex.Single
 import io.reactivex.SingleTransformer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.addTo
+import io.reactivex.schedulers.Schedulers
 import me.digi.sdk.api.helpers.DMEAuthCodeRedemptionHelper
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
@@ -16,8 +19,12 @@ import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
+import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import kotlin.math.max
+import kotlin.math.min
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
@@ -25,18 +32,21 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
-    private var activeSessionDataFetchCompletionHandler: DMEEmptyCompletion? = null
+    private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
+    private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
+    private var fileListCompletionHandler: DMEFileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var activeSyncState: DMEFileList.SyncState? = null
+    private var latestFileList: DMEFileList? = null
+    private var activeSyncStatus: DMEFileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
-                DMELog.d("Sync state changed. Previous: ${previousValue.rawValue}. New: ${value.rawValue}.")
+                DMELog.d("Sync syncStatus changed. Previous: ${previousValue.rawValue}. New: ${value.rawValue}.")
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -46,9 +56,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
-                when (activeSyncState) {
-                    DMEFileList.SyncState.COMPLETED() -> completeDeliveryOfSessionData(null)
-                    DMEFileList.SyncState.PARTIAL() -> completeDeliveryOfSessionData(DMEAPIError.PartialSync())
+                when (activeSyncStatus) {
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -56,9 +66,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             field = value
         }
 
-    fun authorize(fromActivity: Activity, completion: DMEAuthorizationCompletion) = authorize(fromActivity, null, completion)
+    private var stalePollCount = 0
 
-    fun authorize(fromActivity: Activity, scope: DMEDataRequest?, completion: DMEAuthorizationCompletion) {
+    @JvmOverloads
+    fun authorize(fromActivity: Activity, scope: DMEDataRequest? = null, completion: DMEAuthorizationCompletion) {
 
         DMELog.i("Launching user consent request.")
 
@@ -69,7 +80,21 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
                     Pair(true, true),
                     Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
-                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                    Pair(false, true) -> {
+                        val consentModeDialogue = ConsentModeSelectionDialogue()
+                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
+                            override fun installDigiMe() {
+                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
+                                }
+                            }
+
+                            override fun shareAsGuest() {
+                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+                            }
+                        })
+                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
+                    }
                     Pair(false, false) -> {
                         DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
                             nativeConsentManager.beginAuthorization(fromActivity, completion)
@@ -84,13 +109,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
-    fun authorizeOngoingAccess(fromActivity: Activity, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) =
-        authorizeOngoingAccess(fromActivity, null, accessToken, refreshToken, completion)
-
-    fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest?, accessToken: String?, refreshToken: String?, completion: DMEOngoingAuthorizationCompletion) {
+    @JvmOverloads
+    fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest? = null, credentials: DMEOAuthToken? = null, completion: DMEOngoingAuthorizationCompletion) {
 
         fun requestPreauthorizationCode(helper: DMEAuthCodeRedemptionHelper): Single<String> {
-            return apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(helper.buildForPreAuthRequest(configuration.contractId)))
+            val jwt = helper.buildForPreAuthRequest(configuration.contractId, configuration.appId)
+            val authHeader = jwt.tokenise(DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex))
+            return apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(authHeader))
                 .map {
                     when {
                         it.payload is DMEJsonWebToken.Payload.OAuth -> it.payload.accessToken
@@ -119,69 +144,68 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
         }
 
-        fun redeemForAuthCode(helper: DMEAuthCodeRedemptionHelper, preauthCode: String): Single<String> {
-            val req = helper.buildForPreAuthRequest(configuration.contractId)
-        }
-
         val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
         val authHelper = DMEAuthCodeRedemptionHelper()
 
-        requestSession(sessionReq)
-            .map { session -> requestPreauthorizationCode(authHelper).map { Pair(session, it) } }
-            .map {
-                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-                    Pair(true, true),
-                    Pair(true, false) -> requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
-                    Pair(false, true) -> requestConsent(fromActivity, guestConsentManager::beginGuestAuthorization)
-                    Pair(false, false) -> {
-                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                            requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
-                        }
-                    }
-                    else -> it.map { it.first }
-                }
+        val disposable = requestSession(sessionReq)
+            .flatMap { session ->
+                requestPreauthorizationCode(authHelper).map { Pair(session, it) }
             }
-            .ma
-
-
-        sessionManager.getSession(sessionReq) { session, error ->
-
-            if (session != null) {
-                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-                    Pair(true, true),
-                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
-                    Pair(false, true) -> guestConsentManager.beginGuestAuthorization(fromActivity, completion)
-                    Pair(false, false) -> {
-                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                            nativeConsentManager.beginAuthorization(fromActivity, completion)
-                        }
-                    }
-                }
-            }
-            else {
-                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
-                completion(null, error)
-            }
-        }
-
-        val ongoingAuthHelper = DMEAuthCodeRedemptionHelper()
-
-        requestPreauthorizationCode()
-            .compose(authorize())
-            .co
-
+//            .map {
+//                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+//                    Pair(true, true),
+//                    Pair(true, false) -> requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+//                    Pair(false, true) -> requestConsent(fromActivity, guestConsentManager::beginGuestAuthorization)
+//                    Pair(false, false) -> {
+//                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+//                            requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+//                        }
+//                    }
+//                    else -> it.map { it.first }
+//                }
+//            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ result ->
+                DMELog.i(result.toString())
+            }, { error ->
+                DMELog.e(error.toString())
+            })
     }
 
-    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEEmptyCompletion) {
+    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEFileListCompletion) {
 
         DMELog.i("Starting fetch of session data.")
 
-        // Init state.
-        fileListItemCache = DMEFileListItemCache()
+
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
 
-        scheduleNextPoll(true)
+        getSessionFileList({ _, updatedFileIds ->
+
+            updatedFileIds.forEach {
+
+                activeDownloadCount++
+                DMELog.d("Downloading file with ID: $it.")
+
+                getSessionData(it) { file, error ->
+
+                    when {
+                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                    }
+
+                    downloadHandler.invoke(file, error)
+                    activeDownloadCount--
+                }
+            }
+
+        }) { fileList, error ->
+            if (error != null) {
+                completion(fileList, error) // We only want to push this if the error exists, else
+                // it'll cause a premature loop exit.
+            }
+        }
     }
 
     fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
@@ -203,7 +227,25 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    internal fun getFileList(completion: DMEFileListCompletion) {
+    fun getSessionFileList(updateHandler: DMEIncrementalFileListUpdate, completion: DMEFileListCompletion) {
+
+        fileListUpdateHandler = updateHandler
+        fileListCompletionHandler = { fileList, error ->
+            val err = if (error is DMESDKError.FileListPollingTimeout) null else error
+            completion(fileList, err)
+            if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
+                completeDeliveryOfSessionData(err)
+            }
+        }
+
+        if (activeSyncStatus == null) {
+            // Init syncStatus.
+            fileListItemCache = DMEFileListItemCache()
+            scheduleNextPoll(true)
+        }
+    }
+
+    fun getFileList(completion: DMEFileListCompletion) {
 
         val currentSession = sessionManager.currentSession
 
@@ -249,60 +291,47 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.d("Session data poll scheduled.")
 
-        val delay = (if (immediately) 0 else 3000).toLong()
+        val delay = (if (immediately) 0 else (max(configuration.pollInterval, 3) * 1000).toLong())
         Handler().postDelayed({
 
             DMELog.d("Fetching file list.")
             getFileList { fileList, listFetchError ->
 
                 when {
-                    fileList != null -> DMELog.d("File list obtained; Sync state is ${fileList.state.rawValue}.")
+                    fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncState = fileList?.state ?: DMEFileList.SyncState.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
 
+                latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
                 DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
-                if (updatedFileIds.count() > 0)
-                    scheduledPollDidDiscoverUpdatedFiles(updatedFileIds)
 
-                when (syncState) {
-                    DMEFileList.SyncState.PENDING(),
-                    DMEFileList.SyncState.RUNNING() -> {
+                if (updatedFileIds.count() > 0 && fileList != null) {
+                    fileListUpdateHandler?.invoke(fileList, updatedFileIds)
+                    stalePollCount = 0
+                }
+                else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                    fileListCompletionHandler?.invoke(fileList, DMESDKError.FileListPollingTimeout())
+                    return@getFileList
+                }
+
+                when (syncStatus) {
+                    DMEFileList.SyncStatus.PENDING(),
+                    DMEFileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
+                    DMEFileList.SyncStatus.COMPLETED(),
+                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(fileList, null)
                     else -> Unit
                 }
 
-                activeSyncState = syncState
+                activeSyncStatus = syncStatus
             }
 
         }, delay)
-    }
-
-    private fun scheduledPollDidDiscoverUpdatedFiles(updatedFileIds: List<String>) {
-        // We have updated files, attempt to fetch them.
-
-        DMELog.i("Discovered files with updates.")
-
-        updatedFileIds.forEach {
-
-            activeDownloadCount++
-            DMELog.d("Downloading file with ID: $it.")
-
-            getSessionData(it) { file, error ->
-
-                when {
-                    file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                    else -> DMELog.e("Failed to download updates for file with ID: $it.")
-                }
-
-                activeFileDownloadHandler?.invoke(file, error)
-                activeDownloadCount--
-            }
-        }
     }
 
     private fun completeDeliveryOfSessionData(error: DMEError?) {
@@ -313,13 +342,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 
-        activeSessionDataFetchCompletionHandler?.invoke(error)
+        activeSessionDataFetchCompletionHandler?.invoke(latestFileList, error)
 
-        // Clear state.
+        // Clear syncStatus.
         fileListItemCache = null
+        latestFileList = null
         activeFileDownloadHandler = null
         activeSessionDataFetchCompletionHandler = null
-        activeSyncState = null
+        activeSyncStatus = null
         activeDownloadCount = 0
     }
 }

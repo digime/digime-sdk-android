@@ -6,12 +6,12 @@ apply from: 'config/gradle/versioning.gradle'
 apply from: 'config/gradle/coverage.gradle'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
 
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode 1
         versionName "$versions.sdk"
 
@@ -60,6 +60,7 @@ dependencies {
 
     implementation "com.android.support:support-annotations:$versions.supportannotations"
     implementation "com.android.support:appcompat-v7:$versions.supportlibrary"
+    implementation "com.android.support:cardview-v7:$versions.supportlibrary"
     implementation "com.android.support.constraint:constraint-layout:$versions.constraintlayout"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.google.code.gson:gson:$versions.gson"
@@ -70,6 +71,7 @@ dependencies {
     implementation "com.madgag.spongycastle:pkix:$versions.spongycastlepkix"
     implementation "com.madgag.spongycastle:prov:$versions.spongycastleprovider"
     implementation "io.reactivex.rxjava2:rxkotlin:$versions.rxkotlin"
+    implementation "io.reactivex.rxjava2:rxandroid:$versions.rxandroid"
 
     testImplementation "junit:junit:$versions.junit"
     testImplementation "org.robolectric:robolectric:$versions.robolectric"
@@ -77,6 +79,9 @@ dependencies {
     testImplementation "org.robolectric:robolectric-shadows:$versions.robolectricshadows"
     androidTestImplementation "com.android.support.test:runner:$versions.testrunner"
     androidTestImplementation "com.android.support.test.espresso:espresso-core:$versions.espresso"
+
+    testImplementation "io.mockk:mockk:$versions.mockk"
+
 }
 
 repositories {

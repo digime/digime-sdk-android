@@ -50,7 +50,6 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             })
         if (clientConfig is DMEPullConfiguration) {
             gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
-            gsonBuilder.registerTypeAdapter(DMEJsonWebToken::class.java, DMEJsonWebToken.Adapter(DMEKeyTransformer.javaPrivateKeyFromHex(clientConfig.privateKeyHex)))
         }
 
         val requestDispatcher = Dispatcher()
