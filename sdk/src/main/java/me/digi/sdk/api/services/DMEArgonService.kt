@@ -6,6 +6,7 @@ import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRefreshRequest
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.utilities.jwt.PreauthorizationResponseJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -36,5 +37,5 @@ internal interface DMEArgonService {
     fun redeemAuthCode(): Call<DMESession>
 
     @POST("v1/oauth/authorize")
-    fun getPreauthorizionCode(@Header("Authorization") jwt: String): Call<DMEJsonWebToken>
+    fun getPreauthorizionCode(@Header("Authorization") jwt: String): Call<PreauthorizationResponseJWT>
 }

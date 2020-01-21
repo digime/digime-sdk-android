@@ -11,7 +11,10 @@ import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.isAccessible
 
 class ConsentAccessActivity : AppCompatActivity() {
     private lateinit var client: DMEPullClient
@@ -44,7 +47,11 @@ class ConsentAccessActivity : AppCompatActivity() {
         client = DMEPullClient(applicationContext, cfg)
 
         client.authorizeOngoingAccess(this) { session, creds, error ->
-
+            @Suppress("UNCHECKED_CAST")
+            val property = (client::class.members.firstOrNull { it.name == "sessionManager" } as KProperty<DMESessionManager>)
+            property.isAccessible = true
+            val sessionKey = property.getter.call(client).currentSession?.key
+            print(sessionKey)
         }
 
 //        client.authorize(this) { session, error ->

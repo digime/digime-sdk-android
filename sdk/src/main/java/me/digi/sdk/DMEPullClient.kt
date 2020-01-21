@@ -115,7 +115,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     @JvmOverloads
     fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest? = null, credentials: DMEOAuthToken? = null, completion: DMEOngoingAuthorizationCompletion) {
 
-        fun requestPreauthorizationCode(helper: DMEAuthCodeRedemptionHelper): Single<String> {
+        fun requestPreauthorizationCode(): Single<String> {
 
             val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
 
@@ -125,12 +125,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val authHeader = jwt.sign(signingKey).tokenize()
 
             return apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(authHeader))
-                .map {
-                    when {
-                        it.payload is DMEJsonWebToken.Payload.OAuth -> it.payload.accessToken
-                        else -> throw IllegalArgumentException()
-                    }
-                }
+                .map { it.preauthorizationCode }
         }
 
         fun requestSession(req: DMESessionRequest) = Single.create<DMESession> {
@@ -154,25 +149,24 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
 
         val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
-        val authHelper = DMEAuthCodeRedemptionHelper()
 
         val disposable = requestSession(sessionReq)
             .flatMap { session ->
-                requestPreauthorizationCode(authHelper).map { Pair(session, it) }
+                requestPreauthorizationCode().map { Pair(session, it) }
             }
-//            .map {
-//                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-//                    Pair(true, true),
-//                    Pair(true, false) -> requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
-//                    Pair(false, true) -> requestConsent(fromActivity, guestConsentManager::beginGuestAuthorization)
-//                    Pair(false, false) -> {
-//                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-//                            requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
-//                        }
-//                    }
-//                    else -> it.map { it.first }
-//                }
-//            }
+            .map {
+                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+                    Pair(true, true),
+                    Pair(true, false) -> requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+                    Pair(false, true) -> requestConsent(fromActivity, guestConsentManager::beginGuestAuthorization)
+                    Pair(false, false) -> {
+                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            requestConsent(fromActivity, nativeConsentManager::beginAuthorization)
+                        }
+                    }
+                    else -> it.first
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ result ->
