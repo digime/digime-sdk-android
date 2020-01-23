@@ -21,6 +21,7 @@ class DMESessionManager(private val apiClient: DMEAPIClient, private val clientC
 
             session?.scope = sessionRequest.scope
             session?.createdDate = Date()
+            session?.metadata = emptyMap<String, Any>().toMutableMap()
             currentSession = session
             currentScope = sessionRequest
             completion(session, error)

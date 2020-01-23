@@ -1,6 +1,7 @@
 package me.digi.sdk.entities
 
-import java.util.*
+import me.digi.sdk.utilities.jwt.AuthCodeExchangeResponseJWT
+import java.util.Date
 
 data class DMEOAuthToken (
 
@@ -9,4 +10,6 @@ data class DMEOAuthToken (
     val refreshToken: String,
     val tokenType: String
 
-)
+) {
+    internal constructor(jwt: AuthCodeExchangeResponseJWT): this(jwt.accessToken, Date(jwt.expiresOn.toLong()), jwt.refreshToken, jwt.tokenType)
+}

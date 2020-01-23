@@ -47,11 +47,9 @@ class ConsentAccessActivity : AppCompatActivity() {
         client = DMEPullClient(applicationContext, cfg)
 
         client.authorizeOngoingAccess(this) { session, creds, error ->
-            @Suppress("UNCHECKED_CAST")
-            val property = (client::class.members.firstOrNull { it.name == "sessionManager" } as KProperty<DMESessionManager>)
-            property.isAccessible = true
-            val sessionKey = property.getter.call(client).currentSession?.key
-            print(sessionKey)
+            print(session)
+            print(creds)
+            print(error)
         }
 
 //        client.authorize(this) { session, error ->

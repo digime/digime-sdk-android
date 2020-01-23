@@ -19,7 +19,7 @@ data class DMESession (
 
     var refreshToken: String?,
 
-    val preauthorizationCode: String?,
+    var preauthorizationCode: String?,
 
     var authorizationCode: String?
 
@@ -28,6 +28,6 @@ data class DMESession (
     var createdDate: Date? = null
     var scope: DMEDataRequest? = null
     private var sessionManager: WeakReference<String>? = null
-    var metadata: Map<String, Any> = emptyMap()
+    var metadata: MutableMap<String, Any> = emptyMap<String, Any>().toMutableMap()
 
 }

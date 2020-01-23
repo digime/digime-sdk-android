@@ -3,7 +3,7 @@ package me.digi.sdk.utilities.jwt
 import com.google.gson.annotations.JsonAdapter
 
 @JsonAdapter(PreauthorizationResponseJWT.Adapter::class)
-internal class PreauthorizationResponseJWT(tokenised: String? = null): JsonWebToken(tokenised) {
+internal class PreauthorizationResponseJWT(tokenised: String): JsonWebToken(tokenised) {
 
     @JwtClaim
     lateinit var preauthorizationCode: String

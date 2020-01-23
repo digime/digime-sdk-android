@@ -179,9 +179,9 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             R.string.key_app_name
         ).map { ctx.getString(it) }
 
-        session.metadata = payload.filter {
+        session.metadata.putAll(payload.filter {
             metadataWhitelistedKeys.contains(it.key)
-        }
+        })
 
     } ?: run { Unit }
 }

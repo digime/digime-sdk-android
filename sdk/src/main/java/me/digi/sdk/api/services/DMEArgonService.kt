@@ -2,10 +2,13 @@ package me.digi.sdk.api.services
 
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
+import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRefreshRequest
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.utilities.jwt.AuthCodeExchangeRequestJWT
+import me.digi.sdk.utilities.jwt.AuthCodeExchangeResponseJWT
 import me.digi.sdk.utilities.jwt.PreauthorizationResponseJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -38,4 +41,7 @@ internal interface DMEArgonService {
 
     @POST("v1/oauth/authorize")
     fun getPreauthorizionCode(@Header("Authorization") jwt: String): Call<PreauthorizationResponseJWT>
+
+    @POST("v1/oauth/token")
+    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<AuthCodeExchangeResponseJWT>
 }
