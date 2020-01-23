@@ -28,6 +28,7 @@ import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.AuthCodeExchangeRequestJWT
 import me.digi.sdk.utilities.jwt.PreauthorizationRequestJWT
 import me.digi.sdk.utilities.jwt.PreauthorizationResponseJWT
+import me.digi.sdk.utilities.jwt.TriggerDataQueryRequestJWT
 import kotlin.math.max
 import kotlin.math.min
 
@@ -178,12 +179,23 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
         }
 
+        fun triggerDataQuery() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
+            it.flatMap { result ->
+                val jwt = TriggerDataQueryRequestJWT(configuration.appId, configuration.contractId, result.first.key, result.second.accessToken)
+                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+                val authHeader = jwt.sign(signingKey).tokenize()
+                apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
+                    .map { result }
+            }
+        }
+
         val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
 
         requestSession(sessionReq)
             .compose(requestPreauthorizationCode())
             .compose(requestConsent(fromActivity))
             .compose(exchangeAuthorizationCode())
+            .compose(triggerDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ result ->

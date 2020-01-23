@@ -44,4 +44,7 @@ internal interface DMEArgonService {
 
     @POST("v1/oauth/token")
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<AuthCodeExchangeResponseJWT>
+
+    @POST("v1.4/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
+    fun triggerDataQuery(@Header("Authorization") jwt: String): Call<Unit>
 }

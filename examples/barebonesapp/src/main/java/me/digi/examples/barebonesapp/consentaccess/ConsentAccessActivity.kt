@@ -47,9 +47,22 @@ class ConsentAccessActivity : AppCompatActivity() {
         client = DMEPullClient(applicationContext, cfg)
 
         client.authorizeOngoingAccess(this) { session, creds, error ->
-            print(session)
-            print(creds)
-            print(error)
+            session?.let {
+                client.getSessionData({ file, error ->
+                    if (file != null) {
+                        Log.d("File received ", file.toString())
+                        removeReceiving("")
+                    } else
+                        error?.message?.let { it1 -> removeReceiving(it1) }
+                })
+                { fileList, error ->
+                    if (error == null)
+                        removeReceiving("")
+                    else
+                        removeReceiving(error.message)
+                }
+            }
+            error?.message?.let { it -> removeReceiving(it) }
         }
 
 //        client.authorize(this) { session, error ->

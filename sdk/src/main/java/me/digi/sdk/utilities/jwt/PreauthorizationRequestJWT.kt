@@ -6,7 +6,7 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.security.MessageDigest
 import java.util.Date
 
-@Suppress("unused")
+@Suppress("UNUSED")
 internal class PreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String): JsonWebToken() {
 
     @JwtClaim val clientId = "${appId}_${contractId}"
