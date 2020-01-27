@@ -25,9 +25,10 @@ import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.jwt.*
 import me.digi.sdk.utilities.jwt.AuthCodeExchangeRequestJWT
 import me.digi.sdk.utilities.jwt.PreauthorizationRequestJWT
-import me.digi.sdk.utilities.jwt.PreauthorizationResponseJWT
+import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
 import me.digi.sdk.utilities.jwt.TriggerDataQueryRequestJWT
 import kotlin.math.max
 import kotlin.math.min
@@ -140,7 +141,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
 
-                apiClient.makeCall(apiClient.argonService.getPreauthorizionCode(authHeader))
+                apiClient.makeCall(apiClient.argonService.getPreauthorizationCode(authHeader))
                     .map {
                         session.apply {
                             preauthorizationCode = it.preauthorizationCode
@@ -189,13 +190,42 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
         }
 
+        fun refreshCredentials() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
+            it.flatMap { result ->
+                val jwt = RefreshCredentialsRequestJWT(configuration.appId, configuration.contractId, result.second.refreshToken)
+                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+                val authHeader = jwt.sign(signingKey).tokenize()
+                apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
+                    .map { result }
+            }
+        }
+
         val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
+        var activeCredentials = credentials
 
         requestSession(sessionReq)
-            .compose(requestPreauthorizationCode())
-            .compose(requestConsent(fromActivity))
-            .compose(exchangeAuthorizationCode())
+            .let {
+                if (activeCredentials != null) {
+                    it.map { Pair(it, activeCredentials!!) }
+                }
+                else {
+                    it.compose(requestPreauthorizationCode())
+                    .compose(requestConsent(fromActivity))
+                    .compose(exchangeAuthorizationCode())
+                    .doOnSuccess {
+                        activeCredentials = it.second
+                    }
+                }
+            }
             .compose(triggerDataQuery())
+            .onErrorResumeNext { error ->
+                if (error is DMEAPIError.Server && error.code == "InvalidToken") {
+                    Single.just(Pair(nativeConsentManager.sessionManager.currentSession!!, activeCredentials!!))
+                        .compose(refreshCredentials())
+                        .doOnSuccess { activeCredentials = it.second }
+                }
+                Single.error(error)
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ result ->
