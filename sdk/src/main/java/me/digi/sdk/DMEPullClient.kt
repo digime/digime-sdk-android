@@ -8,6 +8,9 @@ import io.reactivex.ObservableTransformer
 import io.reactivex.Single
 import io.reactivex.SingleTransformer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.disposables.Disposables
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
 import me.digi.sdk.api.helpers.DMEAuthCodeRedemptionHelper
@@ -74,6 +77,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
 
     private var stalePollCount = 0
+
+    private val compositeDisposable = CompositeDisposable()
 
     @JvmOverloads
     fun authorize(fromActivity: Activity, scope: DMEDataRequest? = null, completion: DMEAuthorizationCompletion) {
@@ -200,10 +205,18 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
         }
 
+        // Defined above are a number of 'modules' that are used within the Cyclic CA flow.
+        // These can be combined in various ways as the auth state demands.
+        // See the flow below for details.
+
         val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
         var activeCredentials = credentials
 
+        // First, we get a session as normal.
         requestSession(sessionReq)
+
+            // Next, we check if any credentials were supplied (for access restoration).
+            // If not, we kick the user out to digi.me to authorise normally.
             .let {
                 if (activeCredentials != null) {
                     it.map { Pair(it, activeCredentials!!) }
@@ -217,14 +230,49 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     }
                 }
             }
+
+            // At this point, we have a session and a set of credentials, so we can trigger
+            // the data query to 'pair' the credentials with the session.
             .compose(triggerDataQuery())
             .onErrorResumeNext { error ->
+
+                // If an error is encountered from this call, we inspect it to see if it's an
+                // 'InvalidToken' error, meaning that the ACCESS token has expired.
                 if (error is DMEAPIError.Server && error.code == "InvalidToken") {
+
+                    // If so, we take the active session and expired credentials and try to refresh them.
                     Single.just(Pair(nativeConsentManager.sessionManager.currentSession!!, activeCredentials!!))
                         .compose(refreshCredentials())
                         .doOnSuccess { activeCredentials = it.second }
+                        .onErrorResumeNext { error ->
+
+                            // If an error is encountered from this call, we inspect it to see if it's an
+                            // 'InvalidToken' error, meaning that the REFRESH token has expired.
+                            if (error is DMEAPIError.Server && error.code == "InvalidToken") {
+
+                                // If so, we need to obtain a new set of credentials from the digi.me
+                                // application. Process the flow as before, for ongoing access.
+                                Single.just(nativeConsentManager.sessionManager.currentSession!!)
+                                    .compose(requestPreauthorizationCode())
+                                    .compose(requestConsent(fromActivity))
+                                    .compose(exchangeAuthorizationCode())
+                                    .doOnSuccess {
+                                        activeCredentials = it.second
+                                    }
+
+                                    // Once new credentials are obtained, re-trigger the data query.
+                                    // If it fails here, credentials are not the issue. The error
+                                    // will be propagated down to the callback as normal.
+                                    .compose(triggerDataQuery())
+                            }
+                            else {
+                                Single.error(error)
+                            }
+                        }
                 }
-                Single.error(error)
+                else {
+                    Single.error(error)
+                }
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -233,7 +281,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }, { error ->
                 completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.Generic())
             })
-            .apply {  }
+            .addTo(compositeDisposable)
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEFileListCompletion) {
