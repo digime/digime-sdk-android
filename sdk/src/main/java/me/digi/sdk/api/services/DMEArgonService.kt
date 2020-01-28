@@ -2,14 +2,11 @@ package me.digi.sdk.api.services
 
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
-import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMESession
-import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRefreshRequest
 import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.utilities.jwt.AuthCodeExchangeRequestJWT
-import me.digi.sdk.utilities.jwt.AuthCodeExchangeResponseJWT
-import me.digi.sdk.utilities.jwt.PreauthorizationResponseJWT
+import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
+import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
 import me.digi.sdk.utilities.jwt.RefreshCredentialsResponseJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -44,10 +41,10 @@ internal interface DMEArgonService {
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>
 
     @POST("v1/oauth/authorize")
-    fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<PreauthorizationResponseJWT>
+    fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreauthorizationResponseJWT>
 
     @POST("v1/oauth/token")
-    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<AuthCodeExchangeResponseJWT>
+    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<DMEAuthCodeExchangeResponseJWT>
 
     @POST("v1.4/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(@Header("Authorization") jwt: String): Call<Unit>

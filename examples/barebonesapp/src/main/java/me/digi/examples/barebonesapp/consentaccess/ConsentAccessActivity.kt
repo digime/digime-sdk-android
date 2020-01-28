@@ -1,5 +1,6 @@
 package me.digi.examples.barebonesapp.consentaccess
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -9,10 +10,12 @@ import kotlinx.android.synthetic.main.consent_access_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPullClient
+import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import java.util.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.isAccessible
 
@@ -44,9 +47,7 @@ class ConsentAccessActivity : AppCompatActivity() {
     }
 
     private fun shareViaDigiMe() {
-        client = DMEPullClient(applicationContext, cfg)
-
-        client.authorizeOngoingAccess(this) { session, creds, error ->
+        client.authorize(this) { session, error ->
             session?.let {
                 client.getSessionData({ file, error ->
                     if (file != null) {
@@ -64,29 +65,6 @@ class ConsentAccessActivity : AppCompatActivity() {
             }
             error?.message?.let { it -> removeReceiving(it) }
         }
-
-//        client.authorize(this) { session, error ->
-//            session?.let {
-//                client.getSessionData({ file, error ->
-//                    if (file != null) {
-//                        Log.d("File received ", file.toString())
-//                        removeReceiving("")
-//                    } else
-//                        error?.message?.let { it1 -> removeReceiving(it1) }
-//                })
-//                { fileList, error ->
-//                    if (error == null)
-//                        removeReceiving("")
-//                    else
-//                        removeReceiving(error.message)
-//                }
-//            }
-//            error?.message?.let { it -> removeReceiving(it) }
-//        }
-//
-//        client.getSessionAccounts { accounts, error ->
-//
-//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -7,7 +7,7 @@ import java.security.MessageDigest
 import java.util.Date
 
 @Suppress("UNUSED")
-internal class PreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String): JsonWebToken() {
+internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String): JsonWebToken() {
 
     @JwtClaim val clientId = "${appId}_${contractId}"
     @JwtClaim val nonce: String

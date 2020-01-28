@@ -5,7 +5,7 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.util.*
 
 @Suppress("UNUSED")
-internal class TriggerDataQueryRequestJWT (
+internal class DMETriggerDataQueryRequestJWT (
 
     appId: String,
     contractId: String,

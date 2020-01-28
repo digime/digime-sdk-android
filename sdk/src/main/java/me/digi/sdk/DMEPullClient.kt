@@ -3,21 +3,15 @@ package me.digi.sdk
 import android.app.*
 import android.content.Context
 import android.os.Handler
-import io.reactivex.Observable
-import io.reactivex.ObservableTransformer
 import io.reactivex.Single
 import io.reactivex.SingleTransformer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.disposables.Disposables
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
-import me.digi.sdk.api.helpers.DMEAuthCodeRedemptionHelper
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
-import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
@@ -28,13 +22,11 @@ import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
-import me.digi.sdk.utilities.jwt.*
-import me.digi.sdk.utilities.jwt.AuthCodeExchangeRequestJWT
-import me.digi.sdk.utilities.jwt.PreauthorizationRequestJWT
+import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeRequestJWT
+import me.digi.sdk.utilities.jwt.DMEPreauthorizationRequestJWT
 import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
-import me.digi.sdk.utilities.jwt.TriggerDataQueryRequestJWT
+import me.digi.sdk.utilities.jwt.DMETriggerDataQueryRequestJWT
 import kotlin.math.max
-import kotlin.math.min
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
 
@@ -141,7 +133,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val codeVerifier = DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
                 session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
-                val jwt = PreauthorizationRequestJWT(configuration.appId, configuration.contractId, codeVerifier)
+                val jwt = DMEPreauthorizationRequestJWT(configuration.appId, configuration.contractId, codeVerifier)
 
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
@@ -173,7 +165,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             it.flatMap { session ->
 
                 val codeVerifier = session.metadata[context.getString(R.string.key_code_verifier)].toString()
-                val jwt = AuthCodeExchangeRequestJWT(configuration.appId, configuration.contractId, session.authorizationCode!!, codeVerifier)
+                val jwt = DMEAuthCodeExchangeRequestJWT(configuration.appId, configuration.contractId, session.authorizationCode!!, codeVerifier)
 
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
@@ -187,7 +179,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         fun triggerDataQuery() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
             it.flatMap { result ->
-                val jwt = TriggerDataQueryRequestJWT(configuration.appId, configuration.contractId, result.first.key, result.second.accessToken)
+                val jwt = DMETriggerDataQueryRequestJWT(configuration.appId, configuration.contractId, result.first.key, result.second.accessToken)
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
                 apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))

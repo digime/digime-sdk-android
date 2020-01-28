@@ -1,10 +1,9 @@
 package me.digi.sdk.utilities.jwt
 
 import com.google.gson.annotations.JsonAdapter
-import java.util.*
 
-@JsonAdapter(AuthCodeExchangeResponseJWT.Adapter::class)
-internal class AuthCodeExchangeResponseJWT(tokenised: String): JsonWebToken(tokenised) {
+@JsonAdapter(DMEAuthCodeExchangeResponseJWT.Adapter::class)
+internal class DMEAuthCodeExchangeResponseJWT(tokenised: String): JsonWebToken(tokenised) {
 
     @JwtClaim
     lateinit var accessToken: String
@@ -22,5 +21,5 @@ internal class AuthCodeExchangeResponseJWT(tokenised: String): JsonWebToken(toke
     lateinit var tokenType: String
         private set
 
-    inner class Adapter: JsonWebToken.Adapter<AuthCodeExchangeResponseJWT>()
+    inner class Adapter: JsonWebToken.Adapter<DMEAuthCodeExchangeResponseJWT>()
 }
