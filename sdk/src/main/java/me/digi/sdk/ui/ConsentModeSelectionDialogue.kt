@@ -5,8 +5,8 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.*
-import me.digi.sdk.R
 import kotlinx.android.synthetic.main.consent_mode_selection_fragment.*
+import me.digi.sdk.R
 
 class ConsentModeSelectionDialogue: DialogFragment() {
 

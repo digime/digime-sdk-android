@@ -1,7 +1,7 @@
 package me.digi.sdk.entities
 
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
-import java.util.Date
+import java.util.*
 
 data class DMEOAuthToken (
 

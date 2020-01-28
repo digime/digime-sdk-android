@@ -1,13 +1,13 @@
 package me.digi.sdk.utilities.crypto
 
 import android.util.Base64
+import org.spongycastle.asn1.ASN1InputStream
+import org.spongycastle.asn1.pkcs.RSAPublicKey
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.RSAPublicKeySpec
-import org.spongycastle.asn1.ASN1InputStream
-import org.spongycastle.asn1.pkcs.RSAPublicKey
 
 object DMEKeyTransformer {
 

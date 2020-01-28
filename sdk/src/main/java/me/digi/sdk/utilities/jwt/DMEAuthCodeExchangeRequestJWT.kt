@@ -2,7 +2,7 @@ package me.digi.sdk.utilities.jwt
 
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
-import java.util.Date
+import java.util.*
 
 @Suppress("UNUSED")
 internal class DMEAuthCodeExchangeRequestJWT (

@@ -3,18 +3,14 @@ package me.digi.sdk.interapp.managers
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.os.Build
 import me.digi.sdk.DMEAuthError
-import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.*
-import me.digi.sdk.utilities.DMEDrawableUtils
-import me.digi.sdk.utilities.DMELog
 
 class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
 

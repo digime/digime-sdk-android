@@ -1,8 +1,10 @@
 package me.digi.sdk.api
 
 import android.content.Context
-import com.google.gson.*
-import io.reactivex.Observable
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
 import io.reactivex.Single
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
@@ -16,7 +18,6 @@ import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -26,7 +27,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import java.net.URL
-import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 

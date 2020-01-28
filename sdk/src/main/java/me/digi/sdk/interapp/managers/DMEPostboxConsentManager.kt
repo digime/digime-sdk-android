@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.entities.DMEPostbox
 import me.digi.sdk.interapp.DMEAppCallbackHandler

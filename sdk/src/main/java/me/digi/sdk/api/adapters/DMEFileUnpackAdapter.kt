@@ -1,7 +1,10 @@
 package me.digi.sdk.api.adapters
 
 import android.util.Base64
-import com.google.gson.*
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.entities.DMEFile

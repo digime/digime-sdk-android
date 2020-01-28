@@ -1,18 +1,19 @@
 package me.digi.sdk.tests.api.helpers.adapters
 
+import com.google.gson.Gson
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
+import io.mockk.every
+import io.mockk.mockk
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.google.gson.JsonElement
-import com.google.gson.Gson
-import io.mockk.*
-import org.junit.Before
 
 @RunWith(RobolectricTestRunner::class)
 class DMESessionRequestAdapterSpec {

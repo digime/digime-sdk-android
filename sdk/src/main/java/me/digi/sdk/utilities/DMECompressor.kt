@@ -1,7 +1,6 @@
 package me.digi.sdk.utilities
 
 import me.digi.sdk.DMESDKError
-import java.lang.StringBuilder
 import java.util.zip.GZIPInputStream
 
 object DMECompressor {

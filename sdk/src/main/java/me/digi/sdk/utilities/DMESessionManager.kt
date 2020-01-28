@@ -5,7 +5,7 @@ import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
-import java.util.Date
+import java.util.*
 
 class DMESessionManager(private val apiClient: DMEAPIClient, private val clientConfig: DMEClientConfiguration) {
 

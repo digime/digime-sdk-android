@@ -2,14 +2,12 @@ package me.digi.sdk.utilities.jwt
 
 import android.util.Base64
 import com.google.gson.*
-import com.google.gson.annotations.JsonAdapter
 import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
-import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor

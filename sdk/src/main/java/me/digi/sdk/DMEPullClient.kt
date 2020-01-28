@@ -1,6 +1,6 @@
 package me.digi.sdk
 
-import android.app.*
+import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import io.reactivex.Single
@@ -10,7 +10,6 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
 import me.digi.sdk.callbacks.*
-import me.digi.sdk.callbacks.DMEFileListCompletion
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -24,8 +23,8 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeRequestJWT
 import me.digi.sdk.utilities.jwt.DMEPreauthorizationRequestJWT
-import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
 import me.digi.sdk.utilities.jwt.DMETriggerDataQueryRequestJWT
+import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
 import kotlin.math.max
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {

@@ -1,7 +1,6 @@
 package me.digi.sdk.utilities
 
 import android.net.Uri
-import java.lang.IllegalArgumentException
 
 class DMEDeepLinkBuilder {
 

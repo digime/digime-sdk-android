@@ -2,7 +2,7 @@ package me.digi.sdk.entities
 
 import com.google.gson.annotations.SerializedName
 import java.lang.ref.WeakReference
-import java.util.Date
+import java.util.*
 
 data class DMESession (
 

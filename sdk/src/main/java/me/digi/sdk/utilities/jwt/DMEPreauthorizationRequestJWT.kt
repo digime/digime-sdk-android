@@ -4,7 +4,7 @@ import android.util.Base64
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.security.MessageDigest
-import java.util.Date
+import java.util.*
 
 @Suppress("UNUSED")
 internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String): JsonWebToken() {
