@@ -38,7 +38,6 @@ class ConsentAccessActivity : AppCompatActivity() {
             applicationContext.getString(R.string.digime_contract_id),
             pk
         )
-        cfg.baseUrl = "https://api.integration.devdigi.me/"
 
         item_ca_button_share_digime.setOnClickListener {
             displayReceiving()

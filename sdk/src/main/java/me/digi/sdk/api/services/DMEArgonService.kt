@@ -3,7 +3,6 @@ package me.digi.sdk.api.services
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession
-import me.digi.sdk.entities.api.DMESessionRefreshRequest
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
 import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
@@ -30,12 +29,6 @@ internal interface DMEArgonService {
     fun pushData(@Header("sessionKey") sessionKey: String, @Header("symmetricalKey") symmetricalKey: String,
                  @Header("iv") iv: String, @Header("metadata") metadata: String,
                  @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>
-
-    @POST("v1.4/permission-access/session/refresh")
-    fun refreshSession(@Body sessionRefreshRequest: DMESessionRefreshRequest): Call<DMESession>
-
-    @POST("v1/oauth/token")
-    fun redeemAuthCode(): Call<DMESession>
 
     @POST("v1/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>

@@ -15,7 +15,6 @@ import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.DMEClientConfiguration
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEPullConfiguration
-import me.digi.sdk.entities.api.DMEJsonWebToken
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import okhttp3.Dispatcher

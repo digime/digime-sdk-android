@@ -15,10 +15,6 @@ data class DMESession (
     @SerializedName("expiry")
     val expiryDate: Date,
 
-    val accessToken: String?,
-
-    var refreshToken: String?,
-
     var preauthorizationCode: String?,
 
     var authorizationCode: String?
