@@ -1,7 +1,8 @@
 package me.digi.sdk.api.adapters
 
 import com.google.gson.*
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEDataAcceptCondition
+import me.digi.sdk.entities.DMEDataRequest
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type

@@ -9,7 +9,9 @@ import kotlinx.android.synthetic.main.postbox_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEMimeType
+import me.digi.sdk.entities.DMEPushConfiguration
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
 import java.io.IOException
 

@@ -3,18 +3,14 @@ package me.digi.sdk.interapp.managers
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.os.Build
 import me.digi.sdk.DMEAuthError
-import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.*
-import me.digi.sdk.utilities.DMEDrawableUtils
-import me.digi.sdk.utilities.DMELog
 
 class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
 
@@ -38,7 +34,11 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             val caParams = mapOf(
                 ctx.getString(R.string.key_session_key) to session.key,
                 ctx.getString(R.string.key_app_id) to appId
-            )
+            ).toMutableMap()
+
+            if (sessionManager.currentSession?.preauthorizationCode != null) {
+                caParams[ctx.getString(R.string.key_preauthorization_code)] = sessionManager.currentSession!!.preauthorizationCode!!
+            }
 
             val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_consent_access, caParams)
             pendingAuthCallbackHandler = completion
@@ -111,6 +111,9 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
         val params = intent.extras?.toMap() ?: emptyMap()
         val result = params[ctx.getString(R.string.key_result)] as? String
 
+        val authorizationCode = params[ctx.getString(R.string.key_authorization_code)] as? String
+        sessionManager.currentSession?.authorizationCode = authorizationCode
+
         extractAndAppendMetadata(params)
 
         val error = if (!sessionManager.isSessionValid()) {
@@ -172,9 +175,9 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             R.string.key_app_name
         ).map { ctx.getString(it) }
 
-        session.metadata = payload.filter {
+        session.metadata.putAll(payload.filter {
             metadataWhitelistedKeys.contains(it.key)
-        }
+        })
 
     } ?: run { Unit }
 }

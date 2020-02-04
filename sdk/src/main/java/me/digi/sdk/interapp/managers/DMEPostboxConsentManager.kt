@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.entities.DMEPostbox
 import me.digi.sdk.interapp.DMEAppCallbackHandler
@@ -112,9 +111,9 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
 
         ).map { ctx.getString(it) }
 
-        session.metadata = payload.filter {
+        session.metadata.putAll(payload.filter {
             metadataWhitelistedKeys.contains(it.key)
-        }
+        })
 
     } ?: run { Unit }
 }

@@ -5,8 +5,8 @@ import android.content.Context
 import me.digi.sdk.api.helpers.DMEMultipartBody
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.callbacks.DMEPostboxPushCompletion
-import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.DMEPushConfiguration
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.DMESDKAgent
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager

@@ -1,7 +1,6 @@
 package me.digi.sdk.utilities.crypto
 
 import me.digi.sdk.DMESDKError
-import java.nio.charset.StandardCharsets
 
 object DMEDataDecryptor {
 

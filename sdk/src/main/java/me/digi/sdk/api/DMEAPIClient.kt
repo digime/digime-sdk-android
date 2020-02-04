@@ -1,7 +1,11 @@
 package me.digi.sdk.api
 
 import android.content.Context
-import com.google.gson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import io.reactivex.Single
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
@@ -23,7 +27,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import java.net.URL
-import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -75,6 +78,17 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
     }
 
     private fun domainForBaseUrl() = URL(clientConfig.baseUrl).host
+
+    // Rx Overload
+    fun <ResponseType> makeCall(call: Call<ResponseType>) = Single.create<ResponseType> { emitter ->
+        makeCall(call) { value, error ->
+            when {
+                error != null -> emitter.onError(error)
+                value != null -> emitter.onSuccess(value)
+                else -> emitter.onError(DMEAPIError.Generic())
+            }
+        }
+    }
 
     fun <ResponseType> makeCall(call: Call<ResponseType>, completion: (ResponseType?, DMEError?) -> Unit) {
         call.enqueue(object: Callback<ResponseType> {

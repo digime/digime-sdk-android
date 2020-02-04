@@ -6,12 +6,12 @@ import com.google.gson.reflect.TypeToken
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEMimeType
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.security.Security
 import org.spongycastle.jce.provider.BouncyCastleProvider
+import java.security.Security
 
 @RunWith(RobolectricTestRunner::class)
 class DMEDataDecryptorSpec {

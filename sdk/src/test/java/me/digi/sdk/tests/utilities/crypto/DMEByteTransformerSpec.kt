@@ -1,8 +1,8 @@
 package me.digi.sdk.crypto
 
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
 
 class DMEByteTransformerSpec {
 

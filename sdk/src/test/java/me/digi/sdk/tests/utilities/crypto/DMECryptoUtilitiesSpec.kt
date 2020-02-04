@@ -6,8 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
-import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.spongycastle.jce.provider.BouncyCastleProvider

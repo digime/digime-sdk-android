@@ -3,12 +3,10 @@ package me.digi.sdk.interapp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageInfo
 import android.net.Uri
 import android.support.annotation.StringRes
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
-import android.support.v4.content.ContextCompat.startActivity
 import me.digi.sdk.entities.DMESDKAgent
 
 
