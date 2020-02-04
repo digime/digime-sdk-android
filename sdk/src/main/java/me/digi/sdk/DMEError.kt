@@ -26,6 +26,7 @@ sealed class DMEAuthError(override val message: String): DMEError(message) {
     class Cancelled(): DMEAuthError("The user cancelled the authorisation action.")
     class InvalidSession(): DMEAuthError("The session key is invalid or has expired.")
     class InvalidSessionKey(): DMEAuthError("The session key provided to the digi.me app is not valid.")
+    class TokenExpired(): DMEAuthError("The refresh token supplied has expired. As `autoRecoverExpiredCredentials` is turned off, you will need to repeat authorization without credentials to recover.")
 
 }
 

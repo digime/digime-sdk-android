@@ -242,19 +242,26 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                             if (error is DMEAPIError.Server && error.code == "InvalidToken") {
 
                                 // If so, we need to obtain a new set of credentials from the digi.me
-                                // application. Process the flow as before, for ongoing access.
-                                Single.just(nativeConsentManager.sessionManager.currentSession!!)
-                                    .compose(requestPreauthorizationCode())
-                                    .compose(requestConsent(fromActivity))
-                                    .compose(exchangeAuthorizationCode())
-                                    .doOnSuccess {
-                                        activeCredentials = it.second
-                                    }
+                                // application. Process the flow as before, for ongoing acces, provided
+                                // that auto-recover is enabled. If not, we throw a specific error and
+                                // exit the flow.
+                                if (configuration.autoRecoverExpiredCredentials) {
+                                    Single.just(nativeConsentManager.sessionManager.currentSession!!)
+                                        .compose(requestPreauthorizationCode())
+                                        .compose(requestConsent(fromActivity))
+                                        .compose(exchangeAuthorizationCode())
+                                        .doOnSuccess {
+                                            activeCredentials = it.second
+                                        }
 
-                                    // Once new credentials are obtained, re-trigger the data query.
-                                    // If it fails here, credentials are not the issue. The error
-                                    // will be propagated down to the callback as normal.
-                                    .compose(triggerDataQuery())
+                                        // Once new credentials are obtained, re-trigger the data query.
+                                        // If it fails here, credentials are not the issue. The error
+                                        // will be propagated down to the callback as normal.
+                                        .compose(triggerDataQuery())
+                                }
+                                else {
+                                    Single.error(DMEAuthError.TokenExpired())
+                                }
                             }
                             else {
                                 Single.error(error)
