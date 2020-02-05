@@ -2,7 +2,7 @@ package me.digi.examples.barebonesapp.consentaccess
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.consent_access_activity_layout.*

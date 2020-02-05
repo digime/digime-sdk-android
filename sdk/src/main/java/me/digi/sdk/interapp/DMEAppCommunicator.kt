@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.support.annotation.StringRes
+import androidx.annotation.StringRes
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
 import me.digi.sdk.entities.DMESDKAgent
