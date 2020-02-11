@@ -14,12 +14,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:layout_marginStart="20dp"
             android:fontFamily="@font/sanchez"
             android:textColor="@color/white"
             android:textSize="50sp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="@string/app_name" />
+            tools:text="Genre" />
 
     <TextView
         android:id="@+id/songCount"
@@ -32,7 +33,7 @@
         android:layout_marginEnd="20dp"
         app:layout_constraintBottom_toBottomOf="@id/genreLabel"
         app:layout_constraintRight_toRightOf="parent"
-        tools:text="@string/app_name"
+        tools:text="10 songs"
         />
 
     <ProgressBar

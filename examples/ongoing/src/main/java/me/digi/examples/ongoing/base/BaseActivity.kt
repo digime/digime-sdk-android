@@ -1,16 +1,10 @@
 package me.digi.examples.ongoing.base
 
-import android.os.Bundle
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 
-abstract class BaseActivity(@LayoutRes val layout: Int) : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(layout)
-    }
+abstract class BaseActivity(@LayoutRes layout: Int) : AppCompatActivity(layout) {
 
     protected fun setFragment(root: Int, fragment: Fragment) {
         val manager = supportFragmentManager
