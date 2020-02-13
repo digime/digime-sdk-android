@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import io.reactivex.Single
+import me.digi.sdk.ArgonCode
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
@@ -29,6 +30,8 @@ import java.lang.reflect.Type
 import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+import kotlin.reflect.full.createInstance
 
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
@@ -85,7 +88,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             when {
                 error != null -> emitter.onError(error)
                 value != null -> emitter.onSuccess(value)
-                else -> emitter.onError(DMEAPIError.Generic())
+                else -> emitter.onError(DMEAPIError.GENERIC(0, "Something went wrong with your request"))
             }
         }
     }
@@ -108,7 +111,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
-                val genericAPIError = DMEAPIError.Unreachable()
+                val genericAPIError = DMEAPIError.UNREACHABLE()
                 completion(null, genericAPIError)
             }
         })
@@ -116,15 +119,15 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
     private fun <ResponseType> deduceErrorFromResponse(response: Response<ResponseType>): DMEError {
 
-        // Try to parse a digi.me error object from the response.
-        val responseHeaders = response.headers().toMap()
-        val digiErrorCode = responseHeaders["X-Error-Code"]
-        val digiErrorMessage = responseHeaders["X-Error-Message"]
-        val digiErrorReference = responseHeaders["X-Error-Reference"]
+        val headers = response.headers()
 
-        return if (digiErrorMessage != null)
-            DMEAPIError.Server(digiErrorMessage, digiErrorReference, digiErrorCode)
-        else
-            DMEAPIError.Generic()
+        val argonErrorCode = headers["X-Error-Code"]?.let { it } ?: run { return DMEAPIError.GENERIC(response.code(), response.message()) }
+        val argonErrorMessage = headers["X-Error-Message"]
+        val argonErrorReference = headers["X-Error-Reference"]
+
+        return DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
+            val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
+            if (argonCode == argonErrorCode) run { return@fold err.createInstance() } else null
+        } ?: DMEAPIError.UNMAPPED(argonErrorCode, argonErrorMessage, argonErrorReference)
     }
 }
