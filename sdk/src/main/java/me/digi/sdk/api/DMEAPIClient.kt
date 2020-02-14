@@ -127,7 +127,17 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
         return DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
             val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
-            if (argonCode == argonErrorCode) run { return@fold err.createInstance() } else null
+            if (argonCode == argonErrorCode) run {
+                val instance = err.createInstance()
+                instance.apply {
+                    code = argonErrorCode
+                    if (argonErrorMessage != null) message = argonErrorMessage
+                    reference = argonErrorReference
+                }
+
+                return@fold instance
+
+            } else null
         } ?: DMEAPIError.UNMAPPED(argonErrorCode, argonErrorMessage, argonErrorReference)
     }
 }

@@ -34,8 +34,8 @@ sealed class DMEAuthError(override val message: String) : DMEError(message) {
 annotation class ArgonCode(val value: String)
 sealed class DMEAPIError(
     internal var code: String? = null,
-    override val message: String,
-    internal val reference: String? = null
+    override var message: String,
+    internal var reference: String? = null
 
 ) : DMEError(message) {
 
@@ -61,6 +61,6 @@ sealed class DMEAPIError(
     @ArgonCode("SessionUpdateFailed") class SESSION_UPDATE_FAILED: DMEAPIError()
 
     class UNMAPPED(argonCode: String, argonMessage: String?, argonReference: String?): DMEAPIError(argonCode, argonMessage!!, argonReference)
-    class GENERIC(httpStatusCode: Int, message: String): DMEAPIError(message = "Http Status: $httpStatusCode - Error: $message")
+    class GENERIC(httpStatusCode: Int, message: String): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
     class UNREACHABLE : DMEAPIError(message = "Couldn't reach the digi.me API - please check your network connection.")
 }
