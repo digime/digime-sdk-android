@@ -5,7 +5,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.waitMillis
 
-class DMERetryInterceptor(private val config: DMEClientConfiguration): Interceptor {
+class DMERetryInterceptor(private val config: DMEClientConfiguration) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
 
         // Run request.
@@ -18,7 +18,7 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration): Intercept
 
         var retryAttemptsRemaining = config.maxRetryCount
 
-        if(isRecoverableError(response)) {
+        if (isRecoverableError(response)) {
             // All the while the request fails, retry it if below cap.
             while (!response.isSuccessful && retryAttemptsRemaining > 0) {
 
@@ -47,11 +47,8 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration): Intercept
         return response
     }
 
-    private fun isRecoverableError(response: Response) :Boolean
-    {
-        return when(response.code) {
-            400, 401 -> false
-            else -> true
-        }
+    private fun isRecoverableError(response: Response) = when (response.code) {
+        400, 401 -> false
+        else -> true
     }
 }
