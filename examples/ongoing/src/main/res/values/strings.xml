@@ -1,7 +1,7 @@
 <resources>
-    <string name="digime_application_id"></string>
-    <string name="digime_postbox_contract_id">r9ZPFD0bUqycDw6qPSg7AyGT7xisR8jM</string>
-    <string name="digime_contract_id">MWfztc6jeWUV0LutqPBQqbqn12hlNLfR</string>
+    <string name="digime_application_id">IfnN9Y27Jym3P1Fad3ks3sTlo22flUBb</string>
+    <string name="digime_postbox_contract_id"></string>
+    <string name="digime_contract_id">r9ZPFD0bUqycDw6qPSg7AyGT7xisR8jM</string>
     <string name="digime_p12_filename">fJI8P5Z4cIhP3HawlXVvxWBrbyj5QkTF.p12</string>
     <string name="digime_p12_password">monkey periscope</string>
 
