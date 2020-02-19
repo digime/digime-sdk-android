@@ -11,6 +11,7 @@ import me.digi.examples.ongoing.model.Song
 import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
+import me.digi.sdk.callbacks.DMEOngoingAuthorizationCompletion
 import me.digi.sdk.entities.*
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
@@ -25,21 +26,25 @@ object DigiMeService {
         client = DMEPullClient(context, configuration)
     }
 
-    fun requestConsent(activity: Activity, cachedCredentials: DMEOAuthToken?, completion: DMEAuthorizationCompletion) {
+    fun requestConsent(activity: Activity, completion: DMEOngoingAuthorizationCompletion) {
         val objects = listOf(DMEServiceObjectType(406))
         val services = listOf(DMEServiceType(19, objects))
         val groups = listOf(DMEServiceGroup(5, services))
         val scope = DMEScope().apply { timeRanges = listOf(DMETimeRange(to = null, from = null, last = "1d", type = null)) }
         scope.serviceGroups = groups
 
-        client.authorizeOngoingAccess(activity, scope, cachedCredentials) { session, credentials, error ->
+        val credStore = activity.getSharedPreferences("Default", Context.MODE_PRIVATE)
+        val creds = credStore.getString("Token", null)?.let {
+            Gson().fromJson(it, DMEOAuthToken::class.java)
+        }
+
+        client.authorizeOngoingAccess(activity, scope, creds) { session, credentials, error ->
             if (session != null && credentials != null) {
-                val digiMeSharedPreferences = activity.getSharedPreferences("digiMePreferences", Context.MODE_PRIVATE)
                 val credentialsJson = Gson().toJson(credentials)
-                digiMeSharedPreferences.edit().putString("cachedOAuth", credentialsJson).apply()
+                credStore.edit().putString("Token", credentialsJson).apply()
             }
             else { Log.e("SDK Ongoing Access", error.toString()) }
-            completion(session, error)
+            completion(session, credentials, error)
         }
     }
 

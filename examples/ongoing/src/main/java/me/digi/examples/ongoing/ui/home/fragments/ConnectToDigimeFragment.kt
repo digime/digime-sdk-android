@@ -11,29 +11,16 @@ import me.digi.ongoing.R
 
 class ConnectToDigimeFragment : BaseFragment(R.layout.fragment_connect_to_digime) {
 
-    var isConsenting = false
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         buttonPlugMeIn.setOnClickListener { openDigime() }
     }
 
     private fun openDigime() {
-        if (!isConsenting) {
-            isConsenting = true
-            DigiMeService.requestConsent(context as Activity, null) { session, error ->
-                if (session != null) {
-                    val manager = fragmentManager
-                    val transaction = manager?.beginTransaction()
-                    transaction?.replace(R.id.homeRoot, LoadDigimeDataFragment())
-                    transaction?.commit()
-                }
-                else {
-                    // Feedback error.
-                }
-                isConsenting = false
-            }
-        }
+        val manager = fragmentManager
+        val transaction = manager?.beginTransaction()
+        transaction?.replace(R.id.homeRoot, LoadDigimeDataFragment())
+        transaction?.commit()
     }
 
 }

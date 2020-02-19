@@ -31,28 +31,14 @@ class LoadDigimeDataFragment : BaseFragment(R.layout.fragment_loading) {
     }
 
     private fun loadUserData() {
-        var counter = 0
         genreBox.removeAll()
 
-        val digiMePreference = context?.getSharedPreferences("Default", Context.MODE_PRIVATE)
-        val oAuthTokenJson = digiMePreference?.getString("Token", null)!!
-        val oAuthToken = Gson().fromJson(oAuthTokenJson, DMEOAuthToken::class.java)
-
-        DigiMeService.requestConsent(context as Activity, oAuthToken) { session, error ->
-            if (error != null) Log.e("Error", error.toString())
-            if (session != null) {
-                Log.d("Session", session.toString())
-                DigiMeService.getData {
-                    it.forEach {
-                        genreBox.put(it)
-                        counter++
-                    }
-                    Log.i("COUNTER TOTAL", counter.toString())
+        DigiMeService.requestConsent(context as Activity) { session, credentials, error ->
+            if (error == null) {
+                DigiMeService.getData { songs ->
+                    genreBox.put(songs)
                     openDataBreakdownFragment()
                 }
-            }
-            else {
-                Toast.makeText(context, "Invalid session", Toast.LENGTH_LONG).show()
             }
         }
     }
