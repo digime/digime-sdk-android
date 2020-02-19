@@ -42,11 +42,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:max="100"
-        android:progress="10"
+        android:indeterminate="false"
+        android:progressDrawable="@drawable/data_breakdown_bar_background"
         app:layout_constraintLeft_toLeftOf="@id/genreLabel"
         app:layout_constraintRight_toRightOf="@id/songCount"
-        app:layout_constraintTop_toBottomOf="@id/songCount" />
+        app:layout_constraintTop_toBottomOf="@id/songCount"
+        tools:max="100"
+        tools:progress="10" />
 
 
 
