@@ -11,7 +11,10 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:networkSecurityConfig="@xml/network_security_config">
-        <activity android:name="me.digi.examples.ongoing.ui.home.HomeActivity">
+        <activity
+            android:name="me.digi.examples.ongoing.ui.home.HomeActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

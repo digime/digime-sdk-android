@@ -14,18 +14,13 @@ import me.digi.ongoing.R
 
 class DataBreakdownFragment : BaseFragment(R.layout.fragment_data_breakdown) {
 
-//    private val genreBox: Box<Song> = ObjectBox.boxStore.boxFor(Song::class.java)
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView : RecyclerView = breakdownRecyclerView
         recyclerView.apply {
             layoutManager = LinearLayoutManager(this.context)
-            adapter = BreakdownAdapter()
+            adapter = BreakdownAdapter(context)
         }
     }
 
-//    fun sortUserData() {
-//        genreBox.query().build().find()
-//    }
 }
