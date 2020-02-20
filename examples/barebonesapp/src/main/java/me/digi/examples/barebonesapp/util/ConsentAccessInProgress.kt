@@ -1,10 +1,10 @@
 package me.digi.examples.barebonesapp.util
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.data_transfer_in_progress_layout.view.*
 import me.digi.examples.barebonesapp.R
 

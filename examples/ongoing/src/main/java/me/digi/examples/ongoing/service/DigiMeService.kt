@@ -2,7 +2,6 @@ package me.digi.examples.ongoing.service
 
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -10,7 +9,6 @@ import com.google.gson.reflect.TypeToken
 import me.digi.examples.ongoing.model.Song
 import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.callbacks.DMEOngoingAuthorizationCompletion
 import me.digi.sdk.entities.*
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities

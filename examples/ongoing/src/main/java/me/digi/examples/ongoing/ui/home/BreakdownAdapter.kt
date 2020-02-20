@@ -1,12 +1,10 @@
 package me.digi.examples.ongoing.ui.home
 
 import android.content.Context
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.content.contentValuesOf
 import androidx.recyclerview.widget.RecyclerView
 import io.objectbox.Box
 import kotlinx.android.synthetic.main.genre_breakdown_item.view.*

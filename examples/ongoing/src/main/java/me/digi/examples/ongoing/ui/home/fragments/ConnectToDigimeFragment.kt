@@ -1,11 +1,9 @@
 package me.digi.examples.ongoing.ui.home.fragments
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.View
 import kotlinx.android.synthetic.main.fragment_connect_to_digime.*
 import me.digi.examples.ongoing.base.BaseFragment
-import me.digi.examples.ongoing.service.DigiMeService
 import me.digi.ongoing.R
 
 

@@ -8,8 +8,6 @@ import com.google.gson.annotations.Expose
 import com.google.gson.annotations.JsonAdapter
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
-import me.digi.examples.ongoing.utils.GenreInsightGenerator
-import java.lang.IllegalArgumentException
 import java.lang.reflect.Type
 
 @JsonAdapter(Song.Adapter::class)
