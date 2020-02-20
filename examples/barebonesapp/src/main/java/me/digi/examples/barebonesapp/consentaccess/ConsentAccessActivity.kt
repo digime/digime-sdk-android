@@ -40,6 +40,7 @@ class ConsentAccessActivity : AppCompatActivity() {
     }
 
     private fun shareViaDigiMe() {
+        client = DMEPullClient(applicationContext, cfg)
         client.authorize(this) { session, error ->
             session?.let {
                 client.getSessionData({ file, error ->

@@ -16,6 +16,23 @@ import me.digi.ongoing.R
 
 class BreakdownAdapter(val context: Context) : RecyclerView.Adapter<BreakdownAdapter.ViewHolder>() {
 
+    companion object {
+        val colours = listOf(
+            R.color.breakdownBarOne,
+            R.color.breakdownBarTwo,
+            R.color.breakdownBarThree,
+            R.color.breakdownBarFour,
+            R.color.breakdownBarFive,
+            R.color.breakdownBarSix,
+            R.color.breakdownBarSeven,
+            R.color.breakdownBarEight,
+            R.color.breakdownBarNine,
+            R.color.breakdownBarTen,
+            R.color.breakdownBarEleven,
+            R.color.breakdownBarTwelve
+        )
+    }
+
     private val genreBox: Box<Song> = ObjectBox.boxStore.boxFor(Song::class.java)
     private val genreInsights = GenreInsightGenerator.generateGenrePair(genreBox.query().build().find())
 
@@ -26,20 +43,6 @@ class BreakdownAdapter(val context: Context) : RecyclerView.Adapter<BreakdownAda
 
         private fun setPercentBarColor() {
             val randomColourIndex = (0 until 12).random()
-            val colours = listOf(
-                R.color.breakdownBarOne,
-                R.color.breakdownBarTwo,
-                R.color.breakdownBarThree,
-                R.color.breakdownBarFour,
-                R.color.breakdownBarFive,
-                R.color.breakdownBarSix,
-                R.color.breakdownBarSeven,
-                R.color.breakdownBarEight,
-                R.color.breakdownBarNine,
-                R.color.breakdownBarTen,
-                R.color.breakdownBarEleven,
-                R.color.breakdownBarTwelve
-            )
             val color = ContextCompat.getColor(context, colours[randomColourIndex])
             percentBar.progressDrawable.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
         }

@@ -11,10 +11,7 @@ object GenreInsightGenerator {
 
         genres.forEach { genreMap[it] = 1 + (genreMap[it]?.let { it } ?: 0) }
 
-        return genreMap.toList().map { Genre(it.first, it.second, genres.count()) }.toSortedSet(
-            Comparator { o1, o2 ->
-                o1.playCount.compareTo(o2.playCount)
-            }).reversed().toList()
+        return genreMap.toList().map { Genre(it.first, it.second, genres.count()) }.sortedByDescending { it.playCount }
     }
 
 }
