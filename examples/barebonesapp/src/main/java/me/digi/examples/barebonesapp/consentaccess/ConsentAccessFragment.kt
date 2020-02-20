@@ -1,10 +1,10 @@
 package me.digi.examples.barebonesapp.consentaccess
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import me.digi.examples.barebonesapp.R
 
 class ConsentAccessFragment : Fragment() {

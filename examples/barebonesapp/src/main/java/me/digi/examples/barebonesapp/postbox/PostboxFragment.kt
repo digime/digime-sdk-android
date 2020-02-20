@@ -1,10 +1,10 @@
 package me.digi.examples.barebonesapp.postbox
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.postbox_fragment_layout.view.*
 import me.digi.examples.barebonesapp.R
 
