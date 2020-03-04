@@ -26,8 +26,6 @@ sealed class DMEAuthError(override val message: String) : DMEError(message) {
     class InvalidSession : DMEAuthError("The session key is invalid or has expired.")
     class InvalidSessionKey : DMEAuthError("digi.me app returned an invalid session key.")
     class TokenExpired : DMEAuthError("The refresh token supplied has expired. As `autoRecoverExpiredCredentials` is turned off, you will need to repeat authorization without credentials to recover.")
-    class PlaceHolderError(message: String) : DMEAuthError(message)
-
 }
 
 @Target(AnnotationTarget.CLASS)
