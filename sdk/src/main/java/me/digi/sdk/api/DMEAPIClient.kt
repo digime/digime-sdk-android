@@ -38,6 +38,30 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
     private val httpClient: Retrofit
     internal val argonService: DMEArgonService
 
+    companion object {
+
+        fun parsedDMEError(
+            argonErrorCode: String?,
+            argonErrorMessage: String?,
+            argonErrorReference: String?
+        ) =
+            DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
+                val argonCode =
+                    (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
+                if (argonCode == argonErrorCode) run {
+                    val instance = err.createInstance()
+                    instance.apply {
+                        code = argonErrorCode
+                        if (argonErrorMessage != null) message = argonErrorMessage
+                        reference = argonErrorReference
+                    }
+
+                    return@fold instance
+
+                } else null
+            } ?: DMEAPIError.UNMAPPED(argonErrorCode, argonErrorMessage!!, argonErrorReference)
+    }
+
     init {
         val gsonBuilder = GsonBuilder()
             .registerTypeAdapter(DMESessionRequest::class.java, DMESessionRequestAdapter)
@@ -88,7 +112,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             when {
                 error != null -> emitter.onError(error)
                 value != null -> emitter.onSuccess(value)
-                else -> emitter.onError(DMEAPIError.GENERIC(0, "Something went wrong with your request"))
+                else -> emitter.onError(DMEAPIError.GENERIC(400, "Something went wrong with your request"))
             }
         }
     }
@@ -125,19 +149,6 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
         val argonErrorMessage = headers["X-Error-Message"]
         val argonErrorReference = headers["X-Error-Reference"]
 
-        return DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
-            val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
-            if (argonCode == argonErrorCode) run {
-                val instance = err.createInstance()
-                instance.apply {
-                    code = argonErrorCode
-                    if (argonErrorMessage != null) message = argonErrorMessage
-                    reference = argonErrorReference
-                }
-
-                return@fold instance
-
-            } else null
-        } ?: DMEAPIError.UNMAPPED(argonErrorCode, argonErrorMessage, argonErrorReference)
+        return parsedDMEError(argonErrorCode, argonErrorMessage, argonErrorReference)
     }
 }

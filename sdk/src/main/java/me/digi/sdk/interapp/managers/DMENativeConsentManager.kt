@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
+import me.digi.sdk.api.DMEAPIClient.Companion.parsedDMEError
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -97,6 +98,15 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
 
     override fun handle(intent: Intent?) {
 
+        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val params = intent?.extras?.toMap() ?: emptyMap()
+
+        val (errorCode, errorMessage, errorReference) = Triple(
+            params["argonErrorCode"] as? String,
+            params["argonErrorMessage"] as? String,
+            params["argonErrorReference"] as? String
+        )
+
         if (intent == null) {
             // Received no data, Android system failed to start activity.
             DMELog.e("There was a problem launching the consent request activity.")
@@ -106,9 +116,6 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             return
         }
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
-
-        val params = intent.extras?.toMap() ?: emptyMap()
         val result = params[ctx.getString(R.string.key_result)] as? String
 
         val authorizationCode = params[ctx.getString(R.string.key_authorization_code)] as? String
@@ -118,11 +125,19 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
 
         val error = if (!sessionManager.isSessionValid()) {
             DMEAuthError.InvalidSession()
-        }
-        else when (result) {
+        } else when (result) {
             ctx.getString(R.string.const_result_error) -> {
                 DMELog.e("There was a problem requesting consent.")
-                DMEAuthError.General()
+
+                errorMessage?.let {
+                    errorCode?.let {
+                        parsedDMEError(
+                            errorCode,
+                            errorMessage,
+                            errorReference
+                        )
+                    }
+                }
             }
             ctx.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")

@@ -26,6 +26,7 @@ sealed class DMEAuthError(override val message: String) : DMEError(message) {
     class InvalidSession : DMEAuthError("The session key is invalid or has expired.")
     class InvalidSessionKey : DMEAuthError("digi.me app returned an invalid session key.")
     class TokenExpired : DMEAuthError("The refresh token supplied has expired. As `autoRecoverExpiredCredentials` is turned off, you will need to repeat authorization without credentials to recover.")
+    class PlaceHolderError(message: String) : DMEAuthError(message)
 
 }
 
@@ -60,7 +61,7 @@ sealed class DMEAPIError(
     @ArgonCode("SessionUsed") class SESSION_USED: DMEAPIError()
     @ArgonCode("SessionUpdateFailed") class SESSION_UPDATE_FAILED: DMEAPIError()
 
-    class UNMAPPED(argonCode: String, argonMessage: String?, argonReference: String?): DMEAPIError(argonCode, argonMessage!!, argonReference)
+    class UNMAPPED(argonCode: String?, argonMessage: String, argonReference: String?): DMEAPIError(argonCode, argonMessage, argonReference)
     class GENERIC(httpStatusCode: Int, message: String): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
     class UNREACHABLE : DMEAPIError(message = "Couldn't reach the digi.me API - please check your network connection.")
 }
