@@ -12,7 +12,7 @@ abstract class DMEClientConfiguration (
     var globalTimeout: Int = 25
     var maxConcurrentRequests: Int = 5
 
-    var retryOnFail: Boolean = true
+    var retryOnFail: Boolean = false
     var retryDelay: Int = 750
     var retryWithExponentialBackOff: Boolean = true
     var maxRetryCount: Int = 5

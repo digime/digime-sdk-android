@@ -59,6 +59,18 @@ internal open class JsonWebToken(tokenised: String? = null) {
         }
     }
 
+    internal fun generatePayload() {
+        // Parse claims for body.
+        val claimFields = this::class.members.mapNotNull { it as? KProperty }.filter { it.annotations.any { it is JwtClaim }}
+        payload = claimFields.mapNotNull {
+            val key = it.name.replace("(.)([A-Z]+)".toRegex(), "$1_$2").toLowerCase()
+            val value = it.getter.call(this)
+
+            value?.let { Pair(key, value) }
+
+        }.toMap()
+    }
+
     fun encodedHeader(): String {
 
         if (!::header.isInitialized) {
@@ -76,15 +88,7 @@ internal open class JsonWebToken(tokenised: String? = null) {
     fun encodedPayload(): String {
 
         if (!::payload.isInitialized) {
-            // Parse claims for body.
-            val claimFields = this::class.members.mapNotNull { it as? KProperty }.filter { it.annotations.any { it is JwtClaim }}
-            payload = claimFields.mapNotNull {
-                val key = it.name.replace("(.)([A-Z]+)".toRegex(), "$1_$2").toLowerCase()
-                val value = it.getter.call(this)
-
-                value?.let { Pair(key, value) }
-
-            }.toMap()
+            generatePayload()
         }
 
         val bytes = gsonAgent.toJsonTree(payload).toString().toByteArray()
