@@ -9,7 +9,7 @@ abstract class DMEClientConfiguration (
 
 ) {
 
-    var globalTimeout: Int = 25
+    var globalTimeout: Int = 62
     var maxConcurrentRequests: Int = 5
 
     var retryOnFail: Boolean = false

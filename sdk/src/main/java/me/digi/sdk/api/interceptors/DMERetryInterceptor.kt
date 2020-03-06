@@ -1,8 +1,10 @@
 package me.digi.sdk.api.interceptors
 
 import me.digi.sdk.entities.DMEClientConfiguration
+import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.JsonWebToken
 import me.digi.sdk.utilities.jwt.JwtClaim
 import okhttp3.Interceptor
@@ -12,6 +14,7 @@ import okhttp3.internal.waitMillis
 import okio.Buffer
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 class DMERetryInterceptor(private val config: DMEClientConfiguration) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -63,17 +66,16 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration) : Intercep
     }
 
     private fun Request.withRegeneratedJwtNonce(): Request {
-        val authHeader = header("Authorization") ?: return
+        val authHeader = header("Authorization") ?: return this
+        val signingKey = (config as? DMEPullConfiguration)?.privateKeyHex?.let { DMEKeyTransformer.javaPrivateKeyFromHex(it) } ?: return this
         val tokenisedJwt = authHeader.split(" ").last()
         val jwt = JsonWebToken(tokenisedJwt)
 
         val newNonce = DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(16))
+        val newPayload = jwt.payload.toMutableMap().apply { this["nonce"] = newNonce }
+        jwt.payload = newPayload
 
-        val nonceField = jwt::class.members.mapNotNull { it as? KMutableProperty }.first { it.name == "nonce" }
-        nonceField.setter.call(jwt, newNonce)
-        jwt.generatePayload()
-
-        val newTokenisedJwt = jwt.tokenize()
+        val newTokenisedJwt = jwt.sign(signingKey).tokenize()
         val newAuthHeader = "Bearer $newTokenisedJwt"
         val newRequest = newBuilder()
             .header("Authorization", newAuthHeader)
