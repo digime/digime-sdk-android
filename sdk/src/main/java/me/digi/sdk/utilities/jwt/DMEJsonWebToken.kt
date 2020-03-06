@@ -8,6 +8,7 @@ import java.security.PrivateKey
 import java.security.Signature
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor
@@ -32,9 +33,9 @@ internal open class JsonWebToken(tokenised: String? = null) {
         signer
     }
 
-    private lateinit var header: Map<String, Any>
-    private lateinit var payload: Map<String, Any>
-    private lateinit var signature: ByteArray
+    lateinit var header: Map<String, Any>
+    lateinit var payload: Map<String, Any>
+    lateinit var signature: ByteArray
 
     init {
         if (tokenised != null) {
@@ -58,6 +59,7 @@ internal open class JsonWebToken(tokenised: String? = null) {
             }
         }
     }
+
 
     fun encodedHeader(): String {
 
