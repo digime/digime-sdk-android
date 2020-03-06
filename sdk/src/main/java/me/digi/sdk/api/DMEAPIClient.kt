@@ -32,6 +32,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.javaConstructor
 
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
@@ -40,14 +42,13 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
 
     companion object {
 
-        fun parsedDMEError(
+        fun parseDMEError(
             argonErrorCode: String?,
             argonErrorMessage: String?,
             argonErrorReference: String?
         ) =
             DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
-                val argonCode =
-                    (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
+                val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
                 if (argonCode == argonErrorCode) run {
                     val instance = err.createInstance()
                     instance.apply {
@@ -59,7 +60,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
                     return@fold instance
 
                 } else null
-            } ?: DMEAPIError.UNMAPPED(argonErrorCode, argonErrorMessage!!, argonErrorReference)
+            } ?: argonErrorMessage?.let { DMEAPIError.UNMAPPED(argonErrorCode, it, argonErrorReference) } ?: DMEAPIError.GENERIC(argonErrorCode?.toInt(), argonErrorMessage)
     }
 
     init {
@@ -149,6 +150,6 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
         val argonErrorMessage = headers["X-Error-Message"]
         val argonErrorReference = headers["X-Error-Reference"]
 
-        return parsedDMEError(argonErrorCode, argonErrorMessage, argonErrorReference)
+        return parseDMEError(argonErrorCode, argonErrorMessage, argonErrorReference)
     }
 }

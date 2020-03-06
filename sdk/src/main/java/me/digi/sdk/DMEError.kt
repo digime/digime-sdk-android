@@ -59,7 +59,7 @@ sealed class DMEAPIError(
     @ArgonCode("SessionUsed") class SESSION_USED: DMEAPIError()
     @ArgonCode("SessionUpdateFailed") class SESSION_UPDATE_FAILED: DMEAPIError()
 
-    class UNMAPPED(argonCode: String?, argonMessage: String, argonReference: String?): DMEAPIError(argonCode, argonMessage, argonReference)
-    class GENERIC(httpStatusCode: Int, message: String): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
+    class UNMAPPED(argonCode: String? = "", argonMessage: String = "", argonReference: String? = ""): DMEAPIError(argonCode, argonMessage, argonReference)
+    class GENERIC(httpStatusCode: Int? = 0, message: String? = ""): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
     class UNREACHABLE : DMEAPIError(message = "Couldn't reach the digi.me API - please check your network connection.")
 }

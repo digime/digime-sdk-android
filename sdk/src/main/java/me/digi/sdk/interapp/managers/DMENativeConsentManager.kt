@@ -7,7 +7,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
-import me.digi.sdk.api.DMEAPIClient.Companion.parsedDMEError
+import me.digi.sdk.api.DMEAPIClient.Companion.parseDMEError
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -128,16 +128,7 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
         } else when (result) {
             ctx.getString(R.string.const_result_error) -> {
                 DMELog.e("There was a problem requesting consent.")
-
-                errorMessage?.let {
-                    errorCode?.let {
-                        parsedDMEError(
-                            errorCode,
-                            errorMessage,
-                            errorReference
-                        )
-                    }
-                }
+                parseDMEError(errorCode, errorMessage, errorReference)
             }
             ctx.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")
