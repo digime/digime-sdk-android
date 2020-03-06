@@ -42,4 +42,6 @@ abstract class DMEClient(private val context: Context, private val config: DMECl
 
         context.startActivity(launchIntent)
     }
+
+    fun isSessionValid() = sessionManager.isSessionValid()
 }

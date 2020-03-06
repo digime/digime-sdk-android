@@ -21,7 +21,6 @@ object DigiMeService {
     fun configureSdk(context: Context) {
         val privateKey = DMECryptoUtilities(context).privateKeyHexFrom( context.getString(R.string.digime_p12_filename), context.getString(R.string.digime_p12_password) )
         val configuration = DMEPullConfiguration( context.getString(R.string.digime_application_id), context.getString(R.string.digime_contract_id), privateKey )
-        configuration.globalTimeout = 62
         client = DMEPullClient(context, configuration)
     }
 
