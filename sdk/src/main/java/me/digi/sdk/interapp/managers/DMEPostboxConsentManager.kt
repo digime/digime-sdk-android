@@ -67,6 +67,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
         val postboxId = params[ctx.getString(R.string.key_postbox_id)] as? String
         val postboxPublicKey = params[ctx.getString(R.string.key_public_key)] as? String
         val sessionKey = params[ctx.getString(R.string.key_session_key)] as? String
+        val digiMeVersion = params[ctx.getString(R.string.key_app_version)] as? String
 
         extractAndAppendMetadata(params)
 
@@ -91,7 +92,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             }
         }
 
-        val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
+        val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!, digiMeVersion)
         pendingPostboxCallbackHandler?.invoke(postbox, error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         pendingPostboxCallbackHandler = null
@@ -107,7 +108,8 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             R.string.key_postbox_id,
             R.string.key_public_key,
             R.string.key_result,
-            R.string.key_app_id
+            R.string.key_app_id,
+            R.string.key_app_version
 
         ).map { ctx.getString(it) }
 

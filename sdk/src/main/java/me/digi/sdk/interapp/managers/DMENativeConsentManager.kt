@@ -154,6 +154,7 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             R.string.key_session_key,
             R.string.key_result,
             R.string.key_app_id,
+            R.string.key_app_version,
 
             // Timing Keys
             R.string.key_timing_get_all_files,
@@ -173,7 +174,6 @@ class DMENativeConsentManager(val sessionManager: DMESessionManager, val appId: 
             R.string.key_debug_platform,
             R.string.key_debug_contract_type,
             R.string.key_debug_device_id,
-            R.string.key_debug_digime_version,
             R.string.key_debug_user_id,
             R.string.key_debug_library_id,
             R.string.key_debug_pcloud_type,
