@@ -10,6 +10,7 @@
     <string name="key_postbox_id">postbox_id</string>
     <string name="key_public_key">postbox_public_key</string>
     <string name="key_app_name">appName</string>
+    <string name="key_app_version">digiMeVersion</string>
     <string name="key_callback_url">callbackUrl</string>
     <string name="key_session_exchange_token">sessionExchangeToken</string>
     <string name="key_sdk_version">sdkVersion</string>
@@ -33,7 +34,6 @@
     <string name="key_debug_platform">debugPlatform</string>
     <string name="key_debug_contract_type">debugContractType</string>
     <string name="key_debug_device_id">debugDeviceId</string>
-    <string name="key_debug_digime_version">debugDigiMeVersion</string>
     <string name="key_debug_user_id">debugUserId</string>
     <string name="key_debug_library_id">debugLibraryId</string>
     <string name="key_debug_pcloud_type">debugPcloudType</string>

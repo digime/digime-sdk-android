@@ -11,5 +11,6 @@ class DMEPullConfiguration (
     var guestEnabled = true
     var pollInterval = 3
     var maxStalePolls = 100
+    var autoRecoverExpiredCredentials = true
 
 }

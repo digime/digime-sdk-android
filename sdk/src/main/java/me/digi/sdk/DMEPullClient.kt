@@ -229,7 +229,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                 // If an error is encountered from this call, we inspect it to see if it's an
                 // 'InvalidToken' error, meaning that the ACCESS token has expired.
-                if (error is DMEAPIError.Server && error.code == "InvalidToken") {
+                if (error is DMEAPIError.INVALID_REFRESH_TOKEN && error.code == "InvalidToken") {
 
                     // If so, we take the active session and expired credentials and try to refresh them.
                     Single.just(Pair(nativeConsentManager.sessionManager.currentSession!!, activeCredentials!!))
@@ -239,22 +239,29 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                             // If an error is encountered from this call, we inspect it to see if it's an
                             // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                            if (error is DMEAPIError.Server && error.code == "InvalidToken") {
+                            if (error is DMEAPIError.INVALID_REFRESH_TOKEN && error.code == "InvalidToken") {
 
                                 // If so, we need to obtain a new set of credentials from the digi.me
-                                // application. Process the flow as before, for ongoing access.
-                                Single.just(nativeConsentManager.sessionManager.currentSession!!)
-                                    .compose(requestPreauthorizationCode())
-                                    .compose(requestConsent(fromActivity))
-                                    .compose(exchangeAuthorizationCode())
-                                    .doOnSuccess {
-                                        activeCredentials = it.second
-                                    }
+                                // application. Process the flow as before, for ongoing acces, provided
+                                // that auto-recover is enabled. If not, we throw a specific error and
+                                // exit the flow.
+                                if (configuration.autoRecoverExpiredCredentials) {
+                                    Single.just(nativeConsentManager.sessionManager.currentSession!!)
+                                        .compose(requestPreauthorizationCode())
+                                        .compose(requestConsent(fromActivity))
+                                        .compose(exchangeAuthorizationCode())
+                                        .doOnSuccess {
+                                            activeCredentials = it.second
+                                        }
 
-                                    // Once new credentials are obtained, re-trigger the data query.
-                                    // If it fails here, credentials are not the issue. The error
-                                    // will be propagated down to the callback as normal.
-                                    .compose(triggerDataQuery())
+                                        // Once new credentials are obtained, re-trigger the data query.
+                                        // If it fails here, credentials are not the issue. The error
+                                        // will be propagated down to the callback as normal.
+                                        .compose(triggerDataQuery())
+                                }
+                                else {
+                                    Single.error(DMEAuthError.TokenExpired())
+                                }
                             }
                             else {
                                 Single.error(error)
@@ -270,7 +277,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .subscribe({ result ->
                 completion(result.first, result.second, null)
             }, { error ->
-                completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.Generic())
+                completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.GENERIC(0, error.localizedMessage))
             })
             .addTo(compositeDisposable)
     }
