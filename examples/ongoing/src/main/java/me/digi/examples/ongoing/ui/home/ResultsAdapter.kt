@@ -6,18 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-import io.objectbox.Box
 import kotlinx.android.synthetic.main.genre_breakdown_item.view.*
-import me.digi.examples.ongoing.model.Genre
-import me.digi.examples.ongoing.model.Song
-import me.digi.examples.ongoing.service.ObjectBox
-import me.digi.examples.ongoing.utils.GenreInsightGenerator
+import me.digi.examples.ongoing.model.GenreInsight
 import me.digi.ongoing.R
 
-class BreakdownAdapter(val context: Context) : RecyclerView.Adapter<BreakdownAdapter.ViewHolder>() {
+class ResultsAdapter(val context: Context) : RecyclerView.Adapter<ResultsAdapter.ViewHolder>() {
 
     companion object {
-        val colours = listOf(
+        private val colours = listOf(
             R.color.breakdownBarOne,
             R.color.breakdownBarTwo,
             R.color.breakdownBarThree,
@@ -33,29 +29,27 @@ class BreakdownAdapter(val context: Context) : RecyclerView.Adapter<BreakdownAda
         )
     }
 
-    private val genreBox: Box<Song> = ObjectBox.boxStore.boxFor(Song::class.java)
-    private val genreInsights = GenreInsightGenerator.generateGenrePair(genreBox.query().build().find())
-
     inner class ViewHolder(item: View) : RecyclerView.ViewHolder(item) {
-        private val genreName = itemView.genreLabel
-        private val playCount = itemView.songCount
-        private val percentBar = itemView.percentBar
 
         private fun setPercentBarColor() {
             val randomColourIndex = (0 until 12).random()
             val color = ContextCompat.getColor(context, colours[randomColourIndex])
-            percentBar.progressDrawable.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
+            itemView.percentBar.progressDrawable.mutate().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
         }
 
-        fun bind(insight: Genre) {
-            genreName.text = insight.title
-            playCount.text = "${insight.playCount} songs"
-            percentBar.progress = insight.playCount
-            percentBar.max = insight.sampleSize
+        fun bind(insight: GenreInsight) {
+            itemView.apply {
+                genreLabel.text = insight.title
+                songCount.text = "${insight.playCount} songs"
+                percentBar.progress = insight.playCount
+                percentBar.max = insight.sampleSize
+            }
 
             setPercentBarColor()
         }
     }
+
+    private var genreInsights: List<GenreInsight> = emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val itemInflater = LayoutInflater.from(parent.context)
@@ -67,4 +61,13 @@ class BreakdownAdapter(val context: Context) : RecyclerView.Adapter<BreakdownAda
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(genreInsights[position])
 
+    fun performDiffAndUpdate(newInsights: List<GenreInsight>) {
+        val newSampleSize = genreInsights.count() + newInsights.count()
+        genreInsights = mutableListOf<GenreInsight>().apply {
+            addAll(genreInsights.map { GenreInsight(it.title, it.playCount, newSampleSize) })
+            addAll(newInsights.map { GenreInsight(it.title, it.playCount, newSampleSize) })
+        }
+
+        notifyDataSetChanged()
+    }
 }

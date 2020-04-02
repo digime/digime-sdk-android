@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import io.reactivex.Single
+import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.ArgonCode
 import me.digi.sdk.DMEAPIError
 import me.digi.sdk.DMEError
@@ -32,8 +32,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaConstructor
 
 class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
 
