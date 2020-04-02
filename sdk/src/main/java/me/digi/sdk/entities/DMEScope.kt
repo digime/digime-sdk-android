@@ -1,6 +1,6 @@
 package me.digi.sdk.entities
 
-class DMEScope: DMEDataRequest {
+class DMEScope @JvmOverloads constructor(serviceGroups: List<DMEServiceGroup>? = null, timeRanges: List<DMETimeRange>? = null): DMEDataRequest {
 
     override lateinit var serviceGroups: List<DMEServiceGroup>
 
@@ -11,5 +11,10 @@ class DMEScope: DMEDataRequest {
     override fun serviceGroupsInitialized() = ::serviceGroups.isInitialized
 
     override fun timeRangesInitialized() = ::timeRanges.isInitialized
+
+    init {
+        serviceGroups?.also(this::serviceGroups.setter)
+        timeRanges?.also(this::timeRanges.setter)
+    }
 
 }
