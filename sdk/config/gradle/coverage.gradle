@@ -32,9 +32,9 @@ project.afterEvaluate {
         def kotlinClasses = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
         def src = "$project.projectDir/src/main/java"
 
-        classDirectories = files([javaClasses, kotlinClasses])
-        sourceDirectories = files([src])
-        executionData = fileTree(dir: "$buildDir", includes: [
+        classDirectories.from files([javaClasses, kotlinClasses])
+        sourceDirectories.from files([src])
+        executionData.from fileTree(dir: "$buildDir", includes: [
                 "jacoco/*UnitTest.exec",
                 "outputs/code-coverage/connected/*coverage.ec"
         ])

@@ -139,7 +139,9 @@ tasks.register("generateDocs") {
 
     group = 'publishing'
 
-    './docs/generateDocs.sh'.execute()
+    doLast {
+        './docs/generateDocs.sh'.execute()
+    }
 }
 
 tasks.register("artifactoryPublish", GradleBuild.class) {
