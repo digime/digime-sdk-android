@@ -2,10 +2,10 @@ package me.digi.sdk.entities
 
 import java.util.*
 
-class DMETimeRange (
+class DMETimeRange @JvmOverloads constructor(
 
-    val from: Date?,
-    val to: Date?,
-    val last: String?,
-    val type: String?
+    val from: Date? = null,
+    val to: Date? = null,
+    val last: String? = null,
+    val type: String? = null
 )
