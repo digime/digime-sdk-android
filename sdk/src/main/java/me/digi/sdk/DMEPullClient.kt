@@ -149,11 +149,24 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fun requestConsent(fromActivity: Activity) = SingleTransformer<DMESession, DMESession> {
             it.flatMap { session ->
                 Single.create<DMESession> { emitter ->
-                    nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
-                        when {
-                            error != null -> emitter.onError(error)
-                            session != null -> emitter.onSuccess(session)
-                            else -> emitter.onError(java.lang.IllegalArgumentException())
+                    when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
+                        Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
+                            when {
+                                error != null -> emitter.onError(error)
+                                session != null -> emitter.onSuccess(session)
+                                else -> emitter.onError(java.lang.IllegalArgumentException())
+                            }
+                        }
+                        Pair(false, false) -> {
+                            DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                                nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
+                                    when {
+                                        error != null -> emitter.onError(error)
+                                        session != null -> emitter.onSuccess(session)
+                                        else -> emitter.onError(java.lang.IllegalArgumentException())
+                                    }
+                                }
+                            }
                         }
                     }
                 }
