@@ -85,6 +85,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             .addInterceptor(DMERetryInterceptor(clientConfig))
             .configureCertificatePinningIfNecessary()
             .callTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
+            .readTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
             .dispatcher(requestDispatcher)
 
         val retrofitBuilder = Retrofit.Builder()
