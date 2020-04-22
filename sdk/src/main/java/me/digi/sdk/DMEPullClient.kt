@@ -240,10 +240,21 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .compose(triggerDataQuery())
             .onErrorResumeNext { error ->
 
-                // If an error is encountered from this call, we inspect it to see if it's an
-                // 'InvalidToken' error, meaning that the ACCESS token has expired.
-                if (error is DMEAPIError.INVALID_REFRESH_TOKEN && error.code == "InvalidToken") {
+                // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
+                // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
+                // We process the consent flow for ongoing access
+                if (error is DMEAPIError && error.code == "InternalServerError") {
+                    Single.just(nativeConsentManager.sessionManager.currentSession!!)
+                        .compose(requestPreauthorizationCode())
+                        .compose(requestConsent(fromActivity))
+                        .compose(exchangeAuthorizationCode())
+                        .doOnSuccess {
+                            activeCredentials = it.second
+                        }
 
+                    // If an error we encountere a "InvalidToken" error, which means that the ACCESS token
+                    // has expired.
+                } else if (error is DMEAPIError && error.code == "InvalidToken") {
                     // If so, we take the active session and expired credentials and try to refresh them.
                     Single.just(Pair(nativeConsentManager.sessionManager.currentSession!!, activeCredentials!!))
                         .compose(refreshCredentials())
@@ -252,8 +263,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                             // If an error is encountered from this call, we inspect it to see if it's an
                             // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                            if (error is DMEAPIError.INVALID_REFRESH_TOKEN && error.code == "InvalidToken") {
-
+                            if (error is DMEAPIError && error.code == "InvalidToken") {
                                 // If so, we need to obtain a new set of credentials from the digi.me
                                 // application. Process the flow as before, for ongoing acces, provided
                                 // that auto-recover is enabled. If not, we throw a specific error and
