@@ -55,7 +55,7 @@ class DigiMeService(private val context: Application) {
     fun fetchData() = client.getSessionData()
         .map { gsonAgent.fromJson<List<Song>>(String(it.fileContent), object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
-        .filter { TimeUnit.DAYS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
+        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))
