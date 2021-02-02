@@ -15,13 +15,13 @@ data class DMEFile (
 
     @JvmField
     @SerializedName("content")
-    val fileContent: ByteArray
+    val fileContent: String
 
 ) {
 
     lateinit var identifier: String
 
-    internal fun <T> fileContentAs(type: Class<T>) = Gson().fromJson(String(fileContent), type)
-    fun fileContentAsJSON(): JsonElement? = Gson().toJsonTree(String(fileContent))
+    internal fun <T> fileContentAs(type: Class<T>) = Gson().fromJson(fileContent, type)
+    fun fileContentAsJSON(): JsonElement? = Gson().toJsonTree(fileContent)
 
 }

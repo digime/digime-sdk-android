@@ -25,18 +25,18 @@ internal interface DMEArgonService {
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1/permission-access/postbox/{id}")
+    @POST("/v1.4/permission-access/postbox/{id}")
     fun pushData(@Header("sessionKey") sessionKey: String, @Header("symmetricalKey") symmetricalKey: String,
                  @Header("iv") iv: String, @Header("metadata") metadata: String,
                  @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>
 
-    @POST("v1/oauth/token")
+    @POST("v1.4/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>
 
-    @POST("v1/oauth/authorize")
+    @POST("v1.4/oauth/authorize")
     fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreauthorizationResponseJWT>
 
-    @POST("v1/oauth/token")
+    @POST("v1.4/oauth/token")
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<DMEAuthCodeExchangeResponseJWT>
 
     @POST("v1.4/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")

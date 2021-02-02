@@ -32,7 +32,7 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
         val compression = try { json["compression"].asString } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
         val decompressedContentBytes = DMECompressor.decompressData(contentBytes, compression)
 
-        return DMEFile(metadata, DMEMimeType.APPLICATION_JSON, decompressedContentBytes)
+        return DMEFile(metadata, DMEMimeType.APPLICATION_JSON, String(decompressedContentBytes))
     }
 
     private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): DMEFileMetadata? {
