@@ -2,11 +2,10 @@ package me.digi.sdk.entities
 
 import me.digi.sdk.utilities.DMELog
 
-abstract class DMEClientConfiguration (
-
+abstract class DMEClientConfiguration(
     var appId: String,
-    var contractId: String
-
+    var contractId: String,
+    var privateKeyHex: String
 ) {
 
     var globalTimeout: Int = 62
