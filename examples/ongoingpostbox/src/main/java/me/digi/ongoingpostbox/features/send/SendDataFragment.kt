@@ -4,6 +4,7 @@ import androidx.fragment.app.Fragment
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.android.synthetic.main.fragment_send_data.*
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.framework.datasource.DigiMeService
 import org.koin.android.ext.android.inject
@@ -32,11 +33,11 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onComplete = {
-
+                onSuccess = { token ->
+                    textViewPlaceHolder?.text = token.toString()
                 },
                 onError = {
-                    Timber.e("Error: ${it.localizedMessage ?: "Unknown"}")
+                    Timber.e("ErrorOccurredClient: ${it.localizedMessage ?: "Unknown"}")
                 }
             )
     }
