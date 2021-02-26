@@ -25,7 +25,7 @@ internal interface DMEArgonService {
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.4/permission-access/postbox/{id}")
+    @POST("/v1.5/permission-access/postbox/{id}")
     fun pushData(@Header("sessionKey") sessionKey: String, @Header("symmetricalKey") symmetricalKey: String,
                  @Header("iv") iv: String, @Header("metadata") metadata: String,
                  @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>

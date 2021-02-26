@@ -16,6 +16,8 @@ abstract class DMEClientConfiguration(
     var retryWithExponentialBackOff: Boolean = true
     var maxRetryCount: Int = 5
 
+    var autoRecoverExpiredCredentials = true
+
     var debugLogEnabled: Boolean = false
         set(value) {
             field = value

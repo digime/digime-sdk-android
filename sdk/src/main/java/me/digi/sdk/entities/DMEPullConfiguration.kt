@@ -6,5 +6,4 @@ class DMEPullConfiguration(appId: String, contractId: String, privateKeyHex: Str
     var guestEnabled = true
     var pollInterval = 3
     var maxStalePolls = 100
-    var autoRecoverExpiredCredentials = true
 }
