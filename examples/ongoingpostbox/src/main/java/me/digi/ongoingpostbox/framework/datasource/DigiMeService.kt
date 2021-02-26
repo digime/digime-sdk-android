@@ -43,10 +43,9 @@ class DigiMeService(private val context: Application) {
         client.authorizeOngoingPostbox(activity, getCachedPostbox(), getCachedCredential())
             .map {
                 Timber.d("AccessRights: $it")
-                //it.second
                 it
             }
-            .compose(cacheNewCredentials())
+            .compose(cacheCredentials())
             .map { it }
 
     fun getCachedCredential(): DMEOAuthToken? =
@@ -63,27 +62,13 @@ class DigiMeService(private val context: Application) {
             }
         }
 
-    private fun cacheCredentials(): SingleTransformer<DMEOAuthToken?, DMEOAuthToken> =
-        SingleTransformer {
-            it.map { credential ->
-                Timber.d("TOOOOOOOOOKEN2: $credential")
-                credential?.apply {
-                    context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                        val encodedCredential = Gson().toJson(credential)
-                        putString(CACHED_CREDENTIAL_KEY, encodedCredential)
-                        apply()
-                    }
-                }
-            }
-        }
-
-    private fun cacheNewCredentials(): SingleTransformer<Pair<DMEPostbox?, DMEOAuthToken?>, Pair<DMEPostbox?, DMEOAuthToken?>> =
+    private fun cacheCredentials(): SingleTransformer<Pair<DMEPostbox?, DMEOAuthToken?>, Pair<DMEPostbox?, DMEOAuthToken?>> =
         SingleTransformer {
             it.map { credential ->
                 credential?.apply {
                     context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                        val encodedCredential = Gson().toJson(credential.second)
                         val encodedPostbox = Gson().toJson(credential.first)
+                        val encodedCredential = Gson().toJson(credential.second)
                         putString(CACHED_CREDENTIAL_KEY, encodedCredential)
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)
                         apply()

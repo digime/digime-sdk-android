@@ -15,7 +15,7 @@ import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.*
 
 class DMEOngoingPostboxConsentManager(
-    private val sessionManager: DMESessionManager,
+    val sessionManager: DMESessionManager,
     val appId: String
 ) : DMEAppCallbackHandler() {
 

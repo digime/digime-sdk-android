@@ -94,7 +94,8 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                         codeVerifier
                     )
 
-                    val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+                    val signingKey =
+                        DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.getPreauthorizationCode(authHeader))
@@ -106,74 +107,105 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                 }
             }
 
-        fun requestConsent(fromActivity: Activity): SingleTransformer<DMESession, Pair<DMESession, DMEPostbox?>> = SingleTransformer {
-            it.flatMap { result ->
-                Single.create<Pair<DMESession, DMEPostbox?>> { emitter ->
-                    when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
-                        Pair(true, false) -> postboxOngoingManager.beginOngoingPostboxAuthorization(fromActivity) { session, postbox, error ->
-                            when {
-                                session != null -> emitter.onSuccess(Pair(session, postbox))
-                                error != null -> emitter.onError(error)
-                                else -> emitter.onError(java.lang.IllegalArgumentException())
-                            }
-                        }
-                        Pair(false, false) -> {
-                            DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                                postboxOngoingManager.beginOngoingPostboxAuthorization(fromActivity) { session, postbox, error ->
-                                    when {
-                                        session != null -> emitter.onSuccess(Pair(session, postbox))
-                                        error != null -> emitter.onError(error)
-                                        else -> emitter.onError(java.lang.IllegalArgumentException())
-                                    }
+        fun requestConsent(fromActivity: Activity): SingleTransformer<DMESession, Pair<DMESession, DMEPostbox?>> =
+            SingleTransformer {
+                it.flatMap { result ->
+                    Single.create<Pair<DMESession, DMEPostbox?>> { emitter ->
+                        when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
+                            Pair(
+                                true,
+                                false
+                            ) -> postboxOngoingManager.beginOngoingPostboxAuthorization(fromActivity) { session, postbox, error ->
+                                when {
+                                    session != null -> emitter.onSuccess(Pair(session, postbox))
+                                    error != null -> emitter.onError(error)
+                                    else -> emitter.onError(java.lang.IllegalArgumentException())
                                 }
+                            }
+                            Pair(false, false) -> {
+                                DMEAppCommunicator.getSharedInstance()
+                                    .requestInstallOfDMEApp(fromActivity) {
+                                        postboxOngoingManager.beginOngoingPostboxAuthorization(
+                                            fromActivity
+                                        ) { session, postbox, error ->
+                                            when {
+                                                session != null -> emitter.onSuccess(
+                                                    Pair(
+                                                        session,
+                                                        postbox
+                                                    )
+                                                )
+                                                error != null -> emitter.onError(error)
+                                                else -> emitter.onError(java.lang.IllegalArgumentException())
+                                            }
+                                        }
+                                    }
                             }
                         }
                     }
                 }
             }
-        }
 
         fun exchangeAuthorizationCode(): SingleTransformer<Pair<DMESession, DMEPostbox?>, ExchangeResponse> =
             SingleTransformer {
                 it.flatMap { result ->
 
-                    val codeVerifier = result.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+                    val codeVerifier =
+                        result.first.metadata[context.getString(R.string.key_code_verifier)].toString()
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         result.first.authorizationCode!!,
                         codeVerifier
                     )
-                    val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+                    val signingKey =
+                        DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
-                        .map { token: DMEAuthCodeExchangeResponseJWT -> ExchangeResponse(result.first, result.second, DMEOAuthToken(token)) }
+                        .map { token: DMEAuthCodeExchangeResponseJWT ->
+                            ExchangeResponse(
+                                result.first,
+                                result.second,
+                                DMEOAuthToken(token)
+                            )
+                        }
                 }
             }
 
-        fun refreshCredentials() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
-            it.flatMap { result ->
-                val jwt = RefreshCredentialsRequestJWT(configuration.appId, configuration.contractId, result.second.refreshToken)
-                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-                val authHeader = jwt.sign(signingKey).tokenize()
-                apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
-                    .map { result }
+        fun refreshCredentials() =
+            SingleTransformer<Pair<DMESession, DMEOAuthToken>, ExchangeResponse> {
+                it.flatMap { result ->
+                    val jwt = RefreshCredentialsRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        result.second.refreshToken
+                    )
+                    val signingKey =
+                        DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+                    val authHeader = jwt.sign(signingKey).tokenize()
+                    apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
+                        .map { ExchangeResponse(result.first, null, result.second) }
+                }
             }
-        }
 
         // Defined above are a number of 'modules' that are used within the Cyclic Postbox flow.
         // These can be combined in various ways as the auth state demands.
         // See the flow below for details.
         var activeCredentials = credentials
         var activePostbox = existingPostbox
-        val request = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", null)
+        val request = DMESessionRequest(
+            configuration.appId,
+            configuration.contractId,
+            DMESDKAgent(),
+            "gzip",
+            null
+        )
 
         // First, we get a session as normal.
         requestSession(request)
-
-            // Next, we check if any credentials were supplied (for access restoration).
-            // If not, we kick the user out to digi.me to authorise normally.
+            // Next, we check if any credentials were supplied (for access restoration) as well as postbox.
+            // If not, we kick the user out to digi.me to authorise normally which will create postbox and new set of credentials.
             .let { session ->
                 if (activeCredentials != null && activePostbox != null)
                     session.map {
@@ -191,19 +223,66 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                             activeCredentials = it.authToken
                         }
             }
-            // At this point, we have a session and a set of credentials, so we can trigger
-            // the data query to 'pair' the credentials with the session.
+            // At this point, we have a session, postbox and a set of credentials
+            .onErrorResumeNext { error: Throwable ->
+
+                // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
+                // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
+                // We process the consent flow for ongoing access
+                when {
+                    error is DMEAPIError && error.code == "InternalServerError" -> {
+                        Single.just(postboxOngoingManager.sessionManager.currentSession!!)
+                            .compose(requestPreAuthorizationCode())
+                            .compose(requestConsent(fromActivity))
+                            .compose(exchangeAuthorizationCode())
+                            .doOnSuccess {
+                                activePostbox = it.postbox
+                                activeCredentials = it.authToken
+                            }
+                    }
+                    // If an error we encounter is "InvalidToken" error, which means that the ACCESS token
+                    // has expired.
+                    error is DMEAPIError && error.code == "InvalidToken" -> {
+                        // If so, we take the active session and expired credentials and try to refresh them.
+                        Single.just(
+                            Pair(
+                                postboxOngoingManager.sessionManager.currentSession!!,
+                                activeCredentials!!
+                            )
+                        )
+                            .compose(refreshCredentials())
+                            .doOnSuccess { activeCredentials = it.authToken }
+                            .onErrorResumeNext { error ->
+
+                                // If an error is encountered from this call, we inspect it to see if it's an
+                                // 'InvalidToken' error, meaning that the REFRESH token has expired.
+                                if (error is DMEAPIError && error.code == "InvalidToken") {
+                                    // If so, we need to obtain a new set of credentials from the digi.me
+                                    // application. Process the flow as before, for ongoing access, provided
+                                    // that auto-recover is enabled. If not, we throw a specific error and
+                                    // exit the flow.
+                                    if (configuration.autoRecoverExpiredCredentials)
+                                        Single.just(postboxOngoingManager.sessionManager.currentSession!!)
+                                            .compose(requestPreAuthorizationCode())
+                                            .compose(requestConsent(fromActivity))
+                                            .compose(exchangeAuthorizationCode())
+                                            .doOnSuccess {
+                                                activePostbox = it.postbox
+                                                activeCredentials = it.authToken
+                                            } else Single.error(DMEAuthError.TokenExpired())
+                                } else Single.error(error)
+                            }
+                    }
+                    else -> Single.error(error)
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result ->
-                    DMELog.i("RESULT: $result")
-                    //DMELog.i("Result: ${result.first} - ${result.second}")
-                    completion(result.postbox, result.authToken, null)
-                },
-                onError = { error ->
-                    DMELog.e("ErrorOccurred: ${error.localizedMessage ?: "Unknown"}")
-                    completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.GENERIC(0, error.localizedMessage))
+                onSuccess = { result: ExchangeResponse -> completion(result.postbox, result.authToken, null) },
+                onError = { error: Throwable ->
+                    completion(null, null, error.let { it as? DMEError }
+                        ?: DMEAPIError.GENERIC(0, error.localizedMessage ?: "Unknown"))
                 }
             )
             .addTo(compositeDisposable)

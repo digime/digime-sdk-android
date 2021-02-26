@@ -34,6 +34,7 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { token ->
+                    Timber.d("Data: ${token.first} - ${token.second}")
                     textViewPlaceHolder?.text = token.toString()
                 },
                 onError = {
