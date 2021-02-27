@@ -1,6 +1,8 @@
 package me.digi.ongoingpostbox.utils
 
 import android.app.Activity
+import android.content.Context
+import android.net.Uri
 import java.io.IOException
 
 fun getFileContent(activity: Activity, fileName: String): ByteArray {
@@ -16,3 +18,7 @@ fun getFileContent(activity: Activity, fileName: String): ByteArray {
         return ByteArray(2)
     }
 }
+
+@Throws(IOException::class)
+fun readBytes(context: Context, uri: Uri): ByteArray? =
+    context.contentResolver.openInputStream(uri)?.buffered()?.use { it.readBytes() }
