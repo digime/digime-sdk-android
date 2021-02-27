@@ -4,14 +4,19 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import com.google.gson.Gson
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleTransformer
+import io.reactivex.rxjava3.kotlin.subscribeBy
+import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.framework.utils.authorizeOngoingPostbox
+import me.digi.ongoingpostbox.framework.utils.pushData
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPostbox
 import me.digi.sdk.entities.DMEPushConfiguration
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import timber.log.Timber
 
@@ -76,4 +81,16 @@ class DigiMeService(private val context: Application) {
                 }
             }
         }
+
+    fun pushDataToOngoingPostbox(first: DMEPushPayload? = null, second: DMEOAuthToken? = null) {
+        client.pushData(first, second).subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread()).subscribeBy(
+                onSuccess = {
+                    Timber.d("Data pushed!")
+                },
+                onError = {
+                    Timber.e("Error occurred: ${it.localizedMessage ?: "Unknown"}")
+                }
+            )
+    }
 }

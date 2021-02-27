@@ -10,6 +10,7 @@ import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.api.helpers.DMEMultipartBody
+import me.digi.sdk.callbacks.DMEOngoingPostboxPushCompletion
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.callbacks.DMEPostboxOngoingCreationCompletion
 import me.digi.sdk.callbacks.DMEPostboxPushCompletion
@@ -23,10 +24,7 @@ import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEDataEncryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
-import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeRequestJWT
-import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
-import me.digi.sdk.utilities.jwt.DMEPreauthorizationRequestJWT
-import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
+import me.digi.sdk.utilities.jwt.*
 
 class DMEPushClient(val context: Context, val configuration: DMEPushConfiguration) :
     DMEClient(context, configuration) {
@@ -279,7 +277,13 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: ExchangeResponse -> completion(result.postbox, result.authToken, null) },
+                onSuccess = { result: ExchangeResponse ->
+                    completion(
+                        result.postbox,
+                        result.authToken,
+                        null
+                    )
+                },
                 onError = { error: Throwable ->
                     completion(null, null, error.let { it as? DMEError }
                         ?: DMEAPIError.GENERIC(0, error.localizedMessage ?: "Unknown"))
@@ -319,6 +323,77 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                     DMELog.e("Failed to push file to postbox. Error: ${error.message}")
                     completion(error)
                 }
+
+                DMELog.i("Successfully pushed data to postbox")
+                completion(null)
+            }
+        }
+    }
+
+    fun pushDataToOngoingPostbox(
+        postboxFile: DMEPushPayload?,
+        authToken: DMEOAuthToken?,
+        completion: DMEOngoingPostboxPushCompletion
+    ) {
+
+        val postboxFile = postboxFile!!
+        val authToken = authToken!!
+
+        if (sessionManager.isSessionValid()) {
+            val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
+                postboxFile.dmePostbox.publicKey,
+                postboxFile.content,
+                postboxFile.metadata
+            )
+
+            val multipartBody = DMEMultipartBody.Builder()
+                .postboxPushPayload(postboxFile)
+                .dataContent(encryptedData.fileContent, postboxFile.mimeType)
+                .build()
+
+            val jwt = DMEAuthTokenRequestJWT(
+                authToken.accessToken,
+                encryptedData.iv,
+                encryptedData.metadata,
+                encryptedData.symmetricalKey,
+                postboxFile.dmePostbox.sessionKey,
+                configuration.appId,
+                configuration.contractId
+            )
+
+            val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+            val authHeader = jwt.sign(signingKey).tokenize()
+
+            DMELog.d("Header: $authHeader")
+            DMELog.d("AccessToken: ${authToken.accessToken}")
+            DMELog.d("IV: ${encryptedData.iv}")
+            DMELog.d("SimKey: ${encryptedData.symmetricalKey}")
+            DMELog.d("SesKey: ${postboxFile.dmePostbox.sessionKey}")
+            DMELog.d("AppId: ${configuration.appId}")
+            DMELog.d("ContractId: ${configuration.contractId}")
+
+            apiClient.makeCall(
+                apiClient.argonService.pushOngoingData(
+                    authHeader,
+                    postboxFile.dmePostbox.sessionKey,
+                    encryptedData.symmetricalKey,
+                    encryptedData.iv,
+                    encryptedData.metadata,
+                    postboxFile.dmePostbox.postboxId,
+                    multipartBody.requestBody,
+                    multipartBody.description
+                )
+            ) { _, error ->
+
+                if (error != null) {
+                    DMELog.e("Failed to push file to postbox. Error: ${error.message}")
+                    completion(error)
+                }
+
+//                error?.let {
+//                    DMELog.e("Failed to push file to postbox. Error: ${error.message}")
+//                    completion(false, error)
+//                } ?: completion(true, null)
 
                 DMELog.i("Successfully pushed data to postbox")
                 completion(null)

@@ -28,6 +28,10 @@ sealed class DMEAuthError(override val message: String) : DMEError(message) {
     class TokenExpired : DMEAuthError("The refresh token supplied has expired. As `autoRecoverExpiredCredentials` is turned off, you will need to repeat authorization without credentials to recover.")
 }
 
+sealed class DMEPushDataError(override val message: String) : DMEError(message) {
+    object General: DMEPushDataError("Unable to push data to postbox")
+}
+
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ArgonCode(val value: String)

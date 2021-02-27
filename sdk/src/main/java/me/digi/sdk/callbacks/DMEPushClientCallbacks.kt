@@ -12,3 +12,5 @@ typealias DMEPostboxAuthCompletion = (session: DMESession?, postbox: DMEPostbox?
 typealias DMEPostboxOngoingCreationCompletion = (DMEPostbox?, credentials: DMEOAuthToken?, error: DMEError?) -> Unit
 
 typealias DMEPostboxPushCompletion = (error: DMEError?) -> Unit
+
+typealias DMEOngoingPostboxPushCompletion = (error: DMEError?) -> Unit

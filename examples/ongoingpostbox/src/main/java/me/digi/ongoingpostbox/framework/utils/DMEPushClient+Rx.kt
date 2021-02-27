@@ -6,6 +6,7 @@ import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPostbox
+import me.digi.sdk.entities.DMEPushPayload
 
 fun DMEPushClient.authorizeOngoingPostbox(
     activity: Activity,
@@ -24,3 +25,9 @@ fun DMEPushClient.authorizeOngoingPostbox(
                 else emitter.onError(DMEAuthError.General())
         }
     }
+
+fun DMEPushClient.pushData(payload: DMEPushPayload? = null, credentials: DMEOAuthToken? = null): Single<Unit> = Single.create<Unit> { emitter ->
+    pushDataToOngoingPostbox(payload, credentials) { error ->
+        error?.let { emitter.onError(it) }
+    }
+}
