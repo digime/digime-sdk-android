@@ -3,23 +3,23 @@ package me.digi.ongoingpostbox
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
+import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.features.base.BaseActivity
 import me.digi.ongoingpostbox.features.intro.IntroFragment
 import me.digi.ongoingpostbox.features.send.SendDataFragment
-import me.digi.ongoingpostbox.framework.datasource.DigiMeService
 import me.digi.sdk.interapp.DMEAppCommunicator
 import org.koin.android.ext.android.inject
 import kotlin.system.exitProcess
 
 class MainActivity : BaseActivity() {
 
-    private val service: DigiMeService by inject()
+    private val localAccess: MainLocalDataAccess by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        (service.getCachedCredential()?.let {
+        (localAccess.getCachedCredential()?.let {
             // Proceed straight to results screen, this isn't the user's first rodeo.
             SendDataFragment.newInstance()
         } ?: run {

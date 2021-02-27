@@ -26,8 +26,9 @@ fun DMEPushClient.authorizeOngoingPostbox(
         }
     }
 
-fun DMEPushClient.pushData(payload: DMEPushPayload? = null, credentials: DMEOAuthToken? = null): Single<Unit> = Single.create<Unit> { emitter ->
-    pushDataToOngoingPostbox(payload, credentials) { error ->
+fun DMEPushClient.pushData(payload: DMEPushPayload? = null, credentials: DMEOAuthToken? = null): Single<Boolean> = Single.create<Boolean> { emitter ->
+    pushDataToOngoingPostbox(payload, credentials) { isDataPushSuccessful, error ->
         error?.let { emitter.onError(it) }
+            ?: emitter.onSuccess(isDataPushSuccessful)
     }
 }

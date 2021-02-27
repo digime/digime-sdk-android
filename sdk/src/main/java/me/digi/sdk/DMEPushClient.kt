@@ -364,14 +364,6 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
             val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            DMELog.d("Header: $authHeader")
-            DMELog.d("AccessToken: ${authToken.accessToken}")
-            DMELog.d("IV: ${encryptedData.iv}")
-            DMELog.d("SimKey: ${encryptedData.symmetricalKey}")
-            DMELog.d("SesKey: ${postboxFile.dmePostbox.sessionKey}")
-            DMELog.d("AppId: ${configuration.appId}")
-            DMELog.d("ContractId: ${configuration.contractId}")
-
             apiClient.makeCall(
                 apiClient.argonService.pushOngoingData(
                     authHeader,
@@ -385,18 +377,10 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
                 )
             ) { _, error ->
 
-                if (error != null) {
+                error?.let {
                     DMELog.e("Failed to push file to postbox. Error: ${error.message}")
-                    completion(error)
-                }
-
-//                error?.let {
-//                    DMELog.e("Failed to push file to postbox. Error: ${error.message}")
-//                    completion(false, error)
-//                } ?: completion(true, null)
-
-                DMELog.i("Successfully pushed data to postbox")
-                completion(null)
+                    completion(false, error)
+                } ?: completion(true, null).also { DMELog.i("Successfully pushed data to postbox") }
             }
         }
     }

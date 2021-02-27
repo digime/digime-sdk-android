@@ -13,4 +13,4 @@ typealias DMEPostboxOngoingCreationCompletion = (DMEPostbox?, credentials: DMEOA
 
 typealias DMEPostboxPushCompletion = (error: DMEError?) -> Unit
 
-typealias DMEOngoingPostboxPushCompletion = (error: DMEError?) -> Unit
+typealias DMEOngoingPostboxPushCompletion = (isDataPushSuccessful: Boolean, error: DMEError?) -> Unit
