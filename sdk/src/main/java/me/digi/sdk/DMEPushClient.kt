@@ -69,6 +69,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
     ) {
 
         fun requestSession(request: DMESessionRequest) = Single.create<DMESession> { emitter ->
+            DMELog.i("Requesting session")
             sessionManager.getSession(request) { session, error ->
                 when {
                     session != null -> emitter.onSuccess(session)
@@ -80,6 +81,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
 
         fun requestPreAuthorizationCode(): SingleTransformer<DMESession, DMESession> =
             SingleTransformer {
+                DMELog.i("Requesting PreAuthorization code")
                 it.flatMap { session ->
                     val codeVerifier = DMEByteTransformer.hexStringFromBytes(
                         DMECryptoUtilities.generateSecureRandom(64)
@@ -107,6 +109,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
 
         fun requestConsent(fromActivity: Activity): SingleTransformer<DMESession, Pair<DMESession, DMEPostbox?>> =
             SingleTransformer {
+                DMELog.i("Requesting consent")
                 it.flatMap { result ->
                     Single.create<Pair<DMESession, DMEPostbox?>> { emitter ->
                         when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
@@ -146,6 +149,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
 
         fun exchangeAuthorizationCode(): SingleTransformer<Pair<DMESession, DMEPostbox?>, ExchangeResponse> =
             SingleTransformer {
+                DMELog.i("Exchaning authorization code")
                 it.flatMap { result ->
 
                     val codeVerifier =
@@ -173,6 +177,7 @@ class DMEPushClient(val context: Context, val configuration: DMEPushConfiguratio
 
         fun refreshCredentials() =
             SingleTransformer<Pair<DMESession, DMEOAuthToken>, ExchangeResponse> {
+                DMELog.i("Refreshing credentials")
                 it.flatMap { result ->
                     val jwt = RefreshCredentialsRequestJWT(
                         configuration.appId,

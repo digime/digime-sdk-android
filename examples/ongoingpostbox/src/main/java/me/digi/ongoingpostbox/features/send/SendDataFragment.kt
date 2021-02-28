@@ -25,8 +25,6 @@ import java.io.File
 
 class SendDataFragment : Fragment(R.layout.fragment_send_data) {
 
-    private var firstExecution: Boolean = true
-    private lateinit var resultData: Pair<DMEPostbox?, DMEOAuthToken?>
     private val viewModel: SendDataViewModel by viewModel()
 
     companion object {
@@ -40,14 +38,6 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
     }
 
     private fun subscribeToObservers() {
-        viewModel.createPostboxStatus.observe(
-            viewLifecycleOwner,
-            Observer { result: Pair<Pair<DMEPostbox?, DMEOAuthToken?>, String?> ->
-                result.second?.let {
-                    Timber.e("CreatePostboxError: $it")
-                } ?: prepareDataForUpload(result.first)
-            })
-
         viewModel.uploadDataToOngoingPostboxStatus.observe(
             viewLifecycleOwner,
             Observer { result: Pair<Boolean, String?> ->
@@ -113,15 +103,6 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
                         }
                     }
                 }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (firstExecution) {
-            viewModel.createPostbox(requireActivity())
-            firstExecution = false
         }
     }
 }

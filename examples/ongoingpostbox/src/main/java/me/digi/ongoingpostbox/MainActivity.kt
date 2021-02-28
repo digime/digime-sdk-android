@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.features.base.BaseActivity
-import me.digi.ongoingpostbox.features.intro.IntroFragment
+import me.digi.ongoingpostbox.features.connect.view.CreatePostboxFragment
 import me.digi.ongoingpostbox.features.send.SendDataFragment
 import me.digi.sdk.interapp.DMEAppCommunicator
 import org.koin.android.ext.android.inject
@@ -25,7 +25,7 @@ class MainActivity : BaseActivity() {
             SendDataFragment.newInstance()
         } ?: run {
             // Show connect to digime screen first.
-            IntroFragment()
+            CreatePostboxFragment.newInstance()
         })
             .also { setFragment(R.id.homeRoot, it) }
     }
