@@ -5,8 +5,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.features.base.BaseActivity
-import me.digi.ongoingpostbox.features.connect.view.CreatePostboxFragment
-import me.digi.ongoingpostbox.features.send.SendDataFragment
+import me.digi.ongoingpostbox.features.create.view.CreatePostboxFragment
+import me.digi.ongoingpostbox.features.upload.view.UploadContentFragment
+import me.digi.ongoingpostbox.utils.replaceFragment
 import me.digi.sdk.interapp.DMEAppCommunicator
 import org.koin.android.ext.android.inject
 import kotlin.system.exitProcess
@@ -20,14 +21,10 @@ class MainActivity : BaseActivity() {
         setTheme(R.style.Theme_Digimesdkandroid)
         setContentView(R.layout.activity_main)
 
-        (localAccess.getCachedCredential()?.let {
-            // Proceed straight to results screen, this isn't the user's first rodeo.
-            SendDataFragment.newInstance()
-        } ?: run {
-            // Show connect to digime screen first.
-            CreatePostboxFragment.newInstance()
-        })
-            .also { setFragment(R.id.homeRoot, it) }
+        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null) {
+            // User has all needed information to push their data
+            UploadContentFragment.newInstance().replaceFragment(supportFragmentManager)
+        } else CreatePostboxFragment.newInstance().replaceFragment(supportFragmentManager)
     }
 
     override fun onResume() {
@@ -54,9 +51,5 @@ class MainActivity : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
-    }
-
-    fun proceedToSendDataFragment() {
-        setFragment(R.id.homeRoot, SendDataFragment.newInstance())
     }
 }

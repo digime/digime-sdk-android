@@ -1,4 +1,4 @@
-package me.digi.ongoingpostbox.features.send.viewmodel
+package me.digi.ongoingpostbox.features.upload.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -9,41 +9,37 @@ import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
+import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPushPayload
 import timber.log.Timber
 
-class SendDataViewModel(
+class UploadContentViewModel(
     private val uploadData: PushDataToOngoingPostboxUseCase,
     private val disposable: CompositeDisposable = CompositeDisposable()
 ) : ViewModel() {
 
-    private val _uploadDataToOngoingPostboxStatus: MutableLiveData<Pair<Boolean, String?>> =
-        MutableLiveData()
-    val uploadDataToOngoingPostboxStatus: LiveData<Pair<Boolean, String?>>
-        get() = _uploadDataToOngoingPostboxStatus
+    private val _uploadDataStatus: MutableLiveData<Resource<Boolean>> = MutableLiveData()
+    val uploadDataStatus: LiveData<Resource<Boolean>>
+        get() = _uploadDataStatus
 
-    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMEOAuthToken) =
+    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMEOAuthToken) {
+        _uploadDataStatus.postValue(Resource.Loading())
+
         uploadData
             .invoke(postboxPayload, credentials)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { isPushSuccessful ->
-                    Timber.d("Push successful: $isPushSuccessful")
-                    _uploadDataToOngoingPostboxStatus.postValue(Pair(isPushSuccessful, null))
+                    _uploadDataStatus.postValue(Resource.Success(isPushSuccessful))
                 },
                 onError = { error ->
-                    Timber.e("Error: ${error.localizedMessage ?: "Unknown"}")
-                    _uploadDataToOngoingPostboxStatus.postValue(
-                        Pair(
-                            false,
-                            error.localizedMessage ?: "Unknown"
-                        )
-                    )
+                    _uploadDataStatus.postValue(Resource.Failure(error.localizedMessage))
                 }
             )
             .addTo(disposable)
+    }
 
     override fun onCleared() {
         Timber.d("ViewModelCleared")

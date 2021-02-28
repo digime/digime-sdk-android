@@ -1,4 +1,4 @@
-package me.digi.ongoingpostbox.features.connect.view
+package me.digi.ongoingpostbox.features.create.view
 
 import android.os.Bundle
 import android.view.View
@@ -8,11 +8,12 @@ import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.fragment_create_postbox.*
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
-import me.digi.ongoingpostbox.features.connect.viewmodel.CreatePostboxViewModel
+import me.digi.ongoingpostbox.features.create.viewmodel.CreatePostboxViewModel
+import me.digi.ongoingpostbox.features.upload.view.UploadContentFragment
 import me.digi.ongoingpostbox.utils.Resource
+import me.digi.ongoingpostbox.utils.replaceFragment
 import me.digi.ongoingpostbox.utils.snackBar
 import org.koin.android.viewmodel.ext.android.viewModel
-import timber.log.Timber
 
 class CreatePostboxFragment : Fragment(R.layout.fragment_create_postbox), View.OnClickListener {
 
@@ -57,9 +58,10 @@ class CreatePostboxFragment : Fragment(R.layout.fragment_create_postbox), View.O
             })
     }
 
-    private fun handlePostboxSuccess(result: OngoingPostboxResponseBody) {
-        Timber.d("Result: $result")
-    }
+    private fun handlePostboxSuccess(result: OngoingPostboxResponseBody) =
+        UploadContentFragment
+            .newInstance(result)
+            .replaceFragment(requireActivity().supportFragmentManager)
 
     override fun onClick(view: View?) {
         when (view?.id) {

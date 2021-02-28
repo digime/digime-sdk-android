@@ -5,6 +5,9 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.webkit.MimeTypeMap
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import me.digi.ongoingpostbox.R
 import java.io.IOException
 import java.util.*
 
@@ -41,4 +44,11 @@ fun getMimeType(context: Context, uri: Uri): String? {
         )
     }
     return mimeType
+}
+
+fun Fragment.replaceFragment(fragmentManager: FragmentManager) {
+    fragmentManager
+        .beginTransaction()
+        .replace(R.id.navigation_fragment_holder, this)
+        .commit()
 }

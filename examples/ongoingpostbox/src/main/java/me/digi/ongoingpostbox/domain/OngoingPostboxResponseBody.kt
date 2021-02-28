@@ -1,5 +1,9 @@
 package me.digi.ongoingpostbox.domain
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
 data class OngoingPostboxResponseBody(
     val sessionKey: String? = "",
     val postboxId: String? = "",
@@ -9,4 +13,4 @@ data class OngoingPostboxResponseBody(
     val expiresOn: String? = "",
     val refreshToken: String? = "",
     val tokenType: String? = ""
-)
+): Parcelable

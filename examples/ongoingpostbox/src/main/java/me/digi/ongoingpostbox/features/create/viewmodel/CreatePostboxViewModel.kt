@@ -1,4 +1,4 @@
-package me.digi.ongoingpostbox.features.connect.viewmodel
+package me.digi.ongoingpostbox.features.create.viewmodel
 
 import android.app.Activity
 import androidx.lifecycle.LiveData
