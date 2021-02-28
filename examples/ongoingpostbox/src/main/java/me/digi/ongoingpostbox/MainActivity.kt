@@ -17,6 +17,7 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setTheme(R.style.Theme_Digimesdkandroid)
         setContentView(R.layout.activity_main)
 
         (localAccess.getCachedCredential()?.let {

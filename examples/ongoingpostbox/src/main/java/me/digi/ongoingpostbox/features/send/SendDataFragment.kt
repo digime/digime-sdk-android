@@ -12,6 +12,7 @@ import kotlinx.android.synthetic.main.fragment_send_data.*
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.features.send.viewmodel.SendDataViewModel
 import me.digi.ongoingpostbox.utils.getFileContent
+import me.digi.ongoingpostbox.utils.getMimeType
 import me.digi.ongoingpostbox.utils.readBytes
 import me.digi.sdk.entities.DMEMimeType
 import me.digi.sdk.entities.DMEOAuthToken
@@ -19,6 +20,8 @@ import me.digi.sdk.entities.DMEPostbox
 import me.digi.sdk.entities.DMEPushPayload
 import org.koin.android.viewmodel.ext.android.viewModel
 import timber.log.Timber
+import java.io.File
+
 
 class SendDataFragment : Fragment(R.layout.fragment_send_data) {
 
@@ -72,8 +75,17 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
                     when (resultCode) {
                         Activity.RESULT_OK -> {
                             //Image Uri will not be null for RESULT_OK
-                            val fileUri: Uri? = data?.data
+                            val fileUri: Uri = data?.data!!
                             ivSelectImage?.setImageURI(fileUri)
+
+                            //You can get File object from intent
+                            val file: File = ImagePicker.getFile(data)!!
+                            Timber.d(
+                                """
+                                File info: ${file.nameWithoutExtension}
+                                NewFile: ${getMimeType(requireContext(), fileUri)}
+                            """.trimIndent()
+                            )
 
                             btnUploadImage?.isEnabled = true
 
@@ -81,7 +93,7 @@ class SendDataFragment : Fragment(R.layout.fragment_send_data) {
                             val postboxPayload = DMEPushPayload(
                                 result.first!!,
                                 metadata,
-                                readBytes(requireContext(), fileUri!!)!!,
+                                readBytes(requireContext(), fileUri)!!,
                                 DMEMimeType.IMAGE_PNG
                             )
 
