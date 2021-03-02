@@ -57,12 +57,12 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
-                        snackBar("Workspace ready")
+                        snackBar(getString(R.string.label_postbox_created))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
-                        snackBar(result.message ?: "Unknown")
+                        snackBar(result.message ?: getString(R.string.label_unknown_error))
                     }
                 }
             })
@@ -78,12 +78,12 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
-                        snackBar("Image uploaded successfully")
+                        snackBar(getString(R.string.label_update_successful))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
-                        snackBar(result.message ?: "Unknown")
+                        snackBar(result.message ?: getString(R.string.label_unknown_error))
                     }
                 }
             })
@@ -128,7 +128,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                 }
             }
             ImagePicker.RESULT_ERROR -> snackBar(ImagePicker.getError(data))
-            else -> snackBar("Task Cancelled")
+            else -> snackBar(getString(R.string.label_image_picker_cancelled))
         }
     }
 

@@ -5,4 +5,9 @@
     <string name="digime_contract_id">V5cRNEhdXHWqDEM54tZNqBaElDQcfl4v</string>
     <string name="digime_p12_filename">CYCLIC_TEST.p12</string>
     <string name="digime_p12_password">digime</string>
+
+    <string name="label_postbox_created">Workspace ready</string>
+    <string name="label_update_successful">Image uploaded successfully</string>
+    <string name="label_unknown_error">Unkown</string>
+    <string name="label_image_picker_cancelled">Task Cancelled</string>
 </resources>
