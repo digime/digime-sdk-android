@@ -1,5 +1,6 @@
-package me.digi.ongoingpostbox.features.upload.viewmodel
+package me.digi.ongoingpostbox.features.viewmodel
 
+import android.app.Activity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,20 +9,58 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
+import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
+import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPushPayload
-import timber.log.Timber
 
-class UploadContentViewModel(
+/**
+ * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
+ * Each Use-Case is being handled individually in terms of both functionality and
+ * corresponding Live/MutableLiveData
+ *
+ * Since our calls are Rx-based, ideally we'd dispose of them.
+ * Simplest way is to pass disposable into the constructor and initialize it immediately
+ * @see disposable
+ * and dispose of all calls via convenience method provided by ViewModel class
+ * @see onCleared
+ */
+class MainViewModel(
+    private val createPostbox: CreatePostboxUseCase,
     private val uploadData: PushDataToOngoingPostboxUseCase,
     private val disposable: CompositeDisposable = CompositeDisposable()
 ) : ViewModel() {
 
+    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxResponseBody>> =
+        MutableLiveData()
+    val createPostboxStatus: LiveData<Resource<OngoingPostboxResponseBody>>
+        get() = _createPostboxStatus
+
     private val _uploadDataStatus: MutableLiveData<Resource<Boolean>> = MutableLiveData()
     val uploadDataStatus: LiveData<Resource<Boolean>>
         get() = _uploadDataStatus
+
+    fun createPostbox(activity: Activity) {
+        _createPostboxStatus.postValue(Resource.Loading())
+
+        createPostbox
+            .invoke(activity)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: OngoingPostboxResponseBody ->
+                    _createPostboxStatus.postValue(Resource.Success(result))
+                },
+                onError = {
+                    _createPostboxStatus.postValue(
+                        Resource.Failure(it.localizedMessage)
+                    )
+                }
+            )
+            .addTo(disposable)
+    }
 
     fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMEOAuthToken) {
         _uploadDataStatus.postValue(Resource.Loading())
@@ -42,7 +81,6 @@ class UploadContentViewModel(
     }
 
     override fun onCleared() {
-        Timber.d("ViewModelCleared")
         disposable.dispose()
         super.onCleared()
     }

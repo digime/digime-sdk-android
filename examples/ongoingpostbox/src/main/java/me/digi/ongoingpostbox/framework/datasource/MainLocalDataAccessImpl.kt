@@ -7,6 +7,15 @@ import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPostbox
 
+/**
+ * Idea behind local main data access is to isolate
+ * local calls from remote ones.
+ * In which case in the repository/ies we can call one
+ * or the other, or combine them to get seamless data access flow
+ *
+ * In our case here, given we're working with small amount of data
+ * we're using [SharedPreferences]
+ */
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 
     companion object {

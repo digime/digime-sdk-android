@@ -82,7 +82,7 @@ class DMEPushClient(
             // Next, we check if any credentials were supplied (for access restoration) as well as postbox.
             // If not, we kick the user out to digi.me to authorise normally which will create postbox and new set of credentials.
             .let { session ->
-                if (activeCredentials != null)
+                if (activeCredentials != null && activePostbox != null)
                     session.map { DMEOngoingPostbox(it, activePostbox, activeCredentials) }
                 else
                     session.compose(
@@ -189,12 +189,8 @@ class DMEPushClient(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result ->
-                    DMELog.i("RESULT: $result")
-                    completion(result.postbox, result.authToken, null)
-                },
+                onSuccess = { result -> completion(result.postbox, result.authToken, null) },
                 onError = { error: Throwable ->
-                    DMELog.e("ERROR PUSH CLIENT: ${error.localizedMessage}")
                     completion(null, null, error.let { it as? DMEError }
                         ?: DMEAPIError.GENERIC(0, error.localizedMessage ?: "Unknown"))
                 }

@@ -15,6 +15,12 @@ import me.digi.sdk.entities.DMEPushConfiguration
 import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
+/**
+ * Idea behind remote main data access is to isolate
+ * remote calls from local ones.
+ * In which case in the repository/ies we can call one
+ * or the other, or combine them to get seamless data access flow
+ */
 class MainRemoteDataAccessImpl(
     private val context: Context,
     private val localDataAccess: MainLocalDataAccess

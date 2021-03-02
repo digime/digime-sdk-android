@@ -63,12 +63,7 @@ object PushClientHandler {
                 val authHeader = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(apiClient.argonService.getPreauthorizationCode(authHeader))
-                    .map {
-                        session.apply {
-                            DMELog.i("PreAuthCode: ${it.preauthorizationCode}")
-                            preauthorizationCode = it.preauthorizationCode
-                        }
-                    }
+                    .map { session.apply { preauthorizationCode = it.preauthorizationCode } }
             }
         }
 
@@ -123,8 +118,6 @@ object PushClientHandler {
             DMELog.i("Exchanging authorization code")
             it.flatMap { result ->
 
-                DMELog.i("OOOOOOOOOOO ${result.first.authorizationCode}")
-
                 val codeVerifier =
                     result.first.metadata[context.getString(R.string.key_code_verifier)].toString()
                 val jwt = DMEAuthCodeExchangeRequestJWT(
@@ -135,6 +128,7 @@ object PushClientHandler {
                 )
                 val signingKey =
                     DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+
                 val authHeader = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
@@ -152,14 +146,17 @@ object PushClientHandler {
         SingleTransformer<Pair<DMESession, DMEOAuthToken>, DMEOngoingPostbox> {
             DMELog.i("Refreshing credentials")
             it.flatMap { result ->
+
                 val jwt = RefreshCredentialsRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     result.second.refreshToken
                 )
+
                 val signingKey =
                     DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
+
                 apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
                     .map { DMEOngoingPostbox(result.first, null, result.second) }
             }
@@ -168,16 +165,18 @@ object PushClientHandler {
     fun triggerDataQuery(configuration: DMEPushConfiguration, apiClient: DMEAPIClient) =
         SingleTransformer<DMEOngoingPostbox, DMEOngoingPostbox> {
             it.flatMap { result: DMEOngoingPostbox ->
-                DMELog.i("RESULT DATA QUERY: $result")
                 val jwt = DMETriggerDataQueryRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     result.session?.key!!,
                     result.authToken?.accessToken!!
                 )
+
                 val signingKey =
                     DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+
                 val authHeader = jwt.sign(signingKey).tokenize()
+
                 apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
                     .map { DMEOngoingPostbox(result.session, result.postbox, result.authToken) }
             }

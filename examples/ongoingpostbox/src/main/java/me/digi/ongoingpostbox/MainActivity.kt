@@ -3,8 +3,8 @@ package me.digi.ongoingpostbox
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.features.base.BaseActivity
 import me.digi.ongoingpostbox.features.create.view.CreatePostboxFragment
 import me.digi.ongoingpostbox.features.upload.view.UploadContentFragment
 import me.digi.ongoingpostbox.utils.replaceFragment
@@ -12,7 +12,7 @@ import me.digi.sdk.interapp.DMEAppCommunicator
 import org.koin.android.ext.android.inject
 import kotlin.system.exitProcess
 
-class MainActivity : BaseActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val localAccess: MainLocalDataAccess by inject()
 

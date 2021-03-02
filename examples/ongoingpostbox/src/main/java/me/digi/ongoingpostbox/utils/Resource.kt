@@ -1,5 +1,8 @@
 package me.digi.ongoingpostbox.utils
 
+/**
+ * Utility class that helps us handle UI components
+ */
 sealed class Resource<out T>(val data: T? = null, val message: String? = null) {
     class Loading<out T> : Resource<T>()
     class Success<out T>(data: T) : Resource<T>(data)

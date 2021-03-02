@@ -1,10 +1,8 @@
 package me.digi.ongoingpostbox.framework.di
 
-import me.digi.ongoingpostbox.features.create.viewmodel.CreatePostboxViewModel
-import me.digi.ongoingpostbox.features.upload.viewmodel.UploadContentViewModel
+import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import org.koin.dsl.module
 
 val viewModelsModule = module {
-    single { UploadContentViewModel(get()) }
-    single { CreatePostboxViewModel(get()) }
+    single { MainViewModel(get(), get()) }
 }
