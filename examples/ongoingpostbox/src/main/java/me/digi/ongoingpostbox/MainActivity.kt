@@ -21,10 +21,10 @@ class MainActivity : BaseActivity() {
         setTheme(R.style.Theme_Digimesdkandroid)
         setContentView(R.layout.activity_main)
 
-        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null) {
-            // User has all needed information to push their data
+        // User has all needed information to push their data
+        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null)
             UploadContentFragment.newInstance().replaceFragment(supportFragmentManager)
-        } else CreatePostboxFragment.newInstance().replaceFragment(supportFragmentManager)
+        else CreatePostboxFragment.newInstance().replaceFragment(supportFragmentManager)
     }
 
     override fun onResume() {

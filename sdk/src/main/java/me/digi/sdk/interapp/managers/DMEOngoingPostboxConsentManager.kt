@@ -151,17 +151,6 @@ class DMEOngoingPostboxConsentManager(
         val authorizationCode = params[context.getString(R.string.key_authorization_code)] as? String
         sessionManager.currentSession?.authorizationCode = authorizationCode
 
-        DMELog.i("""
-            DATA:
-            1. Result: $result
-            2. PostboxID: $postboxId
-            3. Postbox PK: $postboxPublicKey
-            4. Session key: $sessionKey
-            5. Digime v: $digiMeVersion
-            6. AuthCode: $authorizationCode
-            7. Session auth code: ${sessionManager.currentSession?.authorizationCode}
-        """.trimIndent())
-
         extractAndAppendMetadata(params)
 
         val error = if (!sessionManager.isSessionValid()) {
