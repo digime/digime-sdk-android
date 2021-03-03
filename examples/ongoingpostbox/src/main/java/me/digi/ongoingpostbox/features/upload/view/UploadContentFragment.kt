@@ -52,17 +52,17 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                 when (result) {
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
-                        btnUploadImage?.isEnabled = false
+                        ivImageToUpload?.isClickable = false
                         snackBar(getString(R.string.label_postbox_creation_started))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
                         snackBar(getString(R.string.label_postbox_created))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
                         snackBar(result.message ?: getString(R.string.label_unknown_error))
                     }
                 }
@@ -75,16 +75,19 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
                         btnUploadImage?.isEnabled = false
+                        ivImageToUpload?.isClickable = false
                         snackBar(getString(R.string.label_update_ongoing))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
                         snackBar(getString(R.string.label_update_successful))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
                         snackBar(result.message ?: getString(R.string.label_unknown_error))
                     }
                 }
@@ -104,6 +107,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                 val file: File = ImagePicker.getFile(data)!!
 
                 // Update UI based on the file existence
+                btnUploadImage?.isEnabled = true
                 tvImageName?.text = file.nameWithoutExtension
                 tvMimeType?.isVisible = true
                 tvMimeType?.text = getMimeType(requireContext(), fileUri).toString()
