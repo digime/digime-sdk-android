@@ -53,6 +53,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
                         btnUploadImage?.isEnabled = false
+                        snackBar(getString(R.string.label_postbox_creation_started))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
@@ -74,6 +75,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
                         btnUploadImage?.isEnabled = false
+                        snackBar(getString(R.string.label_update_ongoing))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
