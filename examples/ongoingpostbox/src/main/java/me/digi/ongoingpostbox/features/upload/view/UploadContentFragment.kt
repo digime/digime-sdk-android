@@ -4,12 +4,16 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import coil.load
-import coil.transform.CircleCropTransformation
+import coil.transform.RoundedCornersTransformation
 import com.github.dhaval2404.imagepicker.ImagePicker
 import kotlinx.android.synthetic.main.fragment_upload_content.*
 import me.digi.ongoingpostbox.R
@@ -35,6 +39,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setHasOptionsMenu(true)
 
         handleClickListeners()
         subscribeToObservers()
@@ -53,17 +58,17 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
                         ivImageToUpload?.isClickable = false
-                        snackBar(getString(R.string.label_postbox_creation_started))
+                        snackBarLong(getString(R.string.label_postbox_creation_started))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
                         ivImageToUpload?.isClickable = true
-                        snackBar(getString(R.string.label_postbox_created))
+                        snackBarLong(getString(R.string.label_postbox_created))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
                         ivImageToUpload?.isClickable = true
-                        snackBar(result.message ?: getString(R.string.label_unknown_error))
+                        snackBarLong(result.message ?: getString(R.string.label_unknown_error))
                     }
                 }
             })
@@ -76,19 +81,21 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                         pbUploadContent?.isVisible = true
                         btnUploadImage?.isEnabled = false
                         ivImageToUpload?.isClickable = false
-                        snackBar(getString(R.string.label_update_ongoing))
+                        snackBarLong(getString(R.string.label_update_ongoing))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
                         ivImageToUpload?.isClickable = true
-                        snackBar(getString(R.string.label_update_successful))
+                        snackBarLong(getString(R.string.label_update_successful))
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
                         btnUploadImage?.isEnabled = true
                         ivImageToUpload?.isClickable = true
-                        snackBar(result.message ?: getString(R.string.label_unknown_error))
+                        snackBarIndefiniteWithAction(
+                            result.message ?: getString(R.string.label_unknown_error)
+                        )
                     }
                 }
             })
@@ -100,7 +107,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                 val fileUri: Uri = data?.data!!
 
                 ivImageToUpload?.load(fileUri) {
-                    transformations(CircleCropTransformation())
+                    transformations(RoundedCornersTransformation(15f))
                 }
 
                 //You can get File object from intent
@@ -133,8 +140,8 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     viewModel.uploadDataToOngoingPostbox(postboxPayload, credentials)
                 }
             }
-            ImagePicker.RESULT_ERROR -> snackBar(ImagePicker.getError(data))
-            else -> snackBar(getString(R.string.label_image_picker_cancelled))
+            ImagePicker.RESULT_ERROR -> snackBarLong(ImagePicker.getError(data))
+            else -> snackBarLong(getString(R.string.label_image_picker_cancelled))
         }
     }
 
@@ -154,5 +161,19 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             viewModel.createPostbox(requireActivity())
             firstExecution = false
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) =
+        inflater.inflate(R.menu.menu_main, menu)
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_request_session -> viewModel.showDeleteDataAndStartOverDialog(
+                requireContext(),
+                lifecycleScope
+            )
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 }

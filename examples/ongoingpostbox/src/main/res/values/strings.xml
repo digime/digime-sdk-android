@@ -12,4 +12,10 @@
     <string name="label_update_successful">Image uploaded successfully</string>
     <string name="label_unknown_error">Unkown</string>
     <string name="label_image_picker_cancelled">Task Cancelled</string>
+
+    <string name="label_request_session_dialog_title">Request new session</string>
+    <string name="label_request_session_dialog_subtitle">This will remove all your data from the app and you\'ll be able to request new session</string>
+    <string name="action_yes">Yes</string>
+    <string name="action_no">No</string>
+    <string name="action_ok">@android:string/ok</string>
 </resources>

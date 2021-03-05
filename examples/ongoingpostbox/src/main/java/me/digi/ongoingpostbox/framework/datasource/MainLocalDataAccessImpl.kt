@@ -4,6 +4,9 @@ import android.content.Context
 import com.google.gson.Gson
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
+import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
+import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
+import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
 import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPostbox
 
@@ -17,12 +20,6 @@ import me.digi.sdk.entities.DMEPostbox
  * we're using [SharedPreferences]
  */
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
-
-    companion object {
-        private const val SHAREDPREFS_KEY = "DigiMeXShareableSharedPreferences"
-        private const val CACHED_CREDENTIAL_KEY = "CachedCredential"
-        private const val CACHED_POSTBOX_KEY = "CachedPostbox"
-    }
 
     override fun getCachedCredential(): DMEOAuthToken? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {

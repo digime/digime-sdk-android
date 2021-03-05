@@ -9,7 +9,6 @@ import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEOngoingPostboxConsentManager
-import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
@@ -29,7 +28,6 @@ object PushClientHandler {
         sessionManager: DMESessionManager
     ): Single<DMESession> =
         Single.create<DMESession> { emitter ->
-            DMELog.i("Requesting session")
             sessionManager.getSession(request) { session, error ->
                 when {
                     session != null -> emitter.onSuccess(session)
@@ -45,11 +43,12 @@ object PushClientHandler {
         apiClient: DMEAPIClient
     ): SingleTransformer<DMESession, DMESession> =
         SingleTransformer {
-            DMELog.i("Requesting PreAuthorization code")
             it.flatMap { session ->
+
                 val codeVerifier = DMEByteTransformer.hexStringFromBytes(
                     DMECryptoUtilities.generateSecureRandom(64)
                 )
+
                 session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
                 val jwt = DMEPreauthorizationRequestJWT(
@@ -72,7 +71,6 @@ object PushClientHandler {
         manager: DMEOngoingPostboxConsentManager
     ): SingleTransformer<DMESession, Pair<DMESession, DMEPostbox?>> =
         SingleTransformer {
-            DMELog.i("Requesting consent")
             it.flatMap { result ->
                 Single.create<Pair<DMESession, DMEPostbox?>> { emitter ->
                     when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
@@ -115,17 +113,18 @@ object PushClientHandler {
         apiClient: DMEAPIClient
     ): SingleTransformer<Pair<DMESession, DMEPostbox?>, DMEOngoingPostbox> =
         SingleTransformer {
-            DMELog.i("Exchanging authorization code")
             it.flatMap { result ->
 
                 val codeVerifier =
                     result.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+
                 val jwt = DMEAuthCodeExchangeRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     result.first.authorizationCode!!,
                     codeVerifier
                 )
+
                 val signingKey =
                     DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
 
@@ -144,7 +143,6 @@ object PushClientHandler {
 
     fun refreshCredentials(configuration: DMEPushConfiguration, apiClient: DMEAPIClient) =
         SingleTransformer<Pair<DMESession, DMEOAuthToken>, DMEOngoingPostbox> {
-            DMELog.i("Refreshing credentials")
             it.flatMap { result ->
 
                 val jwt = RefreshCredentialsRequestJWT(
@@ -159,26 +157,6 @@ object PushClientHandler {
 
                 apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
                     .map { DMEOngoingPostbox(result.first, null, result.second) }
-            }
-        }
-
-    fun triggerDataQuery(configuration: DMEPushConfiguration, apiClient: DMEAPIClient) =
-        SingleTransformer<DMEOngoingPostbox, DMEOngoingPostbox> {
-            it.flatMap { result: DMEOngoingPostbox ->
-                val jwt = DMETriggerDataQueryRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    result.session?.key!!,
-                    result.authToken?.accessToken!!
-                )
-
-                val signingKey =
-                    DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-
-                val authHeader = jwt.sign(signingKey).tokenize()
-
-                apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
-                    .map { DMEOngoingPostbox(result.session, result.postbox, result.authToken) }
             }
         }
 }

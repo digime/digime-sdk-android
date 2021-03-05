@@ -67,6 +67,8 @@ class DMEPushClient(
         credentials: DMEOAuthToken? = null,
         completion: DMEPostboxOngoingCreationCompletion
     ) {
+        DMELog.i("Launching user consent request.")
+
         var activeCredentials = credentials
         var activePostbox = existingPostbox
         val request = DMESessionRequest(
@@ -85,22 +87,30 @@ class DMEPushClient(
                 if (activeCredentials != null && activePostbox != null)
                     session.map { DMEOngoingPostbox(it, activePostbox, activeCredentials) }
                 else
-                    session.compose(
-                        pushHandler.requestPreAuthorizationCode(context, configuration, apiClient)
-                    )
+                    session
+                        .compose(
+                            pushHandler.requestPreAuthorizationCode(
+                                context,
+                                configuration,
+                                apiClient
+                            )
+                        )
                         .compose(pushHandler.requestConsent(fromActivity, postboxOngoingManager))
                         .compose(
-                            pushHandler.exchangeAuthorizationCode(context, configuration, apiClient)
+                            pushHandler.exchangeAuthorizationCode(
+                                context,
+                                configuration,
+                                apiClient
+                            )
                         )
                         .doOnSuccess {
                             activePostbox = it.postbox
                             activeCredentials = it.authToken
                         }
             }
-            // At this point, we have a session, postbox and a set of credentials, so we can trigger
-            // the data query to 'pair' the credentials with the session.
-            .compose(pushHandler.triggerDataQuery(configuration, apiClient))
+            // At this point, we have a session, postbox and a set of credentials
             .onErrorResumeNext { error: Throwable ->
+
 
                 // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
                 // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
@@ -241,6 +251,7 @@ class DMEPushClient(
         authToken: DMEOAuthToken?,
         completion: DMEOngoingPostboxPushCompletion
     ) {
+        DMELog.i("Initializing push data to postbox.")
 
         val postboxFile = postboxFile!!
         val authToken = authToken!!
@@ -284,8 +295,16 @@ class DMEPushClient(
             ) { _, error ->
 
                 error?.let {
-                    DMELog.e("Failed to push file to postbox. Error: ${error.message}")
-                    completion(false, error)
+                    when {
+                        error is DMEAPIError && error.code == "InvalidToken" -> completion(
+                            false,
+                            DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
+                        )
+                        else -> {
+                            DMELog.e("Failed to push file to postbox. Error: ${it.printStackTrace()} ${error.message}")
+                            completion(false, error)
+                        }
+                    }
                 } ?: completion(true, null).also { DMELog.i("Successfully pushed data to postbox") }
             }
         } else {
