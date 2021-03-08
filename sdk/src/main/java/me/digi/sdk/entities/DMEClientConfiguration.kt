@@ -2,11 +2,10 @@ package me.digi.sdk.entities
 
 import me.digi.sdk.utilities.DMELog
 
-abstract class DMEClientConfiguration (
-
+abstract class DMEClientConfiguration(
     var appId: String,
-    var contractId: String
-
+    var contractId: String,
+    var privateKeyHex: String
 ) {
 
     var globalTimeout: Int = 62
@@ -16,6 +15,8 @@ abstract class DMEClientConfiguration (
     var retryDelay: Int = 750
     var retryWithExponentialBackOff: Boolean = true
     var maxRetryCount: Int = 5
+
+    var autoRecoverExpiredCredentials = true
 
     var debugLogEnabled: Boolean = false
         set(value) {

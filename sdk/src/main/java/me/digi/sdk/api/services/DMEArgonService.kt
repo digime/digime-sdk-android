@@ -21,14 +21,37 @@ internal interface DMEArgonService {
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
     @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
-    fun getFile(@Path("sessionKey") sessionKey: String, @Path("fileName") fileName: String): Call<DMEFile>
+    fun getFile(
+        @Path("sessionKey") sessionKey: String,
+        @Path("fileName") fileName: String
+    ): Call<DMEFile>
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.4/permission-access/postbox/{id}")
-    fun pushData(@Header("sessionKey") sessionKey: String, @Header("symmetricalKey") symmetricalKey: String,
-                 @Header("iv") iv: String, @Header("metadata") metadata: String,
-                 @Path("id") id: String, @Part file: MultipartBody.Part, @Part("file") description: RequestBody): Call<Unit>
+    @POST("/v1.5/permission-access/postbox/{id}")
+    fun pushData(
+        @Header("sessionKey") sessionKey: String,
+        @Header("symmetricalKey") symmetricalKey: String,
+        @Header("iv") iv: String,
+        @Header("metadata") metadata: String,
+        @Path("id") id: String,
+        @Part file: MultipartBody.Part,
+        @Part("file") description: RequestBody
+    ): Call<Unit>
+
+    @Multipart
+    @Headers("Accept: application/json", "cache-control: no-cache")
+    @POST("/v1.5/permission-access/postbox/{id}")
+    fun pushOngoingData(
+        @Header("Authorization") jwt: String,
+        @Header("sessionKey") sessionKey: String,
+        @Header("symmetricalKey") symmetricalKey: String,
+        @Header("iv") iv: String,
+        @Header("metadata") metadata: String,
+        @Path("id") id: String,
+        @Part file: MultipartBody.Part,
+        @Part("file") description: RequestBody
+    ): Call<Unit>
 
     @POST("v1.4/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>
