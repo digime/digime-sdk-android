@@ -24,8 +24,7 @@ import me.digi.sdk.utilities.jwt.DMEAuthTokenRequestJWT
 
 class DMEPushClient(
     val context: Context,
-    val configuration: DMEPushConfiguration,
-    private val disposable: CompositeDisposable = CompositeDisposable()
+    val configuration: DMEPushConfiguration
 ) :
     DMEClient(context, configuration) {
 
@@ -38,6 +37,8 @@ class DMEPushClient(
     }
 
     private val pushHandler by lazy { PushClientHandler }
+
+    private val disposable: CompositeDisposable = CompositeDisposable()
 
     fun createPostbox(fromActivity: Activity, completion: DMEPostboxCreationCompletion) {
 

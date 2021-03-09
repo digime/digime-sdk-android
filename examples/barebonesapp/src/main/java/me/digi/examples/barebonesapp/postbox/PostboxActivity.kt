@@ -13,19 +13,27 @@ import me.digi.sdk.entities.DMEMimeType
 import me.digi.sdk.entities.DMEPushConfiguration
 import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.io.IOException
 
 class PostboxActivity : AppCompatActivity() {
     private lateinit var client: DMEPushClient
     private lateinit var cfg: DMEPushConfiguration
+    private lateinit var pk: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.postbox_activity_layout)
 
+        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+            applicationContext.getString(R.string.digime_p12_filename),
+            applicationContext.getString(R.string.digime_p12_password)
+        )
+
         cfg = DMEPushConfiguration(
             applicationContext.getString(R.string.digime_application_id),
-            applicationContext.getString(R.string.digime_postbox_contract_id)
+            applicationContext.getString(R.string.digime_postbox_contract_id),
+            pk
         )
 
         client = DMEPushClient(applicationContext, cfg)
