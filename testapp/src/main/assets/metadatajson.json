@@ -1,0 +1,18 @@
+{
+  "accounts": [
+    {
+      "accountId": "222222",
+      "references": ["$.accounts[0]"]
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "names"
+    }
+  ],
+  "appId": "OYz7KXSoQZKCcmW2aGy3RaBkIvctsU9l",
+  "contractId": "Fe22Tpl7mdHNiwmtU59AFkEKyNgkoj0C",
+  "reference": ["file.json"],
+  "tags": ["receipts"],
+  "mimeType": "application/json"
+}
