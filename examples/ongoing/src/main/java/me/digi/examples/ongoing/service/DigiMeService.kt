@@ -38,6 +38,9 @@ class DigiMeService(private val context: Application) {
             context.getString(R.string.digime_contract_id),
             privateKey
         )
+
+        configuration.baseUrl = "https://api.stagingdigi.me/"
+
         DMEPullClient(context, configuration)
     }
 
@@ -53,7 +56,7 @@ class DigiMeService(private val context: Application) {
         .flatMapCompletable { Completable.complete() }
 
     fun fetchData() = client.getSessionData()
-        .map { gsonAgent.fromJson<List<Song>>(String(it.fileContent), object: TypeToken<List<Song>>() {}.type) }
+        .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
         .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
 
