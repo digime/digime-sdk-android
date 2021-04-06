@@ -14,7 +14,7 @@ fun DMEPushClient.authorizeOngoingPostbox(
     credentials: DMEOAuthToken? = null
 ): Single<Pair<DMEPostbox?, DMEOAuthToken?>> =
     Single.create<Pair<DMEPostbox?, DMEOAuthToken?>> { emitter ->
-        createOngoingPostbox(
+        authorizeOngoingPostbox(
             activity,
             existingPostbox,
             credentials

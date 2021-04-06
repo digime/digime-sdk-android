@@ -62,7 +62,7 @@ class DMEPushClient(
         }
     }
 
-    fun createOngoingPostbox(
+    fun authorizeOngoingPostbox(
         fromActivity: Activity,
         existingPostbox: DMEPostbox? = null,
         credentials: DMEOAuthToken? = null,
