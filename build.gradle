@@ -24,6 +24,7 @@ allprojects {
         google()
         jcenter()
         maven { url "https://repository.sysdigi.net/m2/libs-internal" }
+        maven { url "https://repository.sysdigi.net/m2/libs-snapshot" }
         maven { url "https://jitpack.io" }
     }
 }

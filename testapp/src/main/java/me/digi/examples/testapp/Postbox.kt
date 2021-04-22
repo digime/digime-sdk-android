@@ -63,7 +63,8 @@ class Postbox : AppCompatActivity() {
 //        )
 
 //        configuration.baseUrl = "https://api.stagingdigi.me/"
-        configuration.baseUrl = "https://api.development.devdigi.me/"
+        configuration.baseUrl = "https://api.integration.devdigi.me/"
+//        configuration.baseUrl = "https://api.development.devdigi.me/"
 
         client = DMEPushClient(applicationContext, configuration)
 
@@ -102,7 +103,7 @@ class Postbox : AppCompatActivity() {
 //
 //        push_pdf_to_postbox.setOnClickListener {
 //            updateConsoleLog("Creating postbox...")
-//            //createPostbox("file.pdf", "metadatapdf.json", DMEMimeType.APPLICATION_PDF)
+//            //createPostbox("filesmall.pdf", "metadatapdf.json", DMEMimeType.APPLICATION_PDF)
 //        }
     }
 
@@ -165,7 +166,7 @@ class Postbox : AppCompatActivity() {
                 if(pdf.isChecked){
                     updateConsoleLog("Push pdf data to postbox started")
 
-                    val fileContent = getFileContent("file10mb.pdf")
+                    val fileContent = getFileContent("file.pdf")
                     val metadata = getFileContent("metadatapdf.json")
 
                     client.pushDataToPostbox(

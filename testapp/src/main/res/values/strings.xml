@@ -3,10 +3,10 @@
 
 
 <!--    integration-->
-<!--    <string name="digime_application_id">8xQSl0XkCfa434LqNC7NwJdvc38qEWGz</string>-->
-<!--    <string name="digime_contract_id">j9pcaXD9A3krdV7BlMinrB6Kp1kxbJcU</string>-->
-<!--    <string name="digime_p12_filename">integration.p12</string>-->
-<!--    <string name="digime_postbox_contract_id">0e1PukuZMqFCoaoE2MYKpIMagpukrkpz</string>-->
+    <string name="digime_application_id">8xQSl0XkCfa434LqNC7NwJdvc38qEWGz</string>
+    <string name="digime_contract_id">j9pcaXD9A3krdV7BlMinrB6Kp1kxbJcU</string>
+    <string name="digime_p12_filename">integration.p12</string>
+    <string name="digime_postbox_contract_id">0e1PukuZMqFCoaoE2MYKpIMagpukrkpz</string>
 
     <!--    staging-->
 <!--    <string name="digime_application_id">6K0Snz9tZl5NxPT6129JKSCzBnAIQhhP</string>-->
@@ -15,10 +15,10 @@
 <!--    <string name="digime_postbox_contract_id">XWiYyyfHzUbGrI6SGmKd8HZTk0X0R7Go</string>-->
 
     <!--    development-->
-    <string name="digime_application_id">OYz7KXSoQZKCcmW2aGy3RaBkIvctsU9l</string>
-    <string name="digime_contract_id">Fe22Tpl7mdHNiwmtU59AFkEKyNgkoj0C</string>
-    <string name="digime_p12_filename">development.p12</string>
-    <string name="digime_postbox_contract_id">uMOICfKJpsdtxMDlDL9QusyC6i8RuN3D</string>
+<!--    <string name="digime_application_id">OYz7KXSoQZKCcmW2aGy3RaBkIvctsU9l</string>-->
+<!--    <string name="digime_contract_id">Fe22Tpl7mdHNiwmtU59AFkEKyNgkoj0C</string>-->
+<!--    <string name="digime_p12_filename">development.p12</string>-->
+<!--    <string name="digime_postbox_contract_id">uMOICfKJpsdtxMDlDL9QusyC6i8RuN3D</string>-->
 
     <!--    test 06-->
 <!--        <string name="digime_application_id">GDuKc8em7TG4r6v5OiUy0SPHKDAy1GEa</string>-->
