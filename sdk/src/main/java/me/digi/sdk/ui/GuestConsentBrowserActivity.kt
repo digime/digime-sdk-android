@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import me.digi.sdk.R
+
+private const val TAG = "GuestConsentBrowserActi"
 
 class GuestConsentBrowserActivity: Activity() {
 
@@ -24,7 +27,7 @@ class GuestConsentBrowserActivity: Activity() {
         }
         else {
             // Launched by DMEGuestConsentManager.
-            startActivity(Intent(Intent.ACTION_VIEW, intentUri))
+//            startActivity(Intent(Intent.ACTION_VIEW, intentUri))
         }
     }
 
@@ -36,6 +39,12 @@ class GuestConsentBrowserActivity: Activity() {
     }
 
     private fun handleWebOnboardingCallback(intentUri: Uri) {
+
+        val state = intentUri.getQueryParameter("state")
+        val code = intentUri.getQueryParameter("code")
+        Log.d(TAG, "State: $state")
+        Log.d(TAG, "Code: $code")
+
         val result = intentUri.getQueryParameter(getString(R.string.key_result))
         if (result != null && result == getString(R.string.const_result_data_ready)) {
             intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_success))

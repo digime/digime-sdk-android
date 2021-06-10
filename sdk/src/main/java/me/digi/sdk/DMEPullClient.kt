@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.util.Base64
+import android.util.Log
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -118,11 +119,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val ooooo = Gson().fromJson(payload, Payload::class.java)
                 //Give consent
                 ooooo.preauthorization_code?.let { it1 ->
-                    guestConsentManager.beginConsentAction(fromActivity, completion,
-                        it1, configuration.appId)
+                    guestConsentManager.beginConsentAction(fromActivity, completion, it1, configuration.appId)
                 }
             }, onError = {
                 //
+                Log.e("Error", "${it.localizedMessage}")
             })
 
 

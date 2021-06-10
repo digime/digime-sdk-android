@@ -29,9 +29,12 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
 
         val guestRequestCode = DMEAppCommunicator.getSharedInstance().requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
         val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
-        proxyLaunchIntent.setData(buildSaaSClientURI(codeValue, appId))
+        proxyLaunchIntent.data = buildSaaSClientURI(codeValue, appId)
 
-        fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
+        val url = buildSaaSClientURI(codeValue, appId)
+        openNewTabWindow(fromActivity, guestRequestCode, url)
+
+//        fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
 
     override fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean {
@@ -96,8 +99,13 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
         return Uri.parse("${baseURL}apps/saas/authorize")
             .buildUpon()
             .appendQueryParameter(code, codeValue)
-            .appendQueryParameter(errorCallbackUrl, "digime-ca-$appId")
-            .appendQueryParameter(successCallbackUrl, "digime-ca-$appId" + "://auth-success")
+            .appendQueryParameter(errorCallbackUrl, "http://www.digi.me/error")
+            .appendQueryParameter(successCallbackUrl, "http://www.digi.me/callback")
             .build()
+    }
+
+    private fun openNewTabWindow(activity: Activity, guestRequestCode: Int, url: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, url)
+        activity.startActivityForResult(intent, guestRequestCode)
     }
 }
