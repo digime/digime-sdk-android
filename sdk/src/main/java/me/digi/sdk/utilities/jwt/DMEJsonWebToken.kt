@@ -3,12 +3,13 @@ package me.digi.sdk.utilities.jwt
 import android.util.Base64
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
+import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.lang.reflect.Type
 import java.security.PrivateKey
+import java.security.Security
 import java.security.Signature
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
-import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor
@@ -27,8 +28,15 @@ internal open class JsonWebToken(tokenised: String? = null) {
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
     private val signer: Signature by lazy {
+        Security.addProvider(BouncyCastleProvider())
         val signer = Signature.getInstance("SHA512withRSA/PSS", "SC")
-        val parameter = PSSParameterSpec(MGF1ParameterSpec.SHA512.digestAlgorithm, "MGF1", MGF1ParameterSpec.SHA512, 64, 1)
+        val parameter = PSSParameterSpec(
+            MGF1ParameterSpec.SHA512.digestAlgorithm,
+            "MGF1",
+            MGF1ParameterSpec.SHA512,
+            64,
+            1
+        )
         signer.setParameter(parameter)
         signer
     }
@@ -46,8 +54,16 @@ internal open class JsonWebToken(tokenised: String? = null) {
             val encodedSignature = jwtComponents[2]
 
             signature = Base64.decode(encodedSignature, BASE64_FLAGS)
-            header = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(encodedHeader, BASE64_FLAGS).toString(Charsets.UTF_8), object: TypeToken<Map<String, Any>>(){}.type)
-            payload = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(encodedPayload, BASE64_FLAGS).toString(Charsets.UTF_8), object: TypeToken<Map<String, Any>>(){}.type)
+            header = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(encodedHeader, BASE64_FLAGS)
+                .toString(
+                    Charsets.UTF_8
+                ), object : TypeToken<Map<String, Any>>() {}.type
+            )
+            payload = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(
+                encodedPayload,
+                BASE64_FLAGS
+            ).toString(Charsets.UTF_8), object : TypeToken<Map<String, Any>>() {}.type
+            )
 
             // Parse claims for body.
             val claimFields = this::class.members.mapNotNull { it as? KMutableProperty }.filter { it.annotations.any { it is JwtClaim }}
@@ -114,14 +130,20 @@ internal open class JsonWebToken(tokenised: String? = null) {
         return this
     }
 
-    open fun tokenize() = listOf(encodedHeader(), encodedPayload(), encodedSignature()).joinToString(".")
+    open fun tokenize() = listOf(encodedHeader(), encodedPayload(), encodedSignature()).joinToString(
+        "."
+    )
 
-    open inner class Adapter<T: JsonWebToken>: JsonSerializer<T>, JsonDeserializer<T> {
+    open inner class Adapter<T : JsonWebToken>: JsonSerializer<T>, JsonDeserializer<T> {
         override fun serialize(src: T, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
             return JsonPrimitive(src.tokenize())
         }
 
-        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): T {
+        override fun deserialize(
+            json: JsonElement?,
+            typeOfT: Type?,
+            context: JsonDeserializationContext?
+        ): T {
             val source = json ?: throw IllegalArgumentException()
 
             val tokenised = when (source) {

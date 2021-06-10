@@ -3,11 +3,14 @@ package me.digi.sdk
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
+import android.util.Base64
+import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
@@ -15,7 +18,6 @@ import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMEGuestConsentManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
-import me.digi.sdk.ui.ConsentModeSelectionDialogue
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
@@ -27,10 +29,19 @@ import me.digi.sdk.utilities.jwt.DMETriggerDataQueryRequestJWT
 import me.digi.sdk.utilities.jwt.RefreshCredentialsRequestJWT
 import kotlin.math.max
 
-class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(context, configuration) {
+class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(
+    context,
+    configuration
+) {
 
-    private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(sessionManager, configuration.appId) }
-    private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(sessionManager, configuration.baseUrl) }
+    private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(
+        sessionManager,
+        configuration.appId
+    ) }
+    private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(
+        sessionManager,
+        configuration.baseUrl
+    ) }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
@@ -69,51 +80,96 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     private var stalePollCount = 0
 
+    data class Payload (
+        val preauthorization_code: String? = null
+    )
+
     private val compositeDisposable = CompositeDisposable()
 
     @JvmOverloads
-    fun authorize(fromActivity: Activity, scope: DMEDataRequest? = null, completion: DMEAuthorizationCompletion) {
+    fun authorize(
+        fromActivity: Activity,
+        scope: DMEDataRequest? = null,
+        completion: DMEAuthorizationCompletion
+    ) {
 
         DMELog.i("Launching user consent request.")
 
-        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
-        sessionManager.getSession(req) { session, error ->
+        val codeVerifier = DMEByteTransformer.hexStringFromBytes(
+            DMECryptoUtilities.generateSecureRandom(
+                64
+            )
+        )
 
-            if (session != null) {
-                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-                    Pair(true, true),
-                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
-                    Pair(false, true) -> {
-                        val consentModeDialogue = ConsentModeSelectionDialogue()
-                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
-                            override fun installDigiMe() {
-                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
-                                }
-                            }
+        val jwt = DMEPreauthorizationRequestJWT(
+            configuration.appId,
+            configuration.contractId,
+            codeVerifier
+        )
 
-                            override fun shareAsGuest() {
-                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
-                            }
-                        })
-                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
-                    }
-                    Pair(false, false) -> {
-                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-                            nativeConsentManager.beginAuthorization(fromActivity, completion)
-                        }
-                    }
+        val authHeader = jwt.sign(DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)).tokenize()
+
+        apiClient.argonService.getPreauthorizationCode1(authHeader)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onSuccess = {
+                val chunks: List<String> = it.token.split(".")
+                val payload: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                val ooooo = Gson().fromJson(payload, Payload::class.java)
+                //Give consent
+                ooooo.preauthorization_code?.let { it1 ->
+                    guestConsentManager.beginConsentAction(fromActivity, completion,
+                        it1, configuration.appId)
                 }
-            }
-            else {
-                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
-                completion(null, error)
-            }
-        }
+            }, onError = {
+                //
+            })
+
+
+
+//        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
+//        sessionManager.getSession(req) { session, error ->
+//
+//            if (session != null) {
+//                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
+//                    Pair(true, true),
+//                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
+//                    Pair(false, true) -> {
+//                        val consentModeDialogue = ConsentModeSelectionDialogue()
+//                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
+//                            override fun installDigiMe() {
+//                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+//                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
+//                                }
+//                            }
+//
+//                            override fun shareAsGuest() {
+//                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
+//                            }
+//                        })
+//                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
+//                    }
+//                    Pair(false, false) -> {
+//                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+//                            nativeConsentManager.beginAuthorization(fromActivity, completion)
+//                        }
+//                    }
+//                }
+//            }
+//            else {
+//                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
+//                completion(null, error)
+//            }
+//        }
     }
 
     @JvmOverloads
-    fun authorizeOngoingAccess(fromActivity: Activity, scope: DMEDataRequest? = null, credentials: DMEOAuthToken? = null, completion: DMEOngoingAuthorizationCompletion) {
+    fun authorizeOngoingAccess(
+        fromActivity: Activity,
+        scope: DMEDataRequest? = null,
+        credentials: DMEOAuthToken? = null,
+        completion: DMEOngoingAuthorizationCompletion
+    ) {
 
         fun requestSession(req: DMESessionRequest) = Single.create<DMESession> {
             sessionManager.getSession(req) { session, error ->
@@ -129,10 +185,18 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
             it.flatMap { session ->
 
-                val codeVerifier = DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                val codeVerifier = DMEByteTransformer.hexStringFromBytes(
+                    DMECryptoUtilities.generateSecureRandom(
+                        64
+                    )
+                )
                 session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
-                val jwt = DMEPreauthorizationRequestJWT(configuration.appId, configuration.contractId, codeVerifier)
+                val jwt = DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier
+                )
 
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
@@ -150,7 +214,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             it.flatMap { session ->
                 Single.create<DMESession> { emitter ->
                     when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
-                        Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
+                        Pair(
+                            true,
+                            false
+                        ) -> nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
                             when {
                                 error != null -> emitter.onError(error)
                                 session != null -> emitter.onSuccess(session)
@@ -158,7 +225,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                             }
                         }
                         Pair(false, false) -> {
-                            DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
+                            DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(
+                                fromActivity
+                            ) {
                                 nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
                                     when {
                                         error != null -> emitter.onError(error)
@@ -177,7 +246,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             it.flatMap { session ->
 
                 val codeVerifier = session.metadata[context.getString(R.string.key_code_verifier)].toString()
-                val jwt = DMEAuthCodeExchangeRequestJWT(configuration.appId, configuration.contractId, session.authorizationCode!!, codeVerifier)
+                val jwt = DMEAuthCodeExchangeRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    session.authorizationCode!!,
+                    codeVerifier
+                )
 
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
@@ -191,7 +265,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         fun triggerDataQuery() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
             it.flatMap { result ->
-                val jwt = DMETriggerDataQueryRequestJWT(configuration.appId, configuration.contractId, result.first.key, result.second.accessToken)
+                val jwt = DMETriggerDataQueryRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    result.first.key,
+                    result.second.accessToken
+                )
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
                 apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
@@ -201,7 +280,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         fun refreshCredentials() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
             it.flatMap { result ->
-                val jwt = RefreshCredentialsRequestJWT(configuration.appId, configuration.contractId, result.second.refreshToken)
+                val jwt = RefreshCredentialsRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    result.second.refreshToken
+                )
                 val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
                 apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
@@ -213,7 +296,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         // These can be combined in various ways as the auth state demands.
         // See the flow below for details.
 
-        val sessionReq = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
+        val sessionReq = DMESessionRequest(
+            configuration.appId,
+            configuration.contractId,
+            DMESDKAgent(),
+            "gzip",
+            scope
+        )
         var activeCredentials = credentials
 
         // First, we get a session as normal.
@@ -256,7 +345,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     // has expired.
                 } else if (error is DMEAPIError && error.code == "InvalidToken") {
                     // If so, we take the active session and expired credentials and try to refresh them.
-                    Single.just(Pair(nativeConsentManager.sessionManager.currentSession!!, activeCredentials!!))
+                    Single.just(
+                        Pair(
+                            nativeConsentManager.sessionManager.currentSession!!,
+                            activeCredentials!!
+                        )
+                    )
                         .compose(refreshCredentials())
                         .doOnSuccess { activeCredentials = it.second }
                         .onErrorResumeNext { error ->
@@ -300,7 +394,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .subscribe({ result ->
                 completion(result.first, result.second, null)
             }, { error ->
-                completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.GENERIC(0, error.localizedMessage))
+                completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                    0,
+                    error.localizedMessage
+                ))
             })
             .addTo(compositeDisposable)
     }
@@ -359,7 +456,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    fun getSessionFileList(updateHandler: DMEIncrementalFileListUpdate, completion: DMEFileListCompletion) {
+    fun getSessionFileList(
+        updateHandler: DMEIncrementalFileListUpdate,
+        completion: DMEFileListCompletion
+    ) {
 
         fileListUpdateHandler = updateHandler
         fileListCompletionHandler = { fileList, error ->
@@ -437,15 +537,23 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
 
                 latestFileList = fileList
-                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(fileList?.fileList.orEmpty()).orEmpty()
-                DMELog.i("${fileList?.fileList.orEmpty().count()} files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading.")
+                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
+                    fileList?.fileList.orEmpty()
+                ).orEmpty()
+                DMELog.i(
+                    "${
+                        fileList?.fileList.orEmpty().count()
+                    } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
+                )
 
                 if (updatedFileIds.count() > 0 && fileList != null) {
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
-                }
-                else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                    fileListCompletionHandler?.invoke(fileList, DMESDKError.FileListPollingTimeout())
+                } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                    fileListCompletionHandler?.invoke(
+                        fileList,
+                        DMESDKError.FileListPollingTimeout()
+                    )
                     return@getFileList
                 }
 
@@ -456,7 +564,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         scheduleNextPoll()
                     }
                     DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(fileList, null)
+                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                        fileList,
+                        null
+                    )
                     else -> Unit
                 }
 
@@ -469,8 +580,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private fun completeDeliveryOfSessionData(error: DMEError?) {
 
         when {
-            error != null -> DMELog.e("" +
-                    "An error occurred whilst fetching session data. Error: ${error.message}")
+            error != null -> DMELog.e(
+                "" +
+                        "An error occurred whilst fetching session data. Error: ${error.message}"
+            )
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 

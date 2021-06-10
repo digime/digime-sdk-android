@@ -6,7 +6,6 @@ import java.util.*
 
 data class DMESession (
 
-    @SerializedName("sessionKey")
     val key: String,
 
     @SerializedName("sessionExchangeToken")

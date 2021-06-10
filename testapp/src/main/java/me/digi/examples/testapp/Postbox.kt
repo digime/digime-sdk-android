@@ -47,8 +47,7 @@ class Postbox : AppCompatActivity() {
         setContentView(R.layout.postbox)
 
         val privateKey = DMECryptoUtilities(this).privateKeyHexFrom(
-            this.getString(R.string.digime_p12_filename),
-            this.getString(R.string.digime_p12_password)
+            this.getString(R.string.digime_p12_filename)
         )
 
         val configuration = DMEPushConfiguration(
@@ -164,9 +163,9 @@ class Postbox : AppCompatActivity() {
 
                 if(pdf.isChecked){
                     updateConsoleLog("Push pdf data to postbox started")
-
-                    val fileContent = getFileContent("file10mb.pdf")
                     val metadata = getFileContent("metadatapdf.json")
+
+                    val fileContent = getFileContent("file.pdf")
 
                     client.pushDataToPostbox(
                         DMEPushPayload(

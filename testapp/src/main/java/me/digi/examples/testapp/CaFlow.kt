@@ -28,14 +28,13 @@ class CaFlow : AppCompatActivity() {
         }
 
         pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
-            applicationContext.getString(R.string.digime_p12_filename),
-            applicationContext.getString(R.string.digime_p12_password)
+            applicationContext.getString(R.string.digime_p12_filename)
         )
 
         cfg = DMEPullConfiguration(
             applicationContext.getString(R.string.digime_application_id),
             applicationContext.getString(R.string.digime_contract_id),
-            pk
+            applicationContext.getString(R.string.digime_p12_filename)
         )
 
         console_log.movementMethod = ScrollingMovementMethod()
@@ -61,7 +60,7 @@ class CaFlow : AppCompatActivity() {
     )
 
     private fun shareViaDigiMe() {
-        cfg.baseUrl = "https://api.stagingdigi.me/"
+        cfg.baseUrl = "https://api.development.devdigi.me/"
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 

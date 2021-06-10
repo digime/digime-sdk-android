@@ -25,6 +25,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import java.net.URL
@@ -92,6 +93,8 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             .baseUrl(clientConfig.baseUrl)
             .client(httpClientBuilder.build())
             .addConverterFactory(GsonConverterFactory.create(gsonBuilder.create()))
+            .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
+
 
         httpClient = retrofitBuilder.build()
         argonService = httpClient.create(DMEArgonService::class.java)

@@ -2,14 +2,28 @@ package me.digi.sdk.utilities.crypto
 
 import android.util.Base64
 import org.spongycastle.asn1.ASN1InputStream
+import org.spongycastle.asn1.pkcs.RSAPrivateKey
 import org.spongycastle.asn1.pkcs.RSAPublicKey
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.RSAPrivateKeySpec
 import java.security.spec.RSAPublicKeySpec
+import java.util.Base64.getDecoder
 
 object DMEKeyTransformer {
+
+    fun privateKeyFromString(key: String): PrivateKey {
+        val privateKeyContent: String =
+            key.replace("\n", "").replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+        val data: ByteArray = Base64.decode(privateKeyContent.toByteArray(), 0)
+        val spec = PKCS8EncodedKeySpec(data)
+        val fact = KeyFactory.getInstance("RSA")
+
+        return fact.generatePrivate(spec)
+    }
 
     fun javaPrivateKeyFromHex(hex: String): PrivateKey {
         val keyBytes = DMEByteTransformer.bytesFromHexString(hex)

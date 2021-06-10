@@ -24,6 +24,7 @@ abstract class DMEClientConfiguration(
             DMELog.debugLogEnabled = value
         }
 
-    var baseUrl: String = "https://api.digi.me/"
+//    var baseUrl: String = "https://api.digi.me/"
+    var baseUrl: String = "https://api.development.devdigi.me/"
 
 }

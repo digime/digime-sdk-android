@@ -1,6 +1,7 @@
 package me.digi.sdk.utilities.crypto
 
 import android.content.Context
+import android.util.Base64
 import me.digi.sdk.DMESDKError
 import org.spongycastle.crypto.InvalidCipherTextException
 import org.spongycastle.crypto.engines.AESEngine
@@ -10,29 +11,33 @@ import org.spongycastle.crypto.params.KeyParameter
 import org.spongycastle.crypto.params.ParametersWithIV
 import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.security.*
+import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
 
 class DMECryptoUtilities(val context: Context) {
 
     private val keyStore by lazy {
         Security.addProvider(BouncyCastleProvider())
-        KeyStore.getInstance("pkcs12", "SC")
+        KeyStore.getInstance("pkcs1", "SC")
     }
 
-    fun privateKeyHexFrom(p12File: String, password: String): String {
+    fun privateKeyHexFrom(public: String): String {
 
-        val inStream = context.assets.open(p12File)
-        keyStore.load(inStream, password.toCharArray())
 
-        val keyAlaises = keyStore.aliases().toList().filter { keyStore.isKeyEntry(it) }
+            val publicKeyContent =
+                public.replace("\n", "").replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                    .replace("-----END RSA PRIVATE KEY-----", "")
 
-        if (keyAlaises.count() != 1) {
-            throw DMESDKError.P12ParsingError()
-        }
+        val pkcs8EncodedBytes: ByteArray = Base64.decode(publicKeyContent, Base64.DEFAULT)
 
-        val key = keyStore.getKey(keyAlaises.first(), password.toCharArray()) as PrivateKey
+        // extract the private key
 
-        return DMEKeyTransformer.hexFromJavaPrivateKey(key)
+
+        // extract the private key
+        val keySpec = PKCS8EncodedKeySpec(pkcs8EncodedBytes)
+        val kf = KeyFactory.getInstance("RSA")
+        return DMEKeyTransformer.hexFromJavaPrivateKey(kf.generatePrivate(keySpec))
+
     }
 
     companion object {
@@ -43,7 +48,7 @@ class DMECryptoUtilities(val context: Context) {
                 return cipher.doFinal(encryptedBytes)
 
             }
-            catch(error: Throwable) {
+            catch (error: Throwable) {
                 throw DMESDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }
@@ -52,7 +57,7 @@ class DMECryptoUtilities(val context: Context) {
             Security.addProvider(BouncyCastleProvider())
 
             try {
-                val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding",  "SC")
+                val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding", "SC")
                 cipher.init(Cipher.ENCRYPT_MODE, publicKey)
                 return cipher.doFinal(data)
             } catch (e: Exception) {
@@ -69,7 +74,13 @@ class DMECryptoUtilities(val context: Context) {
 
                 val minSize = cipher.getOutputSize(encryptedBytes.count())
                 val outputBuffer = ByteArray(minSize)
-                val len1 = cipher.processBytes(encryptedBytes, 0, encryptedBytes.count(), outputBuffer,0)
+                val len1 = cipher.processBytes(
+                    encryptedBytes,
+                    0,
+                    encryptedBytes.count(),
+                    outputBuffer,
+                    0
+                )
                 val len2 = cipher.doFinal(outputBuffer, len1)
                 val actualLen = len1 + len2
 
@@ -78,7 +89,7 @@ class DMECryptoUtilities(val context: Context) {
 
                 return result
             }
-            catch(error: Throwable) {
+            catch (error: Throwable) {
                 throw DMESDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }

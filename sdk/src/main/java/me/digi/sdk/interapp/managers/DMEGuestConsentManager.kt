@@ -23,14 +23,13 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
             field = value
         }
 
-    fun beginGuestAuthorization(fromActivity: Activity, completion: DMEAuthorizationCompletion) {
-
+    fun beginConsentAction(fromActivity: Activity, completion: DMEAuthorizationCompletion, codeValue: String, appId: String) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
         pendingAuthCallbackHandler = completion
 
         val guestRequestCode = DMEAppCommunicator.getSharedInstance().requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
         val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
-        proxyLaunchIntent.setData(buildQuarkURI())
+        proxyLaunchIntent.setData(buildSaaSClientURI(codeValue, appId))
 
         fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
@@ -86,19 +85,19 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
         // TODO: Does quark do metadata?
     }
 
-    private fun buildQuarkURI(): Uri {
+    private fun buildSaaSClientURI(codeValue: String, appId: String): Uri {
 
-        val session = sessionManager.currentSession ?: throw DMEAuthError.InvalidSession()
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
-        val exchangeTokenKey = ctx.getString(R.string.key_session_exchange_token)?.orEmpty()
-        val callbacklUrlKey = ctx.getString(R.string.key_callback_url)?.orEmpty()
-        val callbackUrl = ctx.getString(R.string.deeplink_guest_consent_callback)?.orEmpty() + "://?"
+        val code = ctx.getString(R.string.saas_client_code)
+        val errorCallbackUrl = ctx.getString(R.string.saas_errorCallback)
+        val successCallbackUrl = ctx.getString(R.string.saas_successCallback)
 
-        return Uri.parse("${baseURL}apps/quark/v1/direct-onboarding")
+        return Uri.parse("${baseURL}apps/saas/authorize")
             .buildUpon()
-            .appendQueryParameter(exchangeTokenKey, session.exchangeToken)
-            .appendQueryParameter(callbacklUrlKey, callbackUrl)
+            .appendQueryParameter(code, codeValue)
+            .appendQueryParameter(errorCallbackUrl, "digime-ca-$appId")
+            .appendQueryParameter(successCallbackUrl, "digime-ca-$appId" + "://auth-success")
             .build()
     }
 }

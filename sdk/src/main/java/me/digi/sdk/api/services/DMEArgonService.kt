@@ -1,9 +1,11 @@
 package me.digi.sdk.api.services
 
+import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.utilities.jwt.*
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
 import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
 import me.digi.sdk.utilities.jwt.RefreshCredentialsResponseJWT
@@ -17,10 +19,10 @@ internal interface DMEArgonService {
     @POST("v1.4/permission-access/session")
     fun getSession(@Body sessionRequest: DMESessionRequest): Call<DMESession>
 
-    @GET("/v1.4/permission-access/query/{sessionKey}")
+    @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
-    @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
+    @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
@@ -28,7 +30,7 @@ internal interface DMEArgonService {
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.4/permission-access/postbox/{id}")
+    @POST("/v1.6/permission-access/postbox/{id}")
     fun pushData(
         @Header("sessionKey") sessionKey: String,
         @Header("symmetricalKey") symmetricalKey: String,
@@ -53,15 +55,18 @@ internal interface DMEArgonService {
         @Part("file") description: RequestBody
     ): Call<Unit>
 
-    @POST("v1.4/oauth/token")
+    @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>
 
-    @POST("v1.4/oauth/authorize")
+    @POST("v1.6/oauth/authorize")
+    fun getPreauthorizationCode1(@Header("Authorization") jwt: String): Single<DMEAUthResponse>
+
+    @POST("v1.6/oauth/authorize")
     fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreauthorizationResponseJWT>
 
-    @POST("v1.4/oauth/token")
+    @POST("v1.6/oauth/token")
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<DMEAuthCodeExchangeResponseJWT>
 
-    @POST("v1.4/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
+    @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(@Header("Authorization") jwt: String): Call<Unit>
 }

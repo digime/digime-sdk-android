@@ -83,6 +83,8 @@ dependencies {
 
     testImplementation "io.mockk:mockk:$versions.mockk"
 
+    implementation "com.squareup.retrofit2:adapter-rxjava3:2.9.0"
+
 }
 
 repositories {
