@@ -14,7 +14,7 @@ internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, 
     @JwtClaim val state: String
     @JwtClaim val codeChallenge: String
     @JwtClaim val codeChallengeMethod = "S256"
-    @JwtClaim val redirectUri = "digime-ca://callback"
+    @JwtClaim val redirectUri = "digime-ca://auth-success"
     @JwtClaim val responseMode = "query"
     @JwtClaim val responseType = "code"
     @JwtClaim val timestamp = Date().time

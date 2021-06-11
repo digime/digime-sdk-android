@@ -10,15 +10,10 @@
             android:launchMode="singleTop">
 
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <!--                <data android:scheme="@string/deeplink_guest_consent_callback" />-->
-                <data
-                    android:host="callback"
-                    android:scheme="digime-ca" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="digime-ca"/>
             </intent-filter>
 
         </activity>

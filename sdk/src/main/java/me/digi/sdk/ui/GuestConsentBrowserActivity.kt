@@ -27,7 +27,7 @@ class GuestConsentBrowserActivity: Activity() {
         }
         else {
             // Launched by DMEGuestConsentManager.
-//            startActivity(Intent(Intent.ACTION_VIEW, intentUri))
+            startActivity(Intent(Intent.ACTION_VIEW, intentUri))
         }
     }
 
