@@ -25,6 +25,7 @@ abstract class DMEClientConfiguration(
         }
 
 //    var baseUrl: String = "https://api.digi.me/"
-    var baseUrl: String = "https://api.development.devdigi.me/"
+//    var baseUrl: String = "https://api.development.devdigi.me/"
+    var baseUrl: String = "https://api.stagingdigi.me/"
 
 }

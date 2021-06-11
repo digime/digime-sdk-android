@@ -26,3 +26,8 @@ data class DMESession (
     var metadata: MutableMap<String, Any> = emptyMap<String, Any>().toMutableMap()
 
 }
+
+data class AuthSession(
+    val code: String? = null,
+    val state: String? = null
+)

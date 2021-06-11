@@ -5,17 +5,17 @@ import android.content.Intent
 import android.net.Uri
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
+import me.digi.sdk.callbacks.AuthorizationCompletion
+import me.digi.sdk.entities.AuthSession
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
-import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.toMap
 
-class DMEGuestConsentManager(private val sessionManager: DMESessionManager, private val baseURL: String): DMEAppCallbackHandler() {
+class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandler() {
 
-    private var pendingAuthCallbackHandler: DMEAuthorizationCompletion? = null
+    private var authorizationCallbackHandler: AuthorizationCompletion? = null
         set(value) {
             if (field != null && value != null) {
                 field?.invoke(null, DMEAuthError.Cancelled())
@@ -23,18 +23,15 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
             field = value
         }
 
-    fun beginConsentAction(fromActivity: Activity, completion: DMEAuthorizationCompletion, codeValue: String, appId: String) {
+    fun beginConsentAction(fromActivity: Activity, completion: AuthorizationCompletion, codeValue: String) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
-        pendingAuthCallbackHandler = completion
+        authorizationCallbackHandler = completion
 
         val guestRequestCode = DMEAppCommunicator.getSharedInstance().requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
-//        val bundle = Bundle()
-//        bundle.putString(GuestConsentBrowserActivity.APP_ID, appId)
-
         val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
 
-        proxyLaunchIntent.setData(buildSaaSClientURI(codeValue, appId))
+        proxyLaunchIntent.data = buildSaaSClientURI(codeValue)
 
         fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
@@ -49,48 +46,47 @@ class DMEGuestConsentManager(private val sessionManager: DMESessionManager, priv
         if (intent == null) {
             // Received no data, Android system failed to start activity.
             DMELog.e("There was a problem launching the guest consent browser activity.")
-            pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, DMEAuthError.General())
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
-            pendingAuthCallbackHandler = null
+            authorizationCallbackHandler = null
             return
         }
+
+
 
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
         val params = intent.extras?.toMap() ?: emptyMap()
-        val result = params[ctx.getString(R.string.key_result)] as? String
 
-        extractAndAppendMetadata(params)
+        val code = params["code"] as? String
+        val state = params["state"] as? String
+        val result = params["result"] as? String
 
-        val error = if (!sessionManager.isSessionValid()) {
-            DMEAuthError.InvalidSession()
-        }
-        else when (result) {
+        var error: DMEAuthError? =  null
+
+        when (result) {
             ctx.getString(R.string.const_result_error) -> {
                 DMELog.e("There was a problem requesting consent.")
-                DMEAuthError.General()
+                error = DMEAuthError.General()
             }
             ctx.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                DMEAuthError.Cancelled()
+                error = DMEAuthError.Cancelled()
             }
             else -> {
                 DMELog.i("User accepted consent request.")
-                null
             }
         }
 
-        pendingAuthCallbackHandler?.invoke(sessionManager.currentSession, error)
+        authorizationCallbackHandler?.invoke(AuthSession(code, state), error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
-        pendingAuthCallbackHandler = null
-
+        authorizationCallbackHandler = null
     }
 
     override fun extractAndAppendMetadata(payload: Map<String, Any>) {
         // TODO: Does quark do metadata?
     }
 
-    private fun buildSaaSClientURI(codeValue: String, appId: String): Uri {
+    private fun buildSaaSClientURI(codeValue: String): Uri {
 
         val ctx = DMEAppCommunicator.getSharedInstance().context
 

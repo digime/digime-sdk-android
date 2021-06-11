@@ -60,7 +60,7 @@ class CaFlow : AppCompatActivity() {
     )
 
     private fun shareViaDigiMe() {
-        cfg.baseUrl = "https://api.development.devdigi.me/"
+//        cfg.baseUrl = "https://api.development.devdigi.me/"
         client = DMEPullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 
@@ -88,26 +88,32 @@ class CaFlow : AppCompatActivity() {
 
         client.authorize(this, test) { session, error: DMEError? ->
             session?.let {
-                updateConsoleLog("\nClient version: " + session.metadata["digiMeVersion"])
-                client.getSessionData({ file, error ->
-                    if (file != null) {
-                        updateConsoleLog(file.identifier + " success")
-                    } else if(error != null) {
-                        updateConsoleLog("Error downloading file")
-                    }
-                })
-                {_, error ->
-                    if (error == null) {
-                        updateConsoleLog("\nFinished getting files")
-                        updateConsoleLog("Getting accounts")
-                        getAccounts()
-                    }
-                    else{
-                        updateConsoleLog("\nFinished getting files with error: " + error.message)
-                        updateConsoleLog("Getting accounts")
-                        getAccounts()
+                client.onboard(this, session){
+                    client.getFileList{ fileList, error ->
+                        val aaa = 0
                     }
                 }
+
+//                updateConsoleLog("\nClient version: " + session.metadata["digiMeVersion"])
+//                client.getSessionData({ file, error ->
+//                    if (file != null) {
+//                        updateConsoleLog(file.identifier + " success")
+//                    } else if(error != null) {
+//                        updateConsoleLog("Error downloading file")
+//                    }
+//                })
+//                {_, error ->
+//                    if (error == null) {
+//                        updateConsoleLog("\nFinished getting files")
+//                        updateConsoleLog("Getting accounts")
+//                        getAccounts()
+//                    }
+//                    else{
+//                        updateConsoleLog("\nFinished getting files with error: " + error.message)
+//                        updateConsoleLog("Getting accounts")
+//                        getAccounts()
+//                    }
+//                }
             }
             error?.message?.let { it -> updateConsoleLog("Error downloading file: " + error.message) }
         }

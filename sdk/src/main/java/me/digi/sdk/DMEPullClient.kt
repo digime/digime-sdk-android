@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.util.Base64
-import android.util.Log
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -17,7 +16,8 @@ import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.interapp.managers.DMEGuestConsentManager
+import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
+import me.digi.sdk.interapp.managers.SaaSOnboardingManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
@@ -39,8 +39,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         sessionManager,
         configuration.appId
     ) }
-    private val guestConsentManager: DMEGuestConsentManager by lazy { DMEGuestConsentManager(
-        sessionManager,
+    private val guestConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
+        configuration.baseUrl
+    ) }
+    private val guestConsentManager2: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
         configuration.baseUrl
     ) }
 
@@ -91,10 +93,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     fun authorize(
         fromActivity: Activity,
         scope: DMEDataRequest? = null,
-        completion: DMEAuthorizationCompletion
+        completion: AuthorizationCompletion
     ) {
 
-        DMELog.i("Launching user consent request.")
+        DMELog.i("Launching user authorize request.")
 
         val codeVerifier = DMEByteTransformer.hexStringFromBytes(
             DMECryptoUtilities.generateSecureRandom(
@@ -114,55 +116,36 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onSuccess = {
+                sessionManager.currentSession = it.session
                 val chunks: List<String> = it.token.split(".")
                 val payload: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                 val ooooo = Gson().fromJson(payload, Payload::class.java)
                 //Give consent
                 ooooo.preauthorization_code?.let { it1 ->
-                    guestConsentManager.beginConsentAction(fromActivity, completion, it1, configuration.appId)
+                    guestConsentManager.beginConsentAction(fromActivity, completion, it1)
                 }
             }, onError = {
-                //
-                Log.e("Error", "${it.localizedMessage}")
+                DMELog.e("An error occurred whilst communicating with our servers: ${it.message}")
+                completion(null, DMEAuthError.General())
             })
-
-
-
-//        val req = DMESessionRequest(configuration.appId, configuration.contractId, DMESDKAgent(), "gzip", scope)
-//        sessionManager.getSession(req) { session, error ->
-//
-//            if (session != null) {
-//                when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), configuration.guestEnabled)) {
-//                    Pair(true, true),
-//                    Pair(true, false) -> nativeConsentManager.beginAuthorization(fromActivity, completion)
-//                    Pair(false, true) -> {
-//                        val consentModeDialogue = ConsentModeSelectionDialogue()
-//                        consentModeDialogue.configureHandler(object: ConsentModeSelectionDialogue.DecisionHandler {
-//                            override fun installDigiMe() {
-//                                DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-//                                    nativeConsentManager.beginAuthorization(fromActivity, completion)
-//                                }
-//                            }
-//
-//                            override fun shareAsGuest() {
-//                                guestConsentManager.beginGuestAuthorization(fromActivity, completion)
-//                            }
-//                        })
-//                        consentModeDialogue.show(fromActivity.fragmentManager, "ConsentModeSelection")
-//                    }
-//                    Pair(false, false) -> {
-//                        DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(fromActivity) {
-//                            nativeConsentManager.beginAuthorization(fromActivity, completion)
-//                        }
-//                    }
-//                }
-//            }
-//            else {
-//                DMELog.e("An error occurred whilst communicating with our servers: ${error?.message}")
-//                completion(null, error)
-//            }
-//        }
     }
+
+
+    @JvmOverloads
+    fun onboard(
+        fromActivity: Activity,
+        authSession: AuthSession,
+        completion: OnboardingCompletion
+    ) {
+
+        DMELog.i("Launching user onboarding request.")
+
+                authSession.code?.let { it1 ->
+                    guestConsentManager2.beginOnboardAction(fromActivity, completion, it1)
+                }
+
+    }
+
 
     @JvmOverloads
     fun authorizeOngoingAccess(

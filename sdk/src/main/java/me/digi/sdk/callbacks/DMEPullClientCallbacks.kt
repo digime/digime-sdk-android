@@ -4,6 +4,9 @@ import me.digi.sdk.DMEError
 import me.digi.sdk.entities.*
 
 typealias DMEAuthorizationCompletion = (session: DMESession?, error: DMEError?) -> Unit
+typealias AuthorizationCompletion = (authSession: AuthSession?, error: DMEError?) -> Unit
+
+typealias OnboardingCompletion = (error: DMEError?) -> Unit
 
 typealias DMEOngoingAuthorizationCompletion = (session: DMESession?, credentials: DMEOAuthToken?, error: DMEError?) -> Unit
 

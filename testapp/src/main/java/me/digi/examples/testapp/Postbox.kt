@@ -62,7 +62,7 @@ class Postbox : AppCompatActivity() {
 //        )
 
 //        configuration.baseUrl = "https://api.stagingdigi.me/"
-        configuration.baseUrl = "https://api.development.devdigi.me/"
+//        configuration.baseUrl = "https://api.development.devdigi.me/"
 
         client = DMEPushClient(applicationContext, configuration)
 

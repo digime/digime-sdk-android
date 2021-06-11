@@ -4,29 +4,20 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import me.digi.sdk.R
 
-private const val TAG = "GuestConsentBrowserActi"
-
-class GuestConsentBrowserActivity: Activity() {
-
-    companion object {
-        val QUARK_LAUNCH_URL_EXTRA_KEY = "launchURL"
-    }
+class GuestConsentBrowserActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.guest_consent_browser_activity)
 
-        val intentUri = intent?.data ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
+        val intentUri = intent?.data
+            ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
 
         if (intentUri.scheme.orEmpty() == getString(R.string.deeplink_guest_consent_callback)) {
-            // Launched by Quark returning from onboarding.
             handleWebOnboardingCallback(intentUri)
-        }
-        else {
-            // Launched by DMEGuestConsentManager.
+        } else {
             startActivity(Intent(Intent.ACTION_VIEW, intentUri))
         }
     }
@@ -34,26 +25,56 @@ class GuestConsentBrowserActivity: Activity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
 
-        val intentUri = intent?.data ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
+        val intentUri = intent?.data
+            ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
         handleWebOnboardingCallback(intentUri)
+    }
+
+    private fun handleSaaSAuthorizeCallback(intentUri: Uri) {
+        val state = intentUri.getQueryParameter("state")
+        val code = intentUri.getQueryParameter("code")
+
+        if (code != null && state != null) {
+            intent?.putExtra(
+                getString(R.string.key_result),
+                getString(R.string.const_result_success)
+            )
+            intent?.putExtra("code", code)
+            intent?.putExtra("state", state)
+            setResult(RESULT_OK, intent)
+        } else {
+            intent?.putExtra(
+                getString(R.string.key_result),
+                getString(R.string.const_result_cancel)
+            )
+            setResult(RESULT_CANCELED, intent)
+        }
+    }
+
+    private fun handleSaaSOnboardingCallback(intentUri: Uri) {
+        if (intentUri.host.equals("onboarding-success")) {
+            intent?.putExtra(
+                getString(R.string.key_result),
+                getString(R.string.const_result_success)
+            )
+            setResult(RESULT_OK, intent)
+        } else {
+            intent?.putExtra(
+                getString(R.string.key_result),
+                getString(R.string.const_result_cancel)
+            )
+            setResult(RESULT_CANCELED, intent)
+        }
     }
 
     private fun handleWebOnboardingCallback(intentUri: Uri) {
 
-        val state = intentUri.getQueryParameter("state")
-        val code = intentUri.getQueryParameter("code")
-        Log.d(TAG, "State: $state")
-        Log.d(TAG, "Code: $code")
+        if (intentUri.host.contains("onboarding")) {
+            handleSaaSOnboardingCallback(intentUri)
+        } else {
+            handleSaaSAuthorizeCallback(intentUri)
+        }
 
-        val result = intentUri.getQueryParameter(getString(R.string.key_result))
-        if (result != null && result == getString(R.string.const_result_data_ready)) {
-            intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_success))
-            setResult(RESULT_OK)
-        }
-        else {
-            intent?.putExtra(getString(R.string.key_result), getString(R.string.const_result_cancel))
-            setResult(RESULT_CANCELED)
-        }
         finish()
     }
 }
