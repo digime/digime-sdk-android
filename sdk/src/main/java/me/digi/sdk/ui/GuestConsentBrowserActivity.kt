@@ -69,7 +69,7 @@ class GuestConsentBrowserActivity : Activity() {
 
     private fun handleWebOnboardingCallback(intentUri: Uri) {
 
-        if (intentUri.host.contains("onboarding")) {
+        if (intentUri.host?.contains("onboarding")!!) {
             handleSaaSOnboardingCallback(intentUri)
         } else {
             handleSaaSAuthorizeCallback(intentUri)

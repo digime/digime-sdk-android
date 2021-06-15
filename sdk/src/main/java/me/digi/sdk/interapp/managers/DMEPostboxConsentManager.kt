@@ -69,7 +69,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
         val sessionKey = params[ctx.getString(R.string.key_session_key)] as? String
         val digiMeVersion = params[ctx.getString(R.string.key_app_version)] as? String
 
-        extractAndAppendMetadata(params)
+        extractAndAppendMetadata(params as Map<String, Any>)
 
         val error = if (!sessionManager.isSessionValid()) {
             DMEAuthError.InvalidSession()

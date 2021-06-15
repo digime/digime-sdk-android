@@ -1,21 +1,30 @@
 package me.digi.saas.features.auth.viewmodel
 
 import android.app.Activity
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import me.digi.sdk.DMEError
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import me.digi.saas.utils.Resource
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.DMEScope
+import me.digi.sdk.entities.AuthSession
 
 private const val TAG = "AuthViewModel"
 
 class AuthViewModel(private val client: DMEPullClient) : ViewModel() {
 
-    private var test : DMEScope? = null
+    private val _authStatus: MutableStateFlow<Resource<AuthSession>> =
+        MutableStateFlow(Resource.Idle())
+    val authStatus: StateFlow<Resource<AuthSession>>
+        get() = _authStatus
 
-    fun authorize(fromActivity: Activity) {
-        client.authorize(fromActivity, test) { authSession, error: DMEError? ->
-            Log.d(TAG, "${authSession?.code}")
+    fun authenticate(activity: Activity) {
+        _authStatus.value = Resource.Loading()
+
+        client.authorize(activity, null) { authSession, error ->
+
+            authSession?.let { _authStatus.value = Resource.Success(it) }
+
+            error?.let { _authStatus.value = Resource.Failure(it.localizedMessage) }
         }
     }
 }

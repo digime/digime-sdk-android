@@ -10,4 +10,10 @@
         android:name="me.digi.saas.features.auth.view.AuthFragment"
         android:label="fragment_auth"
         tools:layout="@layout/fragment_auth" />
+
+    <fragment
+        android:id="@+id/onboardFragment"
+        android:name="me.digi.saas.features.onboard.view.OnboardFragment"
+        android:label="OnboardFragment"
+        tools:layout="@layout/fragment_onboard" />
 </navigation>

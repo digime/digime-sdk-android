@@ -151,7 +151,7 @@ class DMEOngoingPostboxConsentManager(
         val authorizationCode = params[context.getString(R.string.key_authorization_code)] as? String
         sessionManager.currentSession?.authorizationCode = authorizationCode
 
-        extractAndAppendMetadata(params)
+        extractAndAppendMetadata(params as Map<String, Any>)
 
         val error = if (!sessionManager.isSessionValid()) {
             DMEAuthError.InvalidSession()

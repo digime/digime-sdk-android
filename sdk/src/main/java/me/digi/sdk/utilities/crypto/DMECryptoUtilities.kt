@@ -10,6 +10,7 @@ import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.spongycastle.crypto.params.KeyParameter
 import org.spongycastle.crypto.params.ParametersWithIV
 import org.spongycastle.jce.provider.BouncyCastleProvider
+import java.io.InputStream
 import java.security.*
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
@@ -38,6 +39,22 @@ class DMECryptoUtilities(val context: Context) {
         val kf = KeyFactory.getInstance("RSA")
         return DMEKeyTransformer.hexFromJavaPrivateKey(kf.generatePrivate(keySpec))
 
+    }
+
+    fun privateKeyHexFrom(p12File: String, password: String): String {
+
+        val inStream: InputStream = context.assets.open(p12File)
+        keyStore.load(inStream, password.toCharArray())
+
+        val keyAlaises = keyStore.aliases().toList().filter { keyStore.isKeyEntry(it) }
+
+        if (keyAlaises.count() != 1) {
+            throw DMESDKError.P12ParsingError()
+        }
+
+        val key = keyStore.getKey(keyAlaises.first(), password.toCharArray()) as PrivateKey
+
+        return DMEKeyTransformer.hexFromJavaPrivateKey(key)
     }
 
     companion object {
