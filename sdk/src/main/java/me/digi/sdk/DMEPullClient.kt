@@ -16,9 +16,12 @@ import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
-import me.digi.sdk.interapp.managers.SaaSOnboardingManager
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
+import me.digi.sdk.interapp.managers.SaaSOnboardingManager
+import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
+import me.digi.sdk.saas.repositories.DefaultMainRepository
+import me.digi.sdk.saas.repositories.MainRepository
+import me.digi.sdk.saas.utils.Resource
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
@@ -45,6 +48,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private val guestConsentManager2: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
         configuration.baseUrl
     ) }
+
+    private val repository: MainRepository by lazy { DefaultMainRepository() }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
@@ -88,6 +93,55 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     )
 
     private val compositeDisposable = CompositeDisposable()
+
+    suspend fun authenticate(fromActivity: Activity, completion: AuthorizationCompletion) {
+        DMELog.i("Launching user authentication request.")
+
+        val response: Resource<me.digi.sdk.entities.Payload> = repository.fetchPreAuthorizationCode(configuration, apiClient, sessionManager)
+
+        when (response) {
+            is Resource.Success -> {
+                response.data?.preAuthorizationCode?.let {
+                    guestConsentManager.beginConsentAction(fromActivity, completion, it)
+                }
+            }
+            is Resource.Failure -> completion(
+                null,
+                DMEAuthError.ErrorWithMessage(response.message ?: "Unknown error occurred")
+            )
+        }
+    }
+
+    fun onboardService(
+        fromActivity: Activity,
+        authSession: AuthSession,
+        completion: OnboardingCompletion
+    ) {
+        DMELog.i("Launching user onboarding request.")
+
+        authSession.code?.let {
+            guestConsentManager2.beginOnboardAction(fromActivity, completion, it)
+        }
+    }
+
+    suspend fun fetchFileList(completion: DMEFileListCompletion) {
+        DMELog.i("Fetching file list for services")
+
+        val currentSession = sessionManager.currentSession
+        var response: Resource<DMEFileList>? = null
+
+        if (currentSession != null && sessionManager.isSessionValid())
+            response = repository.getFileList(apiClient, currentSession.key)
+        else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, DMEAuthError.InvalidSession())
+        }
+
+        when (response) {
+            is Resource.Success -> completion.invoke(response.data, null)
+            is Resource.Failure -> completion(null, DMEAuthError.InvalidSession())
+        }
+    }
 
     @JvmOverloads
     fun authorize(

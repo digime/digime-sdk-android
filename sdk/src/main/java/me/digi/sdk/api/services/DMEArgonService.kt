@@ -5,8 +5,8 @@ import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.utilities.jwt.*
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
+import me.digi.sdk.utilities.jwt.DMEPreAuthorizationResponse
 import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
 import me.digi.sdk.utilities.jwt.RefreshCredentialsResponseJWT
 import okhttp3.MultipartBody
@@ -59,7 +59,7 @@ internal interface DMEArgonService {
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<RefreshCredentialsResponseJWT>
 
     @POST("v1.6/oauth/authorize")
-    fun getPreauthorizationCode1(@Header("Authorization") jwt: String): Single<DMEAUthResponse>
+    fun getPreauthorizationCode1(@Header("Authorization") jwt: String): Single<DMEPreAuthorizationResponse>
 
     @POST("v1.6/oauth/authorize")
     fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreauthorizationResponseJWT>
@@ -69,4 +69,13 @@ internal interface DMEArgonService {
 
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(@Header("Authorization") jwt: String): Call<Unit>
+
+    /**
+     * Suspend calls
+     */
+    @POST("v1.6/oauth/authorize")
+    suspend fun fetchPreAuthorizationCode(@Header("Authorization") jwt: String): DMEPreAuthorizationResponse
+
+    @GET("/v1.6/permission-access/query/{sessionKey}")
+    suspend fun getFileListForServices(@Path("sessionKey") sessionKey: String): DMEFileList
 }

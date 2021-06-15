@@ -72,6 +72,10 @@ dependencies {
     implementation "io.reactivex.rxjava3:rxkotlin:$versions.rxkotlin"
     implementation "io.reactivex.rxjava3:rxandroid:$versions.rxandroid"
 
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
+
     testImplementation "junit:junit:$versions.junit"
     testImplementation "org.robolectric:robolectric:$versions.robolectric"
     testImplementation "androidx.test:core:$versions.testcore"

@@ -2,8 +2,10 @@ package me.digi.saas.features.auth.viewmodel
 
 import android.app.Activity
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import me.digi.saas.utils.Resource
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.AuthSession
@@ -20,11 +22,13 @@ class AuthViewModel(private val client: DMEPullClient) : ViewModel() {
     fun authenticate(activity: Activity) {
         _authStatus.value = Resource.Loading()
 
-        client.authorize(activity, null) { authSession, error ->
+        viewModelScope.launch {
+            client.authenticate(activity) { authSession, error ->
 
-            authSession?.let { _authStatus.value = Resource.Success(it) }
+                authSession?.let { _authStatus.value = Resource.Success(it) }
 
-            error?.let { _authStatus.value = Resource.Failure(it.localizedMessage) }
+                error?.let { _authStatus.value = Resource.Failure(it.localizedMessage) }
+            }
         }
     }
 }
