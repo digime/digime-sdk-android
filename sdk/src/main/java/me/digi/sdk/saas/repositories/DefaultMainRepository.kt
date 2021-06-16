@@ -8,6 +8,7 @@ import me.digi.sdk.api.DMEAPIClient
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.entities.Payload
+import me.digi.sdk.saas.serviceentities.ServicesResponse
 import me.digi.sdk.saas.utils.Resource
 import me.digi.sdk.saas.utils.safeCall
 import me.digi.sdk.utilities.DMESessionManager
@@ -61,4 +62,15 @@ class DefaultMainRepository : MainRepository {
                 Resource.Success(response)
             }
         }
+
+    override suspend fun getServicesForContract(
+        apiClient: DMEAPIClient,
+        contractId: String
+    ): Resource<ServicesResponse> = withContext(Dispatchers.IO) {
+        safeCall {
+            val response: ServicesResponse = apiClient.argonService.getServicesForContract(contractId)
+
+            Resource.Success(response)
+        }
+    }
 }

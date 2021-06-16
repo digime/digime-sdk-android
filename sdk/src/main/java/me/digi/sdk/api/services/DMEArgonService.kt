@@ -5,6 +5,7 @@ import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.saas.serviceentities.ServicesResponse
 import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
 import me.digi.sdk.utilities.jwt.DMEPreAuthorizationResponse
 import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
@@ -78,4 +79,8 @@ internal interface DMEArgonService {
 
     @GET("/v1.6/permission-access/query/{sessionKey}")
     suspend fun getFileListForServices(@Path("sessionKey") sessionKey: String): DMEFileList
+
+    // TODO: Here for testing purposes?
+    @GET("v1.5/discovery/services")
+    suspend fun getServicesForContract(@Header("contractId") contractId: String): ServicesResponse
 }

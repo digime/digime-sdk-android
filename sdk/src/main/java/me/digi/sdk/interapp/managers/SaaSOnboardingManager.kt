@@ -22,7 +22,7 @@ class SaaSOnboardingManager(private val baseURL: String): DMEAppCallbackHandler(
             field = value
         }
 
-    fun beginOnboardAction(fromActivity: Activity, completion: OnboardingCompletion, codeValue: String) {
+    fun beginOnboardAction(fromActivity: Activity, completion: OnboardingCompletion, serviceId: String, codeValue: String) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
         onboardingCallbackHandler = completion
 
@@ -30,7 +30,7 @@ class SaaSOnboardingManager(private val baseURL: String): DMEAppCallbackHandler(
 
         val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
 
-        proxyLaunchIntent.data = buildSaaSClientOnboardURI(codeValue)
+        proxyLaunchIntent.data = buildSaaSClientOnboardURI(serviceId, codeValue)
 
         fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
@@ -84,7 +84,7 @@ class SaaSOnboardingManager(private val baseURL: String): DMEAppCallbackHandler(
         // TODO: Does quark do metadata?
     }
 
-    private fun buildSaaSClientOnboardURI(codeValue: String): Uri {
+    private fun buildSaaSClientOnboardURI(serviceId: String, codeValue: String): Uri {
 
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
@@ -97,7 +97,7 @@ class SaaSOnboardingManager(private val baseURL: String): DMEAppCallbackHandler(
             .appendQueryParameter(code, codeValue)
             .appendQueryParameter(errorCallbackUrl, "digime-ca://onboarding-failed")
             .appendQueryParameter(successCallbackUrl, "digime-ca://onboarding-success")
-            .appendQueryParameter("service", "420")
+            .appendQueryParameter("service", serviceId)
             .build()
     }
 

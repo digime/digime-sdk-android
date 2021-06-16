@@ -21,6 +21,8 @@ import me.digi.sdk.interapp.managers.SaaSOnboardingManager
 import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
 import me.digi.sdk.saas.repositories.DefaultMainRepository
 import me.digi.sdk.saas.repositories.MainRepository
+import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.saas.serviceentities.ServicesResponse
 import me.digi.sdk.saas.utils.Resource
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
@@ -88,16 +90,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     private var stalePollCount = 0
 
-    data class Payload (
-        val preauthorization_code: String? = null
-    )
-
     private val compositeDisposable = CompositeDisposable()
 
     suspend fun authenticate(fromActivity: Activity, completion: AuthorizationCompletion) {
         DMELog.i("Launching user authentication request.")
 
-        val response: Resource<me.digi.sdk.entities.Payload> = repository.fetchPreAuthorizationCode(configuration, apiClient, sessionManager)
+        val response: Resource<Payload> = repository.fetchPreAuthorizationCode(configuration, apiClient, sessionManager)
 
         when (response) {
             is Resource.Success -> {
@@ -114,13 +112,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun onboardService(
         fromActivity: Activity,
-        authSession: AuthSession,
+        serviceId: String,
+        codeValue: String?,
         completion: OnboardingCompletion
     ) {
         DMELog.i("Launching user onboarding request.")
 
-        authSession.code?.let {
-            guestConsentManager2.beginOnboardAction(fromActivity, completion, it)
+        codeValue?.let {
+            guestConsentManager2.beginOnboardAction(fromActivity, completion, serviceId, it)
         }
     }
 
@@ -140,6 +139,24 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         when (response) {
             is Resource.Success -> completion.invoke(response.data, null)
             is Resource.Failure -> completion(null, DMEAuthError.InvalidSession())
+        }
+    }
+
+    suspend fun getServicesForContract(contractId: String, completion: DMEServicesForContractCompletion) {
+        DMELog.i("Fetching services for contract")
+
+        val response: Resource<ServicesResponse> = repository.getServicesForContract(apiClient, contractId)
+
+        when(response) {
+            is Resource.Success -> {
+                DMELog.d("Services list fetched: ${response.data}")
+                val services: List<Service> = response.data?.data?.services!!
+                completion.invoke(services, null)
+            }
+            is Resource.Failure -> {
+                DMELog.e("Error: ${response.message ?: "Could not fetch services. Something went wrong"}")
+                completion.invoke(null, DMEAuthError.ErrorWithMessage(response.message ?: "Could not fetch services. Something went wrong"))
+            }
         }
     }
 
@@ -175,7 +192,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val payload: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                 val ooooo = Gson().fromJson(payload, Payload::class.java)
                 //Give consent
-                ooooo.preauthorization_code?.let { it1 ->
+                ooooo.preAuthorizationCode?.let { it1 ->
                     guestConsentManager.beginConsentAction(fromActivity, completion, it1)
                 }
             }, onError = {
@@ -195,7 +212,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         DMELog.i("Launching user onboarding request.")
 
                 authSession.code?.let { it1 ->
-                    guestConsentManager2.beginOnboardAction(fromActivity, completion, it1)
+                    guestConsentManager2.beginOnboardAction(fromActivity, completion, "420", it1)
                 }
 
     }

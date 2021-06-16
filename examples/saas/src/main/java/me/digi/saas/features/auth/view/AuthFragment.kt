@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
@@ -32,7 +33,9 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         lifecycleScope.launchWhenResumed {
             viewModel.authStatus.collectLatest { resource: Resource<AuthSession> ->
                 when (resource) {
-                    is Resource.Idle -> { /** Do nothing */ }
+                    is Resource.Idle -> {
+                        /** Do nothing */
+                    }
                     is Resource.Loading -> {
                         binding.authProgressBar.isVisible = true
                         binding.authenticate.isEnabled = false
@@ -41,23 +44,25 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
                         binding.authProgressBar.isVisible = false
                         binding.authenticate.isEnabled = true
 
-                        Timber.d("Success#State: ${resource.data?.state}")
-                        Timber.d("Success#Code: ${resource.data?.code}")
-
-                        // TODO: Save @AuthSession locally in cache
+                        // TODO: Save @AuthSession locally in cache?
                         // TODO: Navigate to home screen
+                        goToOnboardingScreen(resource.data?.code!!)
                     }
                     is Resource.Failure -> {
                         binding.authProgressBar.isVisible = false
                         binding.authenticate.isEnabled = true
-
                         Timber.e("Error: ${resource.message ?: "Unknown error occurred"}")
-
                         snackBar(resource.message ?: "Unknown error occurred")
                     }
                 }
             }
         }
+    }
+
+    private fun goToOnboardingScreen(code: String) {
+        val bundle = Bundle()
+        bundle.putString("code", code)
+        findNavController().navigate(R.id.authToOnboard, bundle)
     }
 
     private fun setupClickListeners() {
