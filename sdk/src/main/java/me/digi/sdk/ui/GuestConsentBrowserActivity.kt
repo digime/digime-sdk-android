@@ -33,12 +33,16 @@ class GuestConsentBrowserActivity : Activity() {
     private fun handleSaaSAuthorizeCallback(intentUri: Uri) {
         val state = intentUri.getQueryParameter("state")
         val code = intentUri.getQueryParameter("code")
+        val success = intentUri.getQueryParameter("success")
+        val error = intentUri.getQueryParameter("errorCode")
 
         if (code != null && state != null) {
             intent?.putExtra(
                 getString(R.string.key_result),
                 getString(R.string.const_result_success)
             )
+            intent?.putExtra("success", success)
+            intent?.putExtra("error", error)
             intent?.putExtra("code", code)
             intent?.putExtra("state", state)
             setResult(RESULT_OK, intent)

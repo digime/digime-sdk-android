@@ -23,7 +23,7 @@ class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandle
             field = value
         }
 
-    fun beginConsentAction(fromActivity: Activity, completion: AuthorizationCompletion, codeValue: String) {
+    fun beginConsentAction(fromActivity: Activity, codeValue: String, completion: AuthorizationCompletion) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
         authorizationCallbackHandler = completion
 
@@ -51,14 +51,14 @@ class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandle
             return
         }
 
-
-
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
         val params = intent.extras?.toMap() ?: emptyMap()
 
         val code = params["code"] as? String
         val state = params["state"] as? String
+        val success = params["success"] as? String
+        val errorCode = params["error"] as? String
         val result = params["result"] as? String
 
         var error: DMEAuthError? =  null
@@ -91,14 +91,11 @@ class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandle
         val ctx = DMEAppCommunicator.getSharedInstance().context
 
         val code = ctx.getString(R.string.saas_client_code)
-        val errorCallbackUrl = ctx.getString(R.string.saas_errorCallback)
-        val successCallbackUrl = ctx.getString(R.string.saas_successCallback)
 
         return Uri.parse("${baseURL}apps/saas/authorize")
             .buildUpon()
             .appendQueryParameter(code, codeValue)
-            .appendQueryParameter(errorCallbackUrl, "digime-ca://auth-failed")
-            .appendQueryParameter(successCallbackUrl, "digime-ca://auth-success")
+            .appendQueryParameter("callback", "http://www.digi.me/return")
             .build()
     }
 }

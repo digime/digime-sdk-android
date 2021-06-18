@@ -3,13 +3,11 @@ package me.digi.sdk.api.services
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileList
+import me.digi.sdk.entities.DMEPreAuthResponse
 import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.saas.serviceentities.ServicesResponse
-import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
-import me.digi.sdk.utilities.jwt.DMEPreAuthorizationResponse
-import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
-import me.digi.sdk.utilities.jwt.RefreshCredentialsResponseJWT
+import me.digi.sdk.utilities.jwt.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -68,6 +66,10 @@ internal interface DMEArgonService {
     @POST("v1.6/oauth/token")
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<DMEAuthCodeExchangeResponseJWT>
 
+    @POST("v1.6/oauth/token")
+    @Headers("Accept:application/json")
+    fun exchangeAuthToken1(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(@Header("Authorization") jwt: String): Call<Unit>
 
@@ -76,6 +78,9 @@ internal interface DMEArgonService {
      */
     @POST("v1.6/oauth/authorize")
     suspend fun fetchPreAuthorizationCode(@Header("Authorization") jwt: String): DMEPreAuthorizationResponse
+
+    @POST("v1.6/oauth/authorize")
+    fun fetchPreAuthorizationCode1(@Header("Authorization") jwt: String): Call<DMEPreAuthResponse?>
 
     @GET("/v1.6/permission-access/query/{sessionKey}")
     suspend fun getFileListForServices(@Path("sessionKey") sessionKey: String): DMEFileList

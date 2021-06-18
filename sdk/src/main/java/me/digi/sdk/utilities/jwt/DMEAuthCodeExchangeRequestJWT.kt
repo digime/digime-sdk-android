@@ -16,7 +16,7 @@ internal class DMEAuthCodeExchangeRequestJWT (
 
     @JwtClaim val clientId = "${appId}_${contractId}"
     @JwtClaim val grantType = "authorization_code"
-    @JwtClaim val redirectUri = "digime-ca-$appId"
+    @JwtClaim val redirectUri = "digime-ca://auth"
     @JwtClaim val timestamp = Date().time
     @JwtClaim val nonce: String
 

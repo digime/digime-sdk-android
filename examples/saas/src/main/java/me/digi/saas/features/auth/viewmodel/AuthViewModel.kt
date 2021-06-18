@@ -31,4 +31,12 @@ class AuthViewModel(private val client: DMEPullClient) : ViewModel() {
             }
         }
     }
+
+    fun bal(activity: Activity) {
+        client.lelele(activity) { session, credentials, error ->
+            println("Session: $session")
+            println("Credentials: $credentials")
+            println("Error: $error")
+        }
+    }
 }

@@ -25,6 +25,8 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+//        viewModel.bal(requireActivity())
+
         setupClickListeners()
         subscribeToObservers()
     }
