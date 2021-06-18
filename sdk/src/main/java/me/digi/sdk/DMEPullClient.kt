@@ -201,6 +201,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
             // At this point, we have a session and a set of credentials, so we can trigger
             // the data query to 'pair' the credentials with the session.
+            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { result: Pair<Session, DMETokenExchange> ->
