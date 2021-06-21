@@ -17,7 +17,7 @@ internal class RefreshCredentialsRequestJWT (
     @JwtClaim val clientId = "${appId}_${contractId}"
     @JwtClaim val timestamp = Date().time
     @JwtClaim val grantType = "refresh_token"
-    @JwtClaim val redirectUri = "digime-ca-$appId"
+    @JwtClaim val redirectUri = "digime-ca://auth"
     @JwtClaim val nonce: String
 
     init {
