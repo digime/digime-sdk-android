@@ -7,18 +7,19 @@ import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.DMEDataRequest
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMESession
+import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.Session
 
-fun DMEPullClient.authorizeOngoingAccess(activity: Activity, scope: DMEDataRequest? = null, credentials: DMEOAuthToken? = null) = Single.create<Pair<DMESession, DMEOAuthToken>> { emitter ->
-    authorizeOngoingAccess(activity, scope, credentials) { session, credentials, error ->
-        error?.let {
-            emitter.onError(it)
-        } ?: if (session != null && credentials != null) {
-            emitter.onSuccess(Pair(session, credentials))
-        } else {
-            emitter.onError(DMEAuthError.General())
-        }
+fun DMEPullClient.authOngoingSaasAccess(
+    activity: Activity,
+    scope: DMEDataRequest? = null,
+    credentials: DMETokenExchange? = null
+): Single<Pair<Session, DMETokenExchange>> = Single.create { emitter ->
+    authorizeOngoingSaasAccess(activity, scope, credentials) { session, credentials, error ->
+        error?.let(emitter::onError)
+            ?: (if (session != null && credentials != null)
+                emitter.onSuccess(Pair(session, credentials))
+            else emitter.onError(DMEAuthError.General()))
     }
 }
 

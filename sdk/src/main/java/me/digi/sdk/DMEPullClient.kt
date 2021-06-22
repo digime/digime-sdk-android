@@ -31,6 +31,7 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
+import java.util.*
 import kotlin.math.max
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(
@@ -118,13 +119,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
-                            codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
                         val result = Pair(response.session, payload)
-
-                        println(response)
-                        println(payload)
 
                         emitter.onSuccess(result)
                     }
@@ -137,13 +134,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> =
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
-                    Single.create<Pair<Session, AuthSession>> { emitter ->
+                    Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
                             guestConsentManager.beginConsentAction(
                                 fromActivity,
                                 it
                             ) { authSession, error ->
-                                println(authSession)
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -206,8 +202,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                     apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
                         .map { response: DataQueryResponse ->
-                            println(response)
-                            println(result)
                             Pair(response.session, result.second)
                         }
                 }
@@ -316,6 +310,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { result: Pair<Session, DMETokenExchange> ->
+                    println("Session: ${result.first}")
+                    println("Token: ${result.second}")
+                    sessionManager.newSession = result.first
                     completion(result.first, result.second, null)
                 },
                 onError = { error ->
@@ -699,7 +696,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.i("Starting fetch of session data.")
 
-
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
 
@@ -730,17 +726,15 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
-    fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
+    private fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
-
             apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId)) { file, error ->
                 file?.identifier = fileId
                 completion(file, error)
             }
-
         }
         else {
             DMELog.e("Your session is invalid; please request a new one.")
@@ -749,7 +743,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
-    fun getSessionFileList(
+    private fun getSessionFileList(
         updateHandler: DMEIncrementalFileListUpdate,
         completion: DMEFileListCompletion
     ) {
@@ -772,7 +766,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun getFileList(completion: DMEFileListCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
             apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
@@ -785,7 +779,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun getSessionAccounts(completion: DMEAccountsCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
@@ -833,6 +827,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
                     fileList?.fileList.orEmpty()
                 ).orEmpty()
+
                 DMELog.i(
                     "${
                         fileList?.fileList.orEmpty().count()

@@ -21,6 +21,7 @@ internal interface DMEArgonService {
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
+    @Headers("Accept: application/octet-stream")
     @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
