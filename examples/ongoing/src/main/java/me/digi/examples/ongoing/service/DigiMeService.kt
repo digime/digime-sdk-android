@@ -37,11 +37,7 @@ class DigiMeService(private val context: Application) {
         DMEPullClient(context, configuration)
     }
 
-    private val gsonAgent: Gson by lazy {
-        GsonBuilder()
-//            .registerTypeAdapter(Song::class.java, Song.Adapter())
-            .create()
-    }
+    private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
     fun obtainAccessRights(activity: Activity) = client.authOngoingSaasAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
         .map { it }
@@ -90,7 +86,7 @@ class DigiMeService(private val context: Application) {
     fun cacheSongs(songs: List<Song>) {
         songs.forEach {
             val encoded = Gson().toJson(it).toByteArray(StandardCharsets.UTF_8)
-            FileUtils(context).storeBytes(encoded, it.entityid)
+            FileUtils(context).storeBytes(encoded, it.entityId)
         }
     }
 }
