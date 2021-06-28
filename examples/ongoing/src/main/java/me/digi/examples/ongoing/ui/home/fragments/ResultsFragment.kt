@@ -5,7 +5,6 @@ import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_data_breakdown.*
 import me.digi.examples.ongoing.base.BaseFragment
@@ -15,6 +14,7 @@ import me.digi.examples.ongoing.ui.home.HomeActivity
 import me.digi.examples.ongoing.ui.home.ResultsAdapter
 import me.digi.examples.ongoing.utils.GenreInsightGenerator
 import me.digi.ongoing.R
+import java.util.concurrent.TimeUnit
 
 class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R.layout.fragment_data_breakdown) {
 
@@ -44,23 +44,17 @@ class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R
         val songs = emptyList<Song>().toMutableList()
 
         digiMeService.obtainAccessRights(parent)
-            .andThen(digiMeService.refetchData())
-//            .doOnNext { songs.add(it) }
-//            .buffer(3L, TimeUnit.SECONDS)
-//            .map { GenreInsightGenerator.generateInsights(it) }
+            .andThen(digiMeService.fetchData())
+            .doOnNext { songs.add(it) }
+            .buffer(3L, TimeUnit.SECONDS)
+            .map { GenreInsightGenerator.generateInsights(it) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onNext = {
-                    println(it)
-                },
-                onError = {
-                    println(it.localizedMessage)
-                },
-                onComplete = {
-                    println("Completed")
-                }
-            )
+            .subscribe(resultsAdapter::performDiffAndUpdate, ::handleError)
+            {
+                digiMeService.cacheSongs(songs)
+                dismissLoadingState()
+            }
     }
 
     private fun handleError(error: Throwable) {

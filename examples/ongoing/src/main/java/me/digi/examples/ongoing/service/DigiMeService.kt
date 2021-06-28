@@ -16,9 +16,6 @@ import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
 import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
 class DigiMeService(private val context: Application) {
 
@@ -42,7 +39,7 @@ class DigiMeService(private val context: Application) {
 
     private val gsonAgent: Gson by lazy {
         GsonBuilder()
-            .registerTypeAdapter(Song::class.java, Song.Adapter())
+//            .registerTypeAdapter(Song::class.java, Song.Adapter())
             .create()
     }
 
@@ -54,10 +51,7 @@ class DigiMeService(private val context: Application) {
     fun fetchData() = client.getSessionData()
         .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
-        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
-
-    fun refetchData() = client.getSessionData()
-        .map{ it }
+//        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createddate), TimeUnit.MILLISECONDS) <= 24 }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))
@@ -96,7 +90,7 @@ class DigiMeService(private val context: Application) {
     fun cacheSongs(songs: List<Song>) {
         songs.forEach {
             val encoded = Gson().toJson(it).toByteArray(StandardCharsets.UTF_8)
-            FileUtils(context).storeBytes(encoded, it.entityId)
+            FileUtils(context).storeBytes(encoded, it.entityid)
         }
     }
 }

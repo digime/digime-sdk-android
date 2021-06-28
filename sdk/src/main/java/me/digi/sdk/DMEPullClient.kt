@@ -24,10 +24,12 @@ import me.digi.sdk.saas.repositories.MainRepository
 import me.digi.sdk.saas.serviceentities.Service
 import me.digi.sdk.saas.serviceentities.ServicesResponse
 import me.digi.sdk.saas.utils.Resource
+import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
@@ -731,16 +733,38 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
-            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId)) { file, error ->
-                file?.identifier = fileId
-                completion(file, error)
-            }
+
+            apiClient.argonService.getFileBytes(currentSession.key, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader = Gson().fromJson(headerString, HeaderMetadata::class.java)
+
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray = DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try { payloadHeader.compression } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
+                    val decompressedContentBytes: ByteArray = DMECompressor.decompressData(contentBytes, compression)
+
+                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Unknown error occurred")
+                        )
+                    }
+                )
         }
         else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
-
     }
 
     private fun getSessionFileList(
@@ -777,6 +801,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
+    // TODO: Handle better if possible
     fun getSessionAccounts(completion: DMEAccountsCompletion) {
 
         val currentSession = sessionManager.newSession
@@ -792,11 +817,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion(null, error)
                 }
 
-                val accountsFileJSON = file?.fileContentAs(DMEAccountList::class.java)
-                val accounts = accountsFileJSON?.accounts
+//                val accountsFileJSON = file?.fileContentAs(DMEAccountList::class.java)
+//                val accounts = accountsFileJSON?.accounts
 
-                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
-                completion(accounts, error)
+//                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
+//                completion(accounts, error)
             }
         }
         else {

@@ -13,7 +13,7 @@ object DMEDataDecryptor {
         val encryptedDSK = encryptedBytes.copyOfRange(0, dskLength)
         val dataIV = encryptedBytes.copyOfRange(dskLength, dskLength + ivLength)
 
-        val privateKey = DMEKeyTransformer.javaPrivateKeyFromHex(privateKeyHex)
+        val privateKey = DMEKeyTransformer.privateKeyFromString(privateKeyHex)
         val dsk = DMECryptoUtilities.decryptRSA(encryptedDSK, privateKey)
 
         val encryptedContent = encryptedBytes.copyOfRange(dskLength + ivLength, encryptedBytes.count())
