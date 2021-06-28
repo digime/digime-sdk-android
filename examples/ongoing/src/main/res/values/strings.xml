@@ -9,6 +9,7 @@
     <string name="plug_me_in">Plug Me In</string>
     <string name="breakdown_title">listened to on Spotify in the last 24 hours</string>
     <string name="fetching_updates">Fetching Updates...</string>
+    <string name="label_songs_count">%s songs</string>
 
     <!-- Staging -->
     <string name="staging_app_id">lFrMvUSnWLRB0WkzKpW45y9USpA3Uygh</string>

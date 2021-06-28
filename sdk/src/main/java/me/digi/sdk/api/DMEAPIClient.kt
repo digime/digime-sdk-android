@@ -21,6 +21,7 @@ import me.digi.sdk.entities.DMEPullConfiguration
 import me.digi.sdk.entities.api.DMESessionRequest
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -81,9 +82,13 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
         val requestDispatcher = Dispatcher()
         requestDispatcher.maxRequests = clientConfig.maxConcurrentRequests
 
+        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.BASIC
+
         val httpClientBuilder = OkHttpClient.Builder()
             .addInterceptor(DMEDefaultHeaderAppender())
             .addInterceptor(DMERetryInterceptor(clientConfig))
+            .addInterceptor(logging)
             .configureCertificatePinningIfNecessary()
             .callTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
             .readTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
