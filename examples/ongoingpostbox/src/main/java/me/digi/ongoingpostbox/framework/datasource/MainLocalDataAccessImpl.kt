@@ -7,8 +7,8 @@ import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
-import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMEPostbox
+import me.digi.sdk.entities.DMEOngoingPostboxData
+import me.digi.sdk.entities.DMETokenExchange
 
 /**
  * Idea behind local main data access is to isolate
@@ -21,21 +21,21 @@ import me.digi.sdk.entities.DMEPostbox
  */
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 
-    override fun getCachedCredential(): DMEOAuthToken? =
+    override fun getCachedCredential(): DMETokenExchange? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMEOAuthToken::class.java)
+                Gson().fromJson(it, DMETokenExchange::class.java)
             }
         }
 
-    override fun getCachedPostbox(): DMEPostbox? =
+    override fun getCachedPostbox(): DMEOngoingPostboxData? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_KEY, null)?.let {
-                Gson().fromJson(it, DMEPostbox::class.java)
+                Gson().fromJson(it, DMEOngoingPostboxData::class.java)
             }
         }
 
-    override fun cacheCredentials(): SingleTransformer<Pair<DMEPostbox?, DMEOAuthToken?>, Pair<DMEPostbox?, DMEOAuthToken?>> =
+    override fun cacheCredentials(): SingleTransformer<Pair<DMEOngoingPostboxData?, DMETokenExchange?>, Pair<DMEOngoingPostboxData?, DMETokenExchange?>> =
         SingleTransformer {
             it.map { credential ->
                 credential?.apply {

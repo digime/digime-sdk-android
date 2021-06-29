@@ -57,6 +57,8 @@ class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandle
 
         val code = params["code"] as? String
         val state = params["state"] as? String
+        val postboxId = params["postboxId"] as? String
+        val publicKey = params["publicKey"] as? String
         val success = params["success"] as? String
         val errorCode = params["error"] as? String
         val result = params["result"] as? String
@@ -77,7 +79,7 @@ class SaasAuthorizaionManager(private val baseURL: String): DMEAppCallbackHandle
             }
         }
 
-        authorizationCallbackHandler?.invoke(AuthSession(code, state), error)
+        authorizationCallbackHandler?.invoke(AuthSession(code, state, postboxId, publicKey), error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
     }

@@ -17,7 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.digi.ongoingpostbox.OngoingPostboxApp
 import me.digi.ongoingpostbox.R
-import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
+import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
@@ -43,9 +43,9 @@ class MainViewModel(
 
     private var job: Job? = null
 
-    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxResponseBody>> =
+    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxPayload>> =
         MutableLiveData()
-    val createPostboxStatus: LiveData<Resource<OngoingPostboxResponseBody>>
+    val createPostboxStatus: LiveData<Resource<OngoingPostboxPayload>>
         get() = _createPostboxStatus
 
     private val _uploadDataStatus: MutableLiveData<Resource<Boolean>> = MutableLiveData()
@@ -60,7 +60,7 @@ class MainViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: OngoingPostboxResponseBody ->
+                onSuccess = { result: OngoingPostboxPayload ->
                     _createPostboxStatus.postValue(Resource.Success(result))
                 },
                 onError = {

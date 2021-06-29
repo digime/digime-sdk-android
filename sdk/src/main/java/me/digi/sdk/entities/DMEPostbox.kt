@@ -1,6 +1,5 @@
 package me.digi.sdk.entities
 
-import androidx.annotation.Nullable
 import com.google.gson.annotations.SerializedName
 
 data class DMEPostbox (
@@ -17,4 +16,9 @@ data class DMEPostbox (
     @SerializedName("digiMeVersion")
     val digiMeVersion: String?
 
+)
+
+data class DMEOngoingPostboxData(
+    val postboxId: String? = null,
+    val publicKey: String? = null
 )

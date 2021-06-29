@@ -6,14 +6,10 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.ongoingpostbox.framework.utils.authorizeOngoingPostbox
+import me.digi.ongoingpostbox.framework.utils.authorizeSaasPostbox
 import me.digi.ongoingpostbox.framework.utils.pushData
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMEPostbox
-import me.digi.sdk.entities.DMEPushConfiguration
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.entities.*
 
 /**
  * Idea behind remote main data access is to isolate
@@ -28,22 +24,19 @@ class MainRemoteDataAccessImpl(
 
     private val client: DMEPushClient by lazy {
 
-        val privateKey = DMECryptoUtilities(context).privateKeyHexFrom(
-            context.getString(R.string.digime_p12_filename),
-            context.getString(R.string.digime_p12_password)
-        )
-
         val configuration = DMEPushConfiguration(
             context.getString(R.string.digime_application_id),
             context.getString(R.string.digime_contract_id),
-            privateKey
+            context.getString(R.string.digime_private_key)
         )
+
+        configuration.baseUrl = "https://api.stagingdigi.me/"
 
         DMEPushClient(context, configuration)
     }
 
-    override fun createPostbox(activity: Activity): Single<Pair<DMEPostbox?, DMEOAuthToken?>> =
-        client.authorizeOngoingPostbox(
+    override fun createPostbox(activity: Activity): Single<Pair<DMEOngoingPostboxData?, DMETokenExchange?>> =
+        client.authorizeSaasPostbox(
             activity,
             localDataAccess.getCachedPostbox(),
             localDataAccess.getCachedCredential()

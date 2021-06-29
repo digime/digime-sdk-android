@@ -5,3 +5,9 @@ data class DMEOngoingPostbox(
     val postbox: DMEPostbox? = null,
     val authToken: DMEOAuthToken? = null
 )
+
+data class DMESaasOngoingPostbox(
+    val session: Session? = null,
+    val postboxData: DMEOngoingPostboxData? = null,
+    val authToken: DMETokenExchange? = null
+)

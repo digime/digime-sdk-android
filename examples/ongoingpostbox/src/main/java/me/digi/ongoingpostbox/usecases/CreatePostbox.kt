@@ -3,6 +3,7 @@ package me.digi.ongoingpostbox.usecases
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.MainRepository
+import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
 
 /**
@@ -15,7 +16,7 @@ import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
  * needed flow of information
  */
 interface CreatePostboxUseCase {
-    operator fun invoke(activity: Activity): Single<OngoingPostboxResponseBody>
+    operator fun invoke(activity: Activity): Single<OngoingPostboxPayload>
 }
 
 /**
@@ -24,19 +25,15 @@ interface CreatePostboxUseCase {
  * @see OngoingPostboxResponseBody
  */
 class CreatePostboxUseCaseImpl(private val repository: MainRepository) : CreatePostboxUseCase {
-    override operator fun invoke(activity: Activity): Single<OngoingPostboxResponseBody> =
+    override operator fun invoke(activity: Activity): Single<OngoingPostboxPayload> =
         repository
             .createPostbox(activity)
             .map {
-                OngoingPostboxResponseBody(
-                    it.first?.sessionKey,
+                OngoingPostboxPayload(
                     it.first?.postboxId,
                     it.first?.publicKey,
-                    it.first?.digiMeVersion,
-                    it.second?.accessToken,
-                    it.second?.expiresOn,
-                    it.second?.refreshToken,
-                    it.second?.tokenType
+                    it.second?.accessToken?.value,
+                    it.second?.refreshToken?.value
                 )
             }
 }

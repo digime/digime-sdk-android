@@ -2,25 +2,30 @@ package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
+import android.util.Base64
+import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.api.helpers.DMEMultipartBody
-import me.digi.sdk.callbacks.DMEOngoingPostboxPushCompletion
-import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
-import me.digi.sdk.callbacks.DMEPostboxOngoingCreationCompletion
-import me.digi.sdk.callbacks.DMEPostboxPushCompletion
+import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.managers.DMEOngoingPostboxConsentManager
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
+import me.digi.sdk.interapp.managers.SaaSOnboardingManager
+import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
 import me.digi.sdk.utilities.DMELog
+import me.digi.sdk.utilities.crypto.DMEByteTransformer
+import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEDataEncryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
-import me.digi.sdk.utilities.jwt.DMEAuthTokenRequestJWT
+import me.digi.sdk.utilities.jwt.*
+import java.security.PrivateKey
 
 class DMEPushClient(
     val context: Context,
@@ -31,6 +36,13 @@ class DMEPushClient(
     private val postboxConsentManager: DMEPostboxConsentManager by lazy {
         DMEPostboxConsentManager(sessionManager, configuration.appId)
     }
+
+    private val authorizeManger: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
+        configuration.baseUrl
+    ) }
+    private val onboardServiceManger: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
+        configuration.baseUrl
+    ) }
 
     private val postboxOngoingManager: DMEOngoingPostboxConsentManager by lazy {
         DMEOngoingPostboxConsentManager(sessionManager, configuration.appId)
@@ -86,7 +98,8 @@ class DMEPushClient(
             // If not, we kick the user out to digi.me to authorise normally which will create postbox and new set of credentials.
             .let { session ->
                 if (activeCredentials != null && activePostbox != null)
-                    session.map { DMEOngoingPostbox(it, activePostbox, activeCredentials) }
+                    session.map {
+                        DMEOngoingPostbox(it, activePostbox, activeCredentials) }
                 else
                     session
                         .compose(
@@ -312,6 +325,181 @@ class DMEPushClient(
             DMELog.e("Your session is invalid; please request a new one.")
             completion(false, DMEAuthError.InvalidSession())
         }
+    }
+
+    fun authorizeOngoingSaasAccess(
+        fromActivity: Activity,
+        existingPostbox: DMEOngoingPostboxData? = null,
+        credentials: DMETokenExchange? = null,
+        completion: DMESaasPostboxOngoingCreationCompletion
+    ) {
+
+        // Defined bellow are a number of 'modules' that are used within the Cyclic Postbox flow.
+        // These can be combined in various ways as the auth state demands.
+        // See the flow below for details.
+
+        fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
+
+            val codeVerifier =
+                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+
+            val jwt = DMEPreauthorizationRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                codeVerifier
+            )
+
+            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader = jwt.sign(signingKey).tokenize()
+
+            apiClient.makeCall(apiClient.argonService.fetchPreAuthorizationCode1(authHeader)) { response, error ->
+                when {
+                    response != null -> {
+                        val chunks: List<String> = response.token.split(".")
+                        val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val payload = Gson().fromJson(payloadJson, Payload::class.java)
+
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
+
+                        val result: Pair<Session, Payload> = Pair(response.session, payload)
+
+                        emitter.onSuccess(result)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
+            }
+        }
+
+        fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> =
+            SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
+                it.flatMap { response ->
+                    Single.create { emitter ->
+                        response.second.preAuthorizationCode?.let {
+                            authorizeManger.beginConsentAction(
+                                fromActivity,
+                                it
+                            ) { authSession, error ->
+                                when {
+                                    error != null -> emitter.onError(error)
+                                    authSession != null -> emitter.onSuccess(
+                                        Pair(
+                                            response.first,
+                                            authSession
+                                        )
+                                    )
+                                    else -> emitter.onError(IllegalArgumentException())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        fun exchangeAuthorizationCode(): SingleTransformer<Pair<Session, AuthSession>, DMESaasOngoingPostbox> =
+            SingleTransformer<Pair<Session, AuthSession>, DMESaasOngoingPostbox> {
+                it.flatMap { response: Pair<Session, AuthSession> ->
+
+                    val codeVerifier =
+                        response.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+
+                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        response.second.code!!,
+                        codeVerifier
+                    )
+
+                    val signingKey =
+                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken1(authHeader))
+                        .map { exchangeToken: ExchangeTokenJWT ->
+
+                            val chunks: List<String> = exchangeToken.token.split(".")
+                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+
+                            val postboxData = DMEOngoingPostboxData().copy(
+                                postboxId = response.second.postboxId,
+                                publicKey = response.second.publicKey
+                            )
+
+                            DMESaasOngoingPostbox(response.first, postboxData, tokenExchange)
+                        }
+                }
+            }
+
+        fun refreshCredentials(): SingleTransformer<Pair<Session, DMETokenExchange>, Pair<Session, DMETokenExchange>> =
+            SingleTransformer<Pair<Session, DMETokenExchange>, Pair<Session, DMETokenExchange>> {
+                it.flatMap { result ->
+
+                    val jwt = RefreshCredentialsRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        result.second.refreshToken.value
+                    )
+
+                    val signingKey: PrivateKey =
+                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
+                        .map { exchangeToken ->
+
+                            val chunks: List<String> = exchangeToken.token.split(".")
+                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+
+                            Pair(result.first, tokenExchange)
+                        }
+                }
+            }
+
+        var activeCredentials: DMETokenExchange? = credentials
+        var activePostbox: DMEOngoingPostboxData? = existingPostbox
+
+        // First, we request pre-auth code needed for auth consent manager
+        requestPreAuthCode()
+            // Next we check if any credentials were supplied (for access restoration)
+            // If not, we kick the user out of the flow and authorize normally
+            .let { preAuthResponse ->
+                if(activeCredentials != null && activePostbox != null) {
+                    preAuthResponse.map {
+                        DMESaasOngoingPostbox(
+                            it.first,
+                            activePostbox,
+                            activeCredentials
+                        )
+                    }
+                }
+                else {
+                    preAuthResponse
+                        .compose(requestConsent(fromActivity))
+                        .compose(exchangeAuthorizationCode())
+                        .doOnSuccess {
+                            activePostbox = it.postboxData
+                            activeCredentials = it.authToken
+                        }
+                }
+            }
+            // At this point, we have a session, postbox and a set of credentials
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { completion.invoke(it.postboxData, it.authToken, null) },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        null,
+                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                            0,
+                            error.localizedMessage
+                        ))
+                }
+            )
+            .addTo(disposable)
     }
 }
 
