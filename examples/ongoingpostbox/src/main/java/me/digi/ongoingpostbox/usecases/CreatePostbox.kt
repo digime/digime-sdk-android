@@ -4,7 +4,6 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.MainRepository
 import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
-import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
 
 /**
  * Use case - Create Postbox
@@ -22,7 +21,7 @@ interface CreatePostboxUseCase {
 /**
  * For our convenience we transform incoming data
  * to a bit more readable class (mainly to avoid nullability)
- * @see OngoingPostboxResponseBody
+ * @see OngoingPostboxPayload
  */
 class CreatePostboxUseCaseImpl(private val repository: MainRepository) : CreatePostboxUseCase {
     override operator fun invoke(activity: Activity): Single<OngoingPostboxPayload> =
@@ -30,10 +29,11 @@ class CreatePostboxUseCaseImpl(private val repository: MainRepository) : CreateP
             .createPostbox(activity)
             .map {
                 OngoingPostboxPayload(
-                    it.first?.postboxId,
-                    it.first?.publicKey,
-                    it.second?.accessToken?.value,
-                    it.second?.refreshToken?.value
+                    it?.session?.key,
+                    it?.postboxData?.postboxId,
+                    it?.postboxData?.publicKey,
+                    it?.authToken?.accessToken?.value,
+                    it?.authToken?.refreshToken?.value
                 )
             }
 }

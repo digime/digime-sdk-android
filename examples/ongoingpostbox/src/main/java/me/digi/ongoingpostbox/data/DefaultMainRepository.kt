@@ -4,9 +4,8 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMEOngoingPostboxData
 import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.DMESaasOngoingPostbox
 
 /**
  * This is our main repository (only one too!)
@@ -19,7 +18,7 @@ import me.digi.sdk.entities.DMETokenExchange
  */
 class DefaultMainRepository(private val remoteAccess: MainRemoteDataAccess) : MainRepository {
 
-    override fun createPostbox(activity: Activity): Single<Pair<DMEOngoingPostboxData?, DMETokenExchange?>> =
+    override fun createPostbox(activity: Activity): Single<DMESaasOngoingPostbox?> =
         remoteAccess.createPostbox(activity)
 
     override fun uploadDataToOngoingPostbox(

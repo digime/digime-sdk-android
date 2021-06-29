@@ -28,15 +28,15 @@ fun DMEPushClient.authorizeSaasPostbox(
     activity: Activity,
     existingPostboxData: DMEOngoingPostboxData? = null,
     credentials: DMETokenExchange? = null
-): Single<Pair<DMEOngoingPostboxData?, DMETokenExchange?>> = Single.create { emitter ->
+): Single<DMESaasOngoingPostbox> = Single.create { emitter ->
     authorizeOngoingSaasAccess(
         activity,
         existingPostboxData,
         credentials
-    ) { postbox, credentials, error ->
+    ) { result, error ->
         error?.let { emitter.onError(it) }
-            ?: if (credentials != null || postbox != null)
-                emitter.onSuccess(Pair(postbox, credentials))
+            ?: if (result?.postboxData != null || result?.authToken != null)
+                emitter.onSuccess(result)
             else emitter.onError(DMEAuthError.General())
     }
 }

@@ -8,6 +8,7 @@ import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
 import me.digi.sdk.entities.DMEOngoingPostboxData
+import me.digi.sdk.entities.DMESaasOngoingPostbox
 import me.digi.sdk.entities.DMETokenExchange
 
 /**
@@ -35,13 +36,13 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun cacheCredentials(): SingleTransformer<Pair<DMEOngoingPostboxData?, DMETokenExchange?>, Pair<DMEOngoingPostboxData?, DMETokenExchange?>> =
+    override fun cacheCredentials(): SingleTransformer<DMESaasOngoingPostbox?, DMESaasOngoingPostbox?> =
         SingleTransformer {
             it.map { credential ->
                 credential?.apply {
                     context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                        val encodedPostbox = Gson().toJson(credential.first)
-                        val encodedCredential = Gson().toJson(credential.second)
+                        val encodedPostbox = Gson().toJson(credential.postboxData)
+                        val encodedCredential = Gson().toJson(credential.authToken)
                         putString(CACHED_CREDENTIAL_KEY, encodedCredential)
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)
                         apply()

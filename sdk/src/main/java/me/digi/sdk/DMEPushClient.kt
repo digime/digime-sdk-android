@@ -488,10 +488,9 @@ class DMEPushClient(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { completion.invoke(it.postboxData, it.authToken, null) },
+                onSuccess = { completion.invoke(it, null) },
                 onError = { error ->
                     completion.invoke(
-                        null,
                         null,
                         error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
                             0,
