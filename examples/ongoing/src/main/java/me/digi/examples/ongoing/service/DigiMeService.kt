@@ -10,16 +10,12 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.examples.ongoing.model.Song
 import me.digi.examples.ongoing.utils.FileUtils
-import me.digi.examples.ongoing.utils.authorizeOngoingAccess
+import me.digi.examples.ongoing.utils.authOngoingSaasAccess
 import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
 class DigiMeService(private val context: Application) {
 
@@ -29,14 +25,11 @@ class DigiMeService(private val context: Application) {
     }
 
     private val client: DMEPullClient by lazy {
-        val privateKey = DMECryptoUtilities(context).privateKeyHexFrom(
-            context.getString(R.string.digime_p12_filename),
-            context.getString(R.string.digime_p12_password)
-        )
+
         val configuration = DMEPullConfiguration(
-            context.getString(R.string.digime_application_id),
-            context.getString(R.string.digime_contract_id),
-            privateKey
+            context.getString(R.string.staging_app_id),
+            context.getString(R.string.staging_contract_id),
+            context.getString(R.string.staging_private_key)
         )
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
@@ -44,21 +37,17 @@ class DigiMeService(private val context: Application) {
         DMEPullClient(context, configuration)
     }
 
-    private val gsonAgent: Gson by lazy {
-        GsonBuilder()
-            .registerTypeAdapter(Song::class.java, Song.Adapter())
-            .create()
-    }
+    private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
-    fun obtainAccessRights(activity: Activity) = client.authorizeOngoingAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
-        .map { it.second }
+    fun obtainAccessRights(activity: Activity) = client.authOngoingSaasAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
+        .map { it }
         .compose(cacheCredential())
         .flatMapCompletable { Completable.complete() }
 
     fun fetchData() = client.getSessionData()
         .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
-        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
+//        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createddate), TimeUnit.MILLISECONDS) <= 24 }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))
@@ -73,15 +62,15 @@ class DigiMeService(private val context: Application) {
     fun getCachedCredential() =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMEOAuthToken::class.java)
+                Gson().fromJson(it, DMETokenExchange::class.java)
             }
         }
 
-    private fun cacheCredential() = SingleTransformer<DMEOAuthToken, DMEOAuthToken> {
+    private fun cacheCredential() = SingleTransformer<Pair<Session, DMETokenExchange>, Pair<Session, DMETokenExchange>> {
         it.map { credential ->
             credential.apply {
                 context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                    val encodedCredential = Gson().toJson(credential)
+                    val encodedCredential = Gson().toJson(credential.second)
                     putString(CACHED_CREDENTIAL_KEY, encodedCredential)
                     apply()
                 }

@@ -24,13 +24,16 @@ import me.digi.sdk.saas.repositories.MainRepository
 import me.digi.sdk.saas.serviceentities.Service
 import me.digi.sdk.saas.serviceentities.ServicesResponse
 import me.digi.sdk.saas.utils.Resource
+import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
+import java.util.*
 import kotlin.math.max
 
 class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(
@@ -118,13 +121,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
-                            codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
                         val result = Pair(response.session, payload)
-
-                        println(response)
-                        println(payload)
 
                         emitter.onSuccess(result)
                     }
@@ -137,13 +136,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> =
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
-                    Single.create<Pair<Session, AuthSession>> { emitter ->
+                    Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
                             guestConsentManager.beginConsentAction(
                                 fromActivity,
                                 it
                             ) { authSession, error ->
-                                println(authSession)
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -206,8 +204,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                     apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
                         .map { response: DataQueryResponse ->
-                            println(response)
-                            println(result)
                             Pair(response.session, result.second)
                         }
                 }
@@ -316,6 +312,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { result: Pair<Session, DMETokenExchange> ->
+                    println("Session: ${result.first}")
+                    println("Token: ${result.second}")
+                    sessionManager.newSession = result.first
                     completion(result.first, result.second, null)
                 },
                 onError = { error ->
@@ -699,7 +698,6 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         DMELog.i("Starting fetch of session data.")
 
-
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
 
@@ -730,26 +728,46 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
-    fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
+    private fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
-            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, fileId)) { file, error ->
-                file?.identifier = fileId
-                completion(file, error)
-            }
+            apiClient.argonService.getFileBytes(currentSession.key, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader = Gson().fromJson(headerString, HeaderMetadata::class.java)
 
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray = DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try { payloadHeader.compression } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
+                    val decompressedContentBytes: ByteArray = DMECompressor.decompressData(contentBytes, compression)
+
+                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Unknown error occurred")
+                        )
+                    }
+                )
         }
         else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
-
     }
 
-    fun getSessionFileList(
+    private fun getSessionFileList(
         updateHandler: DMEIncrementalFileListUpdate,
         completion: DMEFileListCompletion
     ) {
@@ -772,7 +790,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun getFileList(completion: DMEFileListCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
             apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
@@ -783,9 +801,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         }
     }
 
+    // TODO: Handle better if possible
     fun getSessionAccounts(completion: DMEAccountsCompletion) {
 
-        val currentSession = sessionManager.currentSession
+        val currentSession = sessionManager.newSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
@@ -798,11 +817,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion(null, error)
                 }
 
-                val accountsFileJSON = file?.fileContentAs(DMEAccountList::class.java)
-                val accounts = accountsFileJSON?.accounts
+//                val accountsFileJSON = file?.fileContentAs(DMEAccountList::class.java)
+//                val accounts = accountsFileJSON?.accounts
 
-                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
-                completion(accounts, error)
+//                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
+//                completion(accounts, error)
             }
         }
         else {
@@ -833,6 +852,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
                     fileList?.fileList.orEmpty()
                 ).orEmpty()
+
                 DMELog.i(
                     "${
                         fileList?.fileList.orEmpty().count()

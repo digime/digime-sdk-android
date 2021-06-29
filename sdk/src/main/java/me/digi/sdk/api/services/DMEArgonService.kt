@@ -10,7 +10,9 @@ import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
 import me.digi.sdk.utilities.jwt.ExchangeTokenJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.*
 
 internal interface DMEArgonService {
@@ -21,11 +23,18 @@ internal interface DMEArgonService {
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
-    @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
+    @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
     ): Call<DMEFile>
+
+    @Headers("Accept: application/octet-stream")
+    @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
+    fun getFileBytes(
+        @Path("sessionKey") sessionKey: String,
+        @Path("fileName") fileName: String
+    ): Single<Response<ResponseBody>>
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")

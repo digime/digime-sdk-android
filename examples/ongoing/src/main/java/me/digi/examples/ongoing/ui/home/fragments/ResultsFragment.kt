@@ -3,7 +3,6 @@ package me.digi.examples.ongoing.ui.home.fragments
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
-import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_data_breakdown.*
@@ -16,18 +15,17 @@ import me.digi.examples.ongoing.utils.GenreInsightGenerator
 import me.digi.ongoing.R
 import java.util.concurrent.TimeUnit
 
-class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R.layout.fragment_data_breakdown) {
+class ResultsFragment(private val digiMeService: DigiMeService) :
+    BaseFragment(R.layout.fragment_data_breakdown) {
 
     private val parent: HomeActivity by lazy { activity as HomeActivity }
-    private val resultsAdapter: ResultsAdapter by lazy { ResultsAdapter(context!!) }
+    private val resultsAdapter: ResultsAdapter by lazy { ResultsAdapter() }
     private var firstExecution = true
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        breakdownRecyclerView.apply {
-            layoutManager = LinearLayoutManager(this.context)
-            adapter = resultsAdapter
-        }
+
+        breakdownRecyclerView.adapter = resultsAdapter
     }
 
     override fun onResume() {
@@ -39,9 +37,9 @@ class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R
     }
 
     private fun loadData() {
-        resultsAdapter.performDiffAndUpdate(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
+        resultsAdapter.submitList(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
 
-        val songs = emptyList<Song>().toMutableList()
+        val songs: MutableList<Song> = mutableListOf()
 
         digiMeService.obtainAccessRights(parent)
             .andThen(digiMeService.fetchData())
@@ -50,8 +48,7 @@ class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R
             .map { GenreInsightGenerator.generateInsights(it) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(resultsAdapter::performDiffAndUpdate, ::handleError)
-            {
+            .subscribe(resultsAdapter::submitList, ::handleError) {
                 digiMeService.cacheSongs(songs)
                 dismissLoadingState()
             }
@@ -60,11 +57,13 @@ class ResultsFragment(private val digiMeService: DigiMeService) : BaseFragment(R
     private fun handleError(error: Throwable) {
         val msg = AlertDialog.Builder(parent)
         msg.setTitle("Oops...")
-        msg.setMessage("""
+        msg.setMessage(
+            """
         We encountered an error whilst communicating with digi.me.
                 
         Error Details: ${error.localizedMessage}
-        """.trimIndent())
+        """.trimIndent()
+        )
         msg.setNeutralButton("Try Again") { _, _ ->
             loadData()
         }

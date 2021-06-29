@@ -4,10 +4,15 @@
     <string name="digime_p12_filename">yrg1LktWk2gldVk8atD5Pf7Um4c1LnMs.p12</string>
     <string name="digime_p12_password">digime</string>
 
-
     <string name="app_name">Genrefy</string>
     <string name="connect_to_digime_blurb">discover your most listened to music genre on Spotify in the past 24 hours.</string>
     <string name="plug_me_in">Plug Me In</string>
     <string name="breakdown_title">listened to on Spotify in the last 24 hours</string>
     <string name="fetching_updates">Fetching Updates...</string>
+    <string name="label_songs_count">%s songs</string>
+
+    <!-- Staging -->
+    <string name="staging_app_id">lFrMvUSnWLRB0WkzKpW45y9USpA3Uygh</string>
+    <string name="staging_contract_id">jUYNVi7vcV3YVoxmy0sXBeyuHAVGNpnw</string>
+    <string name="staging_private_key">-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAlhZG2VBLbBK1aml0qViZb9fnr+aV9nQZtp9GYhjbOLtzmB39\nvlF27FZ7+jDpl0i1J3yLIIcGsM/ORjsocAjkXvhKwkWeg8NiO5Wl6XdLPNmJoy43\nWvNZFLNrRNjMEg761k4koJ448W2AV2VH5vLcVzzAx+5YIMh1DUxkPTf1APIbIr0f\nf9ElbwrYxQoRKC3Agh4EILzJ/mkT/m3ELjevOf88OdnLMCcwdk5/rx5Jnwmxenom\njJTqvsNYyp/VVaf0YrhYyTvx1ZrJ2T1WufMHnicyyi1JhLbPN+SznIv+yrwu/eBQ\n7MYJ1iOChTvGEICNMzOmObsQo8X6HQjVEO5ZmQIDAQABAoIBADhlcoXiCBU6CnVL\n3wxrQGyoYmTUbnFHOwpGWzotQOLWfR8h1eEX12oDLV7b1kqEhZ2qzNSSKE90Jnx5\naj5++OE+x0isxF2ao2TkXI2Xx+u7il6I1UAVxNlkeeBK3pPCkTrJ7jV0fs0palps\nslHz3BvjtkTqKK9Y47L1i4z9Y9DQlMyrnBaSzrPN92k6NBMU7MC/25lDh5xufxZn\nCWmdKIBEsq9amHWF5ExDYacoLuehAzC7du2ihNkGu2L5UVcs3KYJFyEJfubngAhL\nnMpM5gqxOZfh1TPbkJTQ0KdPQoRQUxVgo7k8JygwXFW+CnyEmchMsrGh8R3SaFVc\nPuQuTSkCgYEA1Xro+8Eal4NSE372Iupuosx+NZyJdtzIu52x2ZpXaHCJmWEAm5Wg\ncN7PRldSWUnzyfNNGlvBvZKriVHb15tr8ZabV8rk9M5ad16NArSx9qenBx5QAxDc\nQ457ppjfQ1aAzRtTnjns5Sg23L13111sSt8nhUdpgPE3yN2UFwNpcw8CgYEAs/sH\nttxExcepxINKaQ+vG9IkqGUQiEC6hrDh11GBUporEc7q8YU2P1SNnL1CMpMV1WFP\nBhEVLtcah5744Ve0H2ArQSHtdCgjdFmX2IshgH2BJRGvG5r+x56AV6HP7uqQ1vuw\nV90oxNREoTnc1nONHT+gJokxSS0/jx8urIrVyNcCgYEAmCmwkWm1w5M12HGhjYed\n7mpl916pWNDMP3aKgzkQ3n+AhJPws/U1093szg2Fw+EDZMoIBiaq9K3rmMiBM7Az\ng5K/DRewlJHVR8pcJjaXtuEPG/LOQzEsXvbbSgci9ENfMVMuCdTt9vTwDez608Zi\nXweqisQ4/lBxW7ocST8EVZ8CgYA1EYPIy1IL7z+DjiLWr6U2UtQ0QviI9G0LYgR1\ndLbpIEQq0BQ+esTwD4JiAPwP5Ya+kB647ziLwykzbBB+gVm/FqAqaFKXuW4a1IAN\nfZi3RkpaH8i+HwmY2oeFT1T8YXWrrjLk9XUb9Gr4DxOquA+X3Dbgpfs+VHU1QkCE\n57r5qQKBgE8cn39Q7IPQtcilMcdQ6canUTI0jXAG/Lh/peyu7QMACurMJ37WwHpr\niPlnwt46Y6D+9NlvHTKgaZeghyuVm+IbI2WdnaYbR2f93IV6BDiSq4a7OpU21SeU\nuW7hdOPTmpQ1je0KVhWElG8QmZiWU6pxEC+MPXViB0cKwipB2Y+D\n-----END RSA PRIVATE KEY-----</string>
 </resources>

@@ -9,7 +9,7 @@ import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMEFileMetadata
-import me.digi.sdk.entities.DMEMimeType
+import me.digi.sdk.entities.Status
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import java.lang.reflect.Type
@@ -25,14 +25,14 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
         val metadata = extractMetadata(json, context)
 
         val encryptedContent = json["fileContent"].asString ?: throw DMESDKError.InvalidData()
-        val encryptedBytes = Base64.decode(encryptedContent, Base64.DEFAULT)
+        val encryptedBytes: ByteArray = Base64.decode(encryptedContent, Base64.DEFAULT)
 
-        val contentBytes = DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
+        val contentBytes: ByteArray = DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
 
-        val compression = try { json["compression"].asString } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
-        val decompressedContentBytes = DMECompressor.decompressData(contentBytes, compression)
+        val compression: String = try { json["compression"].asString } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
+        val decompressedContentBytes: ByteArray = DMECompressor.decompressData(contentBytes, compression)
 
-        return DMEFile(metadata, DMEMimeType.APPLICATION_JSON, String(decompressedContentBytes))
+        return DMEFile(String(decompressedContentBytes), status = Status())
     }
 
     private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): DMEFileMetadata? {
