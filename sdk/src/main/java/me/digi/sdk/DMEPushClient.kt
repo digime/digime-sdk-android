@@ -431,14 +431,14 @@ class DMEPushClient(
                 }
             }
 
-        fun refreshCredentials(): SingleTransformer<Pair<Session, DMETokenExchange>, Pair<Session, DMETokenExchange>> =
-            SingleTransformer<Pair<Session, DMETokenExchange>, Pair<Session, DMETokenExchange>> {
+        fun refreshCredentials(): SingleTransformer<DMESaasOngoingPostbox, DMESaasOngoingPostbox> =
+            SingleTransformer<DMESaasOngoingPostbox, DMESaasOngoingPostbox> {
                 it.flatMap { result ->
 
                     val jwt = RefreshCredentialsRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        result.second.refreshToken.value
+                        result.authToken?.refreshToken?.value!!
                     )
 
                     val signingKey: PrivateKey =
@@ -452,7 +452,7 @@ class DMEPushClient(
                             val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                             val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
-                            Pair(result.first, tokenExchange)
+                            DMESaasOngoingPostbox(result.session, result.postboxData, tokenExchange)
                         }
                 }
             }
@@ -485,6 +485,58 @@ class DMEPushClient(
                 }
             }
             // At this point, we have a session, postbox and a set of credentials
+            .onErrorResumeNext { error: Throwable ->
+                // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
+                // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
+                // We process the consent flow for ongoing access
+                when {
+                    error is DMEAPIError && error.code == "InternalServerError" -> {
+
+                        requestPreAuthCode()
+                            .compose(requestConsent(fromActivity))
+                            .compose(exchangeAuthorizationCode())
+                            .doOnSuccess {
+                                activePostbox = it.postboxData
+                                activeCredentials = it.authToken
+                            }
+
+                        // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
+                        // has expired.
+                    }
+                    // If an error we encounter is "InvalidToken" error, which means that the ACCESS token
+                    // has expired.
+                    error is DMEAPIError && error.code == "InvalidToken" -> {
+                        // If so, we take the active session and expired credentials and try to refresh them.
+
+                        requestPreAuthCode()
+                            .map { DMESaasOngoingPostbox(it.first, activePostbox, activeCredentials) }
+                            .compose(refreshCredentials())
+                            .doOnSuccess { activeCredentials = it.authToken }
+                            .onErrorResumeNext { innerError: Throwable ->
+
+                                // If an error is encountered from this call, we inspect it to see if it's an
+                                // 'InvalidToken' error, meaning that the REFRESH token has expired.
+                                if (innerError is DMEAPIError && error.code == "InvalidToken") {
+                                    // If so, we need to obtain a new set of credentials from the digi.me
+                                    // application. Process the flow as before, for ongoing acces, provided
+                                    // that auto-recover is enabled. If not, we throw a specific error and
+                                    // exit the flow.
+                                    if (configuration.autoRecoverExpiredCredentials) {
+                                        requestPreAuthCode()
+                                            .compose(requestConsent(fromActivity))
+                                            .compose(exchangeAuthorizationCode())
+                                            .doOnSuccess {
+                                                activePostbox = it.postboxData
+                                                activeCredentials = it.authToken
+                                            }
+                                    }
+                                    else Single.error(DMEAuthError.TokenExpired())
+                                } else Single.error(innerError)
+                            }
+                    }
+                    else -> Single.error(error)
+                }
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
