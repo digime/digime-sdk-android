@@ -17,12 +17,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.digi.ongoingpostbox.OngoingPostboxApp
 import me.digi.ongoingpostbox.R
-import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
+import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
-import me.digi.sdk.entities.DMEOAuthToken
 import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.SaasOngoingPushResponse
 
 /**
  * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
@@ -43,13 +44,13 @@ class MainViewModel(
 
     private var job: Job? = null
 
-    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxResponseBody>> =
+    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxPayload>> =
         MutableLiveData()
-    val createPostboxStatus: LiveData<Resource<OngoingPostboxResponseBody>>
+    val createPostboxStatus: LiveData<Resource<OngoingPostboxPayload>>
         get() = _createPostboxStatus
 
-    private val _uploadDataStatus: MutableLiveData<Resource<Boolean>> = MutableLiveData()
-    val uploadDataStatus: LiveData<Resource<Boolean>>
+    private val _uploadDataStatus: MutableLiveData<Resource<SaasOngoingPushResponse>> = MutableLiveData()
+    val uploadDataStatus: LiveData<Resource<SaasOngoingPushResponse>>
         get() = _uploadDataStatus
 
     fun createPostbox(activity: Activity) {
@@ -60,7 +61,7 @@ class MainViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: OngoingPostboxResponseBody ->
+                onSuccess = { result: OngoingPostboxPayload ->
                     _createPostboxStatus.postValue(Resource.Success(result))
                 },
                 onError = {
@@ -72,7 +73,7 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMEOAuthToken) {
+    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMETokenExchange) {
         _uploadDataStatus.postValue(Resource.Loading())
 
         uploadData
@@ -80,8 +81,8 @@ class MainViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { isPushSuccessful ->
-                    _uploadDataStatus.postValue(Resource.Success(isPushSuccessful))
+                onSuccess = { result ->
+                    _uploadDataStatus.postValue(Resource.Success(result))
                 },
                 onError = { error ->
                     _uploadDataStatus.postValue(Resource.Failure(error.localizedMessage))

@@ -24,10 +24,11 @@ data class DMESession (
     var scope: DMEDataRequest? = null
     private var sessionManager: WeakReference<String>? = null
     var metadata: MutableMap<String, Any> = emptyMap<String, Any>().toMutableMap()
-
 }
 
 data class AuthSession(
     val code: String? = null,
-    val state: String? = null
+    val state: String? = null,
+    val postboxId: String? = null,
+    val publicKey: String? = null
 )

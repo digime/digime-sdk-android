@@ -7,7 +7,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox.*
-import kotlinx.android.synthetic.main.postbox.console_log
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.DMEMimeType
 import me.digi.sdk.entities.DMEPushConfiguration
@@ -111,7 +110,6 @@ class Postbox : AppCompatActivity() {
 
     private fun createPostbox() {
         client.createPostbox(this) { dmePostbox, error ->
-            updateConsoleLog("\nClient version: " + (dmePostbox?.digiMeVersion ?: "null\n"))
             if (dmePostbox != null) {
                 updateConsoleLog("Postbox created")
                 updateConsoleLog("id" + dmePostbox.postboxId)

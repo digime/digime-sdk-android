@@ -51,7 +51,7 @@ internal interface DMEArgonService {
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.5/permission-access/postbox/{id}")
+    @POST("/v1.6/permission-access/postbox/{id}")
     fun pushOngoingData(
         @Header("Authorization") jwt: String,
         @Header("sessionKey") sessionKey: String,
@@ -61,7 +61,7 @@ internal interface DMEArgonService {
         @Path("id") id: String,
         @Part file: MultipartBody.Part,
         @Part("file") description: RequestBody
-    ): Call<Unit>
+    ): Single<SaasOngoingPushResponse>
 
     @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>

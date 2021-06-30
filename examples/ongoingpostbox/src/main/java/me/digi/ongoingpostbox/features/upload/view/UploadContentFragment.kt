@@ -1,30 +1,29 @@
 package me.digi.ongoingpostbox.features.upload.view
 
-import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.RoundedCornersTransformation
-import com.github.dhaval2404.imagepicker.ImagePicker
 import kotlinx.android.synthetic.main.fragment_upload_content.*
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.domain.OngoingPostboxResponseBody
+import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
-import me.digi.sdk.entities.DMEMimeType
-import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.*
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
+import timber.log.Timber
 import java.io.File
 
 class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.OnClickListener {
@@ -32,6 +31,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
     private val viewModel: MainViewModel by viewModel()
     private val localAccess: MainLocalDataAccess by inject()
     private var firstExecution = true
+    private val pickImage = 100
 
     companion object {
         fun newInstance() = UploadContentFragment()
@@ -51,107 +51,61 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
     }
 
     private fun subscribeToObservers() {
-        viewModel.createPostboxStatus.observe(
-            viewLifecycleOwner,
-            Observer { result: Resource<OngoingPostboxResponseBody> ->
-                when (result) {
-                    is Resource.Loading -> {
-                        pbUploadContent?.isVisible = true
-                        ivImageToUpload?.isClickable = false
-                        snackBarLong(getString(R.string.label_postbox_creation_started))
-                    }
-                    is Resource.Success -> {
-                        pbUploadContent?.isVisible = false
-                        ivImageToUpload?.isClickable = true
-                        snackBarLong(getString(R.string.label_postbox_created))
-                    }
-                    is Resource.Failure -> {
-                        pbUploadContent?.isVisible = false
-                        ivImageToUpload?.isClickable = true
-                        snackBarLong(result.message ?: getString(R.string.label_unknown_error))
-                    }
+        viewModel.createPostboxStatus.observe(viewLifecycleOwner) { result: Resource<OngoingPostboxPayload> ->
+            when (result) {
+                is Resource.Loading -> {
+                    pbUploadContent?.isVisible = true
+                    ivImageToUpload?.isClickable = false
+                    snackBarLong(getString(R.string.label_postbox_creation_started))
                 }
-            })
-
-        viewModel.uploadDataStatus.observe(
-            viewLifecycleOwner,
-            Observer { result: Resource<Boolean> ->
-                when (result) {
-                    is Resource.Loading -> {
-                        pbUploadContent?.isVisible = true
-                        btnUploadImage?.isEnabled = false
-                        ivImageToUpload?.isClickable = false
-                        snackBarLong(getString(R.string.label_update_ongoing))
-                    }
-                    is Resource.Success -> {
-                        pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
-                        ivImageToUpload?.isClickable = true
-                        snackBarLong(getString(R.string.label_update_successful))
-                    }
-                    is Resource.Failure -> {
-                        pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
-                        ivImageToUpload?.isClickable = true
-                        snackBarIndefiniteWithAction(
-                            result.message ?: getString(R.string.label_unknown_error)
-                        )
-                    }
+                is Resource.Success -> {
+                    pbUploadContent?.isVisible = false
+                    ivImageToUpload?.isClickable = true
+                    snackBarLong(getString(R.string.label_postbox_created))
                 }
-            })
-    }
-
-    private fun handleImageRequest(resultCode: Int, data: Intent?) {
-        when (resultCode) {
-            Activity.RESULT_OK -> {
-                val fileUri: Uri = data?.data!!
-
-                ivImageToUpload?.load(fileUri) {
-                    transformations(RoundedCornersTransformation(15f))
-                }
-
-                //You can get File object from intent
-                val file: File = ImagePicker.getFile(data)!!
-
-                // Update UI based on the file existence
-                btnUploadImage?.isEnabled = true
-                tvImageName?.text = file.nameWithoutExtension
-                tvMimeType?.isVisible = true
-                tvMimeType?.text = getMimeType(requireContext(), fileUri).toString()
-                btnUploadImage?.isEnabled = true
-
-                /**
-                 * At this point we have both
-                 * @see [localAccess.getCachedPostbox]
-                 * @see [localAccess.getCachedCredential]
-                 * so we can say they're not null
-                 */
-                val metadata = getFileContent(requireActivity(), "metadatapng.json")
-                val postbox = localAccess.getCachedPostbox()!!
-                val credentials = localAccess.getCachedCredential()!!
-                val postboxPayload = DMEPushPayload(
-                    postbox,
-                    metadata,
-                    readBytes(requireContext(), fileUri)!!,
-                    DMEMimeType.IMAGE_PNG
-                )
-
-                btnUploadImage?.setOnClickListener {
-                    viewModel.uploadDataToOngoingPostbox(postboxPayload, credentials)
+                is Resource.Failure -> {
+                    pbUploadContent?.isVisible = false
+                    ivImageToUpload?.isClickable = true
+                    snackBarLong(result.message ?: getString(R.string.label_unknown_error))
                 }
             }
-            ImagePicker.RESULT_ERROR -> snackBarLong(ImagePicker.getError(data))
-            else -> snackBarLong(getString(R.string.label_image_picker_cancelled))
+        }
+
+        viewModel.uploadDataStatus.observe(viewLifecycleOwner) { result: Resource<SaasOngoingPushResponse> ->
+            when (result) {
+                is Resource.Loading -> {
+                    pbUploadContent?.isVisible = true
+                    btnUploadImage?.isEnabled = false
+                    ivImageToUpload?.isClickable = false
+                    snackBarLong(getString(R.string.label_update_ongoing))
+                }
+                is Resource.Success -> {
+                    pbUploadContent?.isVisible = false
+                    btnUploadImage?.isEnabled = true
+                    ivImageToUpload?.isClickable = true
+                    snackBarLong(getString(R.string.label_update_successful))
+
+                    Timber.d("Result: ${result.data}")
+                }
+                is Resource.Failure -> {
+                    pbUploadContent?.isVisible = false
+                    btnUploadImage?.isEnabled = true
+                    ivImageToUpload?.isClickable = true
+                    snackBarIndefiniteWithAction(
+                        result.message ?: getString(R.string.label_unknown_error)
+                    )
+                }
+            }
         }
     }
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.ivImageToUpload -> ImagePicker
-                .with(this)
-                .compress(1024)
-                .crop(16f, 9f)
-                .start(::handleImageRequest)
+            R.id.ivImageToUpload -> {
+                val gallery =
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
+                startActivityForResult(gallery, pickImage)
+            }
         }
     }
 
@@ -175,5 +129,58 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK && requestCode == pickImage) handleImage(data?.data)
+    }
+
+    private fun handleImage(data: Uri?) {
+        data?.let {
+            ivImageToUpload?.load(data) {
+                crossfade(true)
+                transformations(RoundedCornersTransformation(15f))
+            }
+
+            //You can get File object from intent
+            val file = File(data.path)
+
+            // Update UI based on the file existence
+            btnUploadImage?.isEnabled = true
+            tvImageName?.text = file.nameWithoutExtension
+            tvMimeType?.isVisible = true
+            tvMimeType?.text = getMimeType(requireContext(), data).toString()
+            btnUploadImage?.isEnabled = true
+
+            /**
+             * At this point we have
+             * @see [localAccess.getCachedPostbox]
+             * @see [localAccess.getCachedCredential]
+             * @see [localAccess.getCachedSession]
+             * so we can say they're not null
+             */
+            val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
+            val postbox: DMEOngoingPostboxData = localAccess.getCachedPostbox()!!
+            val credentials: DMETokenExchange = localAccess.getCachedCredential()!!
+            val session: Session = localAccess.getCachesSession()!!
+
+            val saasPostbox = DMEPostbox().copy(
+                key = session.key,
+                postboxId = postbox.postboxId,
+                publicKey = postbox.publicKey
+            )
+
+            val postboxPayload = DMEPushPayload(
+                saasPostbox,
+                metadata,
+                readBytes(requireContext(), data)!!,
+                DMEMimeType.IMAGE_PNG
+            )
+
+            btnUploadImage?.setOnClickListener {
+                viewModel.uploadDataToOngoingPostbox(postboxPayload, credentials)
+            }
+        } ?: snackBarLong(getString(R.string.label_image_picker_cancelled))
     }
 }
