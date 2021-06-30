@@ -9,5 +9,5 @@ import me.digi.sdk.entities.*
  */
 interface MainRemoteDataAccess {
     fun createPostbox(activity: Activity): Single<DMESaasOngoingPostbox?>
-    fun uploadDataToOngoingPostbox(pushPayload: SaasPushPayload? = null, credentials: DMETokenExchange? = null): Single<SaasOngoingPushResponse>
+    fun uploadDataToOngoingPostbox(pushPayload: DMEPushPayload? = null, credentials: DMETokenExchange? = null): Single<SaasOngoingPushResponse>
 }

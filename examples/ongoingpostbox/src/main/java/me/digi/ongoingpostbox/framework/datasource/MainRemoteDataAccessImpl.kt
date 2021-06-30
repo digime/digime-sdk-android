@@ -46,7 +46,7 @@ class MainRemoteDataAccessImpl(
             .map { it }
 
     override fun uploadDataToOngoingPostbox(
-        pushPayload: SaasPushPayload?,
+        pushPayload: DMEPushPayload?,
         credentials: DMETokenExchange?
     ): Single<SaasOngoingPushResponse> = client.pushData(pushPayload, credentials).map { it }
 }

@@ -2,9 +2,9 @@ package me.digi.ongoingpostbox.usecases
 
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.MainRepository
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.DMETokenExchange
 import me.digi.sdk.entities.SaasOngoingPushResponse
-import me.digi.sdk.entities.SaasPushPayload
 
 /**
  * Use case - Push data to Postbox
@@ -17,7 +17,7 @@ import me.digi.sdk.entities.SaasPushPayload
  */
 interface PushDataToOngoingPostboxUseCase {
     operator fun invoke(
-        pushPayload: SaasPushPayload?,
+        pushPayload: DMEPushPayload?,
         credentials: DMETokenExchange?
     ): Single<SaasOngoingPushResponse>
 }
@@ -25,7 +25,7 @@ interface PushDataToOngoingPostboxUseCase {
 class PushDataToOngoingPostboxUseCaseImpl(private val repository: MainRepository) :
     PushDataToOngoingPostboxUseCase {
     override fun invoke(
-        pushPayload: SaasPushPayload?,
+        pushPayload: DMEPushPayload?,
         credentials: DMETokenExchange?
     ): Single<SaasOngoingPushResponse> = repository.uploadDataToOngoingPostbox(pushPayload, credentials)
 }

@@ -42,7 +42,7 @@ fun DMEPushClient.authorizeSaasPostbox(
 }
 
 fun DMEPushClient.pushData(
-    payload: SaasPushPayload? = null,
+    payload: DMEPushPayload? = null,
     credentials: DMETokenExchange? = null
 ): Single<SaasOngoingPushResponse> = Single.create { emitter ->
     pushDataToOngoingPostbox(payload, credentials) { response, error ->

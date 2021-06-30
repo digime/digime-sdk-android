@@ -232,23 +232,23 @@ class DMEPushClient(
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                postboxFile.dmePostbox.publicKey,
+                postboxFile.dmePostbox.publicKey!!,
                 postboxFile.content,
                 postboxFile.metadata
             )
 
             val multipartBody = DMEMultipartBody.Builder()
-//                .postboxPushPayload(DMEPushPayload(null, null, null, null))
+                .postboxPushPayload(postboxFile)
                 .dataContent(encryptedData.fileContent, postboxFile.mimeType)
                 .build()
 
             apiClient.makeCall(
                 apiClient.argonService.pushData(
-                    postboxFile.dmePostbox.sessionKey,
+                    postboxFile.dmePostbox.key!!,
                     encryptedData.symmetricalKey,
                     encryptedData.iv,
                     encryptedData.metadata,
-                    postboxFile.dmePostbox.postboxId,
+                    postboxFile.dmePostbox.postboxId!!,
                     multipartBody.requestBody,
                     multipartBody.description
                 )
@@ -266,13 +266,13 @@ class DMEPushClient(
     }
 
     fun pushDataToOngoingPostbox(
-        postboxFile: SaasPushPayload?,
+        postboxFile: DMEPushPayload?,
         authToken: DMETokenExchange?,
         completion: DMEOngoingPostboxPushCompletion
     ) {
         DMELog.i("Initializing push data to postbox.")
 
-        val postboxFile: SaasPushPayload = postboxFile!!
+        val postboxFile: DMEPushPayload = postboxFile!!
         val authToken: DMETokenExchange = authToken!!
 
         if (sessionManager.isSessionValid()) {
@@ -282,7 +282,7 @@ class DMEPushClient(
                 postboxFile.metadata
             )
 
-            val multipartBody = DMEMultipartBody.Builder()
+            val multipartBody: DMEMultipartBody = DMEMultipartBody.Builder()
                 .postboxPushPayload(postboxFile)
                 .dataContent(encryptedData.fileContent, postboxFile.mimeType)
                 .build()
@@ -296,8 +296,8 @@ class DMEPushClient(
                 configuration.contractId
             )
 
-            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader = jwt.sign(signingKey).tokenize()
+            val signingKey: PrivateKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
 
             apiClient.argonService.pushOngoingData(
                 authHeader,

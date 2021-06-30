@@ -21,9 +21,9 @@ import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.DMETokenExchange
 import me.digi.sdk.entities.SaasOngoingPushResponse
-import me.digi.sdk.entities.SaasPushPayload
 
 /**
  * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
@@ -73,7 +73,7 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun uploadDataToOngoingPostbox(postboxPayload: SaasPushPayload, credentials: DMETokenExchange) {
+    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMETokenExchange) {
         _uploadDataStatus.postValue(Resource.Loading())
 
         uploadData

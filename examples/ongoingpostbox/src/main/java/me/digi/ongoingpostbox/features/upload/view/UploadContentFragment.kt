@@ -133,9 +133,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && requestCode == pickImage) {
-            handleImage(data?.data)
-        }
+        if (resultCode == RESULT_OK && requestCode == pickImage) handleImage(data?.data)
     }
 
     private fun handleImage(data: Uri?) {
@@ -167,13 +165,13 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             val credentials: DMETokenExchange = localAccess.getCachedCredential()!!
             val session: Session = localAccess.getCachesSession()!!
 
-            val saasPostbox = SaasDMEPostobx().copy(
+            val saasPostbox = DMEPostbox().copy(
                 key = session.key,
                 postboxId = postbox.postboxId,
                 publicKey = postbox.publicKey
             )
 
-            val postboxPayload = SaasPushPayload(
+            val postboxPayload = DMEPushPayload(
                 saasPostbox,
                 metadata,
                 readBytes(requireContext(), data)!!,

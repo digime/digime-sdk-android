@@ -170,7 +170,7 @@ class DMEOngoingPostboxConsentManager(
             }
         }
 
-        val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!, digiMeVersion)
+        val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
         pendingOngoingPostboxCallbackHandler?.invoke(sessionManager.currentSession, postbox, error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         pendingOngoingPostboxCallbackHandler = null
