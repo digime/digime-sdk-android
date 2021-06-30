@@ -37,12 +37,16 @@ class DMEPushClient(
         DMEPostboxConsentManager(sessionManager, configuration.appId)
     }
 
-    private val authorizeManger: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
-        configuration.baseUrl
-    ) }
-    private val onboardServiceManger: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
-        configuration.baseUrl
-    ) }
+    private val authorizeManger: SaasAuthorizaionManager by lazy {
+        SaasAuthorizaionManager(
+            configuration.baseUrl
+        )
+    }
+    private val onboardServiceManger: SaaSOnboardingManager by lazy {
+        SaaSOnboardingManager(
+            configuration.baseUrl
+        )
+    }
 
     private val postboxOngoingManager: DMEOngoingPostboxConsentManager by lazy {
         DMEOngoingPostboxConsentManager(sessionManager, configuration.appId)
@@ -99,7 +103,8 @@ class DMEPushClient(
             .let { session ->
                 if (activeCredentials != null && activePostbox != null)
                     session.map {
-                        DMEOngoingPostbox(it, activePostbox, activeCredentials) }
+                        DMEOngoingPostbox(it, activePostbox, activeCredentials)
+                    }
                 else
                     session
                         .compose(
@@ -233,7 +238,7 @@ class DMEPushClient(
             )
 
             val multipartBody = DMEMultipartBody.Builder()
-                .postboxPushPayload(postboxFile)
+//                .postboxPushPayload(DMEPushPayload(null, null, null, null))
                 .dataContent(encryptedData.fileContent, postboxFile.mimeType)
                 .build()
 
@@ -261,18 +266,18 @@ class DMEPushClient(
     }
 
     fun pushDataToOngoingPostbox(
-        postboxFile: DMEPushPayload?,
-        authToken: DMEOAuthToken?,
+        postboxFile: SaasPushPayload?,
+        authToken: DMETokenExchange?,
         completion: DMEOngoingPostboxPushCompletion
     ) {
         DMELog.i("Initializing push data to postbox.")
 
-        val postboxFile = postboxFile!!
-        val authToken = authToken!!
+        val postboxFile: SaasPushPayload = postboxFile!!
+        val authToken: DMETokenExchange = authToken!!
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                postboxFile.dmePostbox.publicKey,
+                postboxFile.dmePostbox.publicKey!!,
                 postboxFile.content,
                 postboxFile.metadata
             )
@@ -283,47 +288,53 @@ class DMEPushClient(
                 .build()
 
             val jwt = DMEAuthTokenRequestJWT(
-                authToken.accessToken,
+                authToken.accessToken.value,
                 encryptedData.iv,
                 encryptedData.metadata,
                 encryptedData.symmetricalKey,
-                postboxFile.dmePostbox.sessionKey,
                 configuration.appId,
                 configuration.contractId
             )
 
-            val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
+            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(
-                apiClient.argonService.pushOngoingData(
-                    authHeader,
-                    postboxFile.dmePostbox.sessionKey,
-                    encryptedData.symmetricalKey,
-                    encryptedData.iv,
-                    encryptedData.metadata,
-                    postboxFile.dmePostbox.postboxId,
-                    multipartBody.requestBody,
-                    multipartBody.description
-                )
-            ) { _, error ->
-
-                error?.let {
-                    when {
-                        error is DMEAPIError && error.code == "InvalidToken" -> completion(
-                            false,
-                            DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
-                        )
-                        else -> {
-                            DMELog.e("Failed to push file to postbox. Error: ${it.printStackTrace()} ${error.message}")
-                            completion(false, error)
+            apiClient.argonService.pushOngoingData(
+                authHeader,
+                postboxFile.dmePostbox.key!!,
+                encryptedData.symmetricalKey,
+                encryptedData.iv,
+                encryptedData.metadata,
+                postboxFile.dmePostbox.postboxId!!,
+                multipartBody.requestBody,
+                multipartBody.description
+            )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = {
+                        sessionManager.newSession = it.session
+                        completion(it, null).also { DMELog.i("Successfully pushed data to postbox") }
+                    },
+                    onError = { error ->
+                        when {
+                            error is DMEAPIError && error.code == "InvalidToken" -> completion(
+                                null,
+                                DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
+                            )
+                            else -> {
+                                DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
+                                completion(
+                                    null,
+                                    DMEAuthError.ErrorWithMessage(error.localizedMessage)
+                                )
+                            }
                         }
                     }
-                } ?: completion(true, null).also { DMELog.i("Successfully pushed data to postbox") }
-            }
+                )
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(false, DMEAuthError.InvalidSession())
+            completion(null, DMEAuthError.InvalidSession())
         }
     }
 
@@ -359,7 +370,8 @@ class DMEPushClient(
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
+                            codeVerifier
 
                         val result: Pair<Session, Payload> = Pair(response.session, payload)
 
@@ -418,8 +430,10 @@ class DMEPushClient(
                         .map { exchangeToken: ExchangeTokenJWT ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
-                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+                            val payloadJson: String =
+                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
                             val postboxData = DMEOngoingPostboxData().copy(
                                 postboxId = response.second.postboxId,
@@ -449,8 +463,10 @@ class DMEPushClient(
                         .map { exchangeToken ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
-                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+                            val payloadJson: String =
+                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
                             DMESaasOngoingPostbox(result.session, result.postboxData, tokenExchange)
                         }
@@ -465,7 +481,7 @@ class DMEPushClient(
             // Next we check if any credentials were supplied (for access restoration)
             // If not, we kick the user out of the flow and authorize normally
             .let { preAuthResponse ->
-                if(activeCredentials != null && activePostbox != null) {
+                if (activeCredentials != null && activePostbox != null) {
                     preAuthResponse.map {
                         DMESaasOngoingPostbox(
                             it.first,
@@ -473,8 +489,7 @@ class DMEPushClient(
                             activeCredentials
                         )
                     }
-                }
-                else {
+                } else {
                     preAuthResponse
                         .compose(requestConsent(fromActivity))
                         .compose(exchangeAuthorizationCode())
@@ -509,7 +524,13 @@ class DMEPushClient(
                         // If so, we take the active session and expired credentials and try to refresh them.
 
                         requestPreAuthCode()
-                            .map { DMESaasOngoingPostbox(it.first, activePostbox, activeCredentials) }
+                            .map {
+                                DMESaasOngoingPostbox(
+                                    it.first,
+                                    activePostbox,
+                                    activeCredentials
+                                )
+                            }
                             .compose(refreshCredentials())
                             .doOnSuccess { activeCredentials = it.authToken }
                             .onErrorResumeNext { innerError: Throwable ->
@@ -529,8 +550,7 @@ class DMEPushClient(
                                                 activePostbox = it.postboxData
                                                 activeCredentials = it.authToken
                                             }
-                                    }
-                                    else Single.error(DMEAuthError.TokenExpired())
+                                    } else Single.error(DMEAuthError.TokenExpired())
                                 } else Single.error(innerError)
                             }
                     }
@@ -540,7 +560,11 @@ class DMEPushClient(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { completion.invoke(it, null) },
+                onSuccess = {
+                    println("Data: $it")
+                    sessionManager.newSession = it.session
+                    completion.invoke(it, null)
+                },
                 onError = { error ->
                     completion.invoke(
                         null,

@@ -65,9 +65,6 @@ dependencies {
     // Gson
     implementation "com.google.code.gson:gson:2.8.7"
 
-    // Image handler
-//    implementation 'com.github.dhaval2404:imagepicker:2.1'
-
     // Coil
     implementation "io.coil-kt:coil:1.2.2"
 

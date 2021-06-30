@@ -6,10 +6,12 @@ import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
+import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_SESSION_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
 import me.digi.sdk.entities.DMEOngoingPostboxData
 import me.digi.sdk.entities.DMESaasOngoingPostbox
 import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.Session
 
 /**
  * Idea behind local main data access is to isolate
@@ -36,6 +38,13 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
+    override fun getCachesSession(): Session? =
+        context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
+            getString(CACHED_SESSION_KEY, null)?.let {
+                Gson().fromJson(it, Session::class.java)
+            }
+        }
+
     override fun cacheCredentials(): SingleTransformer<DMESaasOngoingPostbox?, DMESaasOngoingPostbox?> =
         SingleTransformer {
             it.map { credential ->
@@ -43,8 +52,10 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                     context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
                         val encodedPostbox = Gson().toJson(credential.postboxData)
                         val encodedCredential = Gson().toJson(credential.authToken)
+                        val encodedSession = Gson().toJson(credential.session)
                         putString(CACHED_CREDENTIAL_KEY, encodedCredential)
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)
+                        putString(CACHED_SESSION_KEY, encodedSession)
                         apply()
                     }
                 }

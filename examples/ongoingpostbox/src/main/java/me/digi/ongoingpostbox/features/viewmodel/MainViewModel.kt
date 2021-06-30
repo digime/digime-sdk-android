@@ -21,8 +21,9 @@ import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
-import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.SaasPushPayload
 
 /**
  * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
@@ -48,8 +49,8 @@ class MainViewModel(
     val createPostboxStatus: LiveData<Resource<OngoingPostboxPayload>>
         get() = _createPostboxStatus
 
-    private val _uploadDataStatus: MutableLiveData<Resource<Boolean>> = MutableLiveData()
-    val uploadDataStatus: LiveData<Resource<Boolean>>
+    private val _uploadDataStatus: MutableLiveData<Resource<SaasOngoingPushResponse>> = MutableLiveData()
+    val uploadDataStatus: LiveData<Resource<SaasOngoingPushResponse>>
         get() = _uploadDataStatus
 
     fun createPostbox(activity: Activity) {
@@ -72,7 +73,7 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMEOAuthToken) {
+    fun uploadDataToOngoingPostbox(postboxPayload: SaasPushPayload, credentials: DMETokenExchange) {
         _uploadDataStatus.postValue(Resource.Loading())
 
         uploadData
@@ -80,8 +81,8 @@ class MainViewModel(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { isPushSuccessful ->
-                    _uploadDataStatus.postValue(Resource.Success(isPushSuccessful))
+                onSuccess = { result ->
+                    _uploadDataStatus.postValue(Resource.Success(result))
                 },
                 onError = { error ->
                     _uploadDataStatus.postValue(Resource.Failure(error.localizedMessage))
