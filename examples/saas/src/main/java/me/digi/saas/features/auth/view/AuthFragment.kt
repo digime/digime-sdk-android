@@ -5,7 +5,6 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
@@ -62,7 +61,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
     private fun goToOnboardingScreen(code: String) {
         val bundle = Bundle()
         bundle.putString("code", code)
-        findNavController().navigate(R.id.authToOnboard, bundle)
+//        findNavController().navigate(R.id.authToOnboard, bundle)
     }
 
     private fun setupClickListeners() {
