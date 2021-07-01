@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph.xml"
-    app:startDestination="@id/read">
+    app:startDestination="@id/authFragment">
 
     <fragment
         android:id="@+id/read"
@@ -22,4 +22,28 @@
         android:name="me.digi.saas.features.pullraw.view.PullRawFragment"
         android:label="PullRawFragment"
         tools:layout="@layout/fragment_pull_raw" />
+
+    <fragment
+        android:id="@+id/authFragment"
+        android:name="me.digi.saas.features.auth.view.AuthFragment"
+        android:label="AuthFragment"
+        tools:layout="@layout/fragment_auth" >
+        <action
+            android:id="@+id/authToOnboard"
+            app:destination="@id/onboardFragment"
+            app:popUpTo="@id/authFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/onboardFragment"
+        android:name="me.digi.saas.features.onboard.view.OnboardFragment"
+        android:label="OnboardFragment"
+        tools:layout="@layout/fragment_onboard" >
+        <action
+            android:id="@+id/onboardToRead"
+            app:destination="@id/read"
+            app:popUpTo="@id/onboardFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 </navigation>

@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
@@ -28,7 +29,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.fetchServicesForContract(getString(R.string.digime_contract_id))
+        viewModel.fetchServicesForContract(getString(R.string.pullContractId))
 
         onboardingCode = arguments?.getString("code", null)
 
@@ -60,7 +61,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
                     is Resource.Loading -> binding.onboardProgressBar.isVisible = true
                     is Resource.Success -> {
                         binding.onboardProgressBar.isVisible = false
-//                        findNavController().navigate(R.id.onboardToHome)
+                        findNavController().navigate(R.id.onboardToRead)
                     }
                     is Resource.Failure -> {
                         binding.onboardProgressBar.isVisible = false
@@ -97,7 +98,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.skip -> {
-//                findNavController().navigate(R.id.onboardToHome)
+                findNavController().navigate(R.id.onboardToRead)
             }
         }
     }

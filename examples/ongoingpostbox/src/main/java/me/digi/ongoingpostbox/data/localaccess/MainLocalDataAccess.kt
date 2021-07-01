@@ -12,6 +12,6 @@ import me.digi.sdk.entities.Session
 interface MainLocalDataAccess {
     fun getCachedCredential(): DMETokenExchange?
     fun getCachedPostbox(): DMEOngoingPostboxData?
-    fun getCachesSession(): Session?
+    fun getCachedSession(): Session?
     fun cacheCredentials(): SingleTransformer<DMESaasOngoingPostbox?, DMESaasOngoingPostbox?>
 }

@@ -5,7 +5,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val useCasesModule: Module = module {
-    single<AuthenticateUseCase> { AuthenticateUseCaseImpl() }
+    single<AuthenticateUseCase> { AuthenticateUseCaseImpl(get()) }
     single<OnboardServiceUseCase> { OnboardServiceUseCaseImpl() }
     single<GetSessionDataUseCase> { GetSessionDataUseCaseImpl() }
     single<PushDataUseCase> { PushDataUseCaseImpl() }

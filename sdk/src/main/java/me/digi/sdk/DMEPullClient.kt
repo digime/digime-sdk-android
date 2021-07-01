@@ -455,6 +455,21 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     }
 
+    @JvmOverloads
+    fun onboardNew(
+        fromActivity: Activity,
+        serviceId: String,
+        codeValue: String?,
+        completion: OnboardingCompletion
+    ) {
+
+        DMELog.i("Launching user onboarding request.")
+
+        codeValue?.let {
+            guestConsentManager2.beginOnboardAction(fromActivity, completion, serviceId, it)
+        }
+    }
+
 
     @JvmOverloads
     fun authorizeOngoingAccess(

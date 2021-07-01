@@ -16,6 +16,9 @@ import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
 import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class DigiMeService(private val context: Application) {
 
@@ -47,7 +50,7 @@ class DigiMeService(private val context: Application) {
     fun fetchData() = client.getSessionData()
         .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
-//        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createddate), TimeUnit.MILLISECONDS) <= 24 }
+        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))

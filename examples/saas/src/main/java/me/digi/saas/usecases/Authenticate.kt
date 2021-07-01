@@ -1,11 +1,16 @@
 package me.digi.saas.usecases
 
+import android.app.Activity
+import io.reactivex.rxjava3.core.Single
+import me.digi.saas.data.repository.MainRepository
+import me.digi.sdk.entities.AuthSession
+
 interface AuthenticateUseCase {
-    fun method()
+    fun invoke(activity: Activity): Single<AuthSession>
 }
 
-class AuthenticateUseCaseImpl: AuthenticateUseCase {
+class AuthenticateUseCaseImpl(private val repository: MainRepository): AuthenticateUseCase {
 
-    override fun method() {
-    }
+    override fun invoke(activity: Activity): Single<AuthSession> =
+        repository.authenticate(activity)
 }
