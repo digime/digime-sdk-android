@@ -17,7 +17,6 @@ import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.managers.DMEOngoingPostboxConsentManager
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
-import me.digi.sdk.interapp.managers.SaaSOnboardingManager
 import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
@@ -39,12 +38,14 @@ class DMEPushClient(
 
     private val authorizeManger: SaasAuthorizaionManager by lazy {
         SaasAuthorizaionManager(
-            configuration.baseUrl
+            configuration.baseUrl,
+            "authorize"
         )
     }
-    private val onboardServiceManger: SaaSOnboardingManager by lazy {
-        SaaSOnboardingManager(
-            configuration.baseUrl
+    private val onboardServiceManger: SaasAuthorizaionManager by lazy {
+        SaasAuthorizaionManager(
+            configuration.baseUrl,
+            "onboard"
         )
     }
 

@@ -8,7 +8,8 @@ import com.google.gson.Gson
 import kotlinx.android.synthetic.main.ca_flow.*
 import me.digi.sdk.DMEError
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEPullConfiguration
+import me.digi.sdk.entities.DMEScope
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
@@ -88,7 +89,7 @@ class CaFlow : AppCompatActivity() {
 
         client.authorize(this, test) { session, error: DMEError? ->
             session?.let {
-                client.onboard(this, session){
+                client.onboard(this, session){ session, error ->
                     client.getFileList{ fileList, error ->
                         val aaa = 0
                     }

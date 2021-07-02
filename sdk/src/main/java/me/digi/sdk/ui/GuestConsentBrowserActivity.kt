@@ -30,7 +30,7 @@ class GuestConsentBrowserActivity : Activity() {
         handleWebOnboardingCallback(intentUri)
     }
 
-    private fun handleSaaSAuthorizeCallback(intentUri: Uri) {
+    private fun handleSaasCallback(intentUri: Uri) {
         val state = intentUri.getQueryParameter("state")
         val code = intentUri.getQueryParameter("code")
         val postboxId = intentUri.getQueryParameter("postboxId")
@@ -38,51 +38,31 @@ class GuestConsentBrowserActivity : Activity() {
         val success = intentUri.getQueryParameter("success")
         val error = intentUri.getQueryParameter("errorCode")
 
-        if (code != null && state != null) {
-            intent?.putExtra(
-                getString(R.string.key_result),
-                getString(R.string.const_result_success)
-            )
-            intent?.putExtra("success", success)
-            intent?.putExtra("error", error)
-            intent?.putExtra("code", code)
-            intent?.putExtra("state", state)
-            intent?.putExtra("postboxId", postboxId)
-            intent?.putExtra("publicKey", publicKey)
-            setResult(RESULT_OK, intent)
-        } else {
-            intent?.putExtra(
-                getString(R.string.key_result),
-                getString(R.string.const_result_cancel)
-            )
-            setResult(RESULT_CANCELED, intent)
-        }
-    }
-
-    private fun handleSaaSOnboardingCallback(intentUri: Uri) {
-        if (intentUri.host.equals("onboarding-success")) {
-            intent?.putExtra(
-                getString(R.string.key_result),
-                getString(R.string.const_result_success)
-            )
-            setResult(RESULT_OK, intent)
-        } else {
-            intent?.putExtra(
-                getString(R.string.key_result),
-                getString(R.string.const_result_cancel)
-            )
-            setResult(RESULT_CANCELED, intent)
+        success?.let {
+            if(it == "true") {
+                intent?.putExtra(
+                    getString(R.string.key_result),
+                    getString(R.string.const_result_success)
+                )
+                intent?.putExtra("success", success)
+                intent?.putExtra("error", error)
+                intent?.putExtra("code", code)
+                intent?.putExtra("state", state)
+                intent?.putExtra("postboxId", postboxId)
+                intent?.putExtra("publicKey", publicKey)
+                setResult(RESULT_OK, intent)
+            } else {
+                intent?.putExtra(
+                    getString(R.string.key_result),
+                    getString(R.string.const_result_cancel)
+                )
+                setResult(RESULT_CANCELED, intent)
+            }
         }
     }
 
     private fun handleWebOnboardingCallback(intentUri: Uri) {
-
-        if (intentUri.host?.contains("onboarding")!!) {
-            handleSaaSOnboardingCallback(intentUri)
-        } else {
-            handleSaaSAuthorizeCallback(intentUri)
-        }
-
+        handleSaasCallback(intentUri)
         finish()
     }
 }

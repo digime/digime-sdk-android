@@ -17,7 +17,6 @@ import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
-import me.digi.sdk.interapp.managers.SaaSOnboardingManager
 import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
 import me.digi.sdk.saas.repositories.DefaultMainRepository
 import me.digi.sdk.saas.repositories.MainRepository
@@ -45,12 +44,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         sessionManager,
         configuration.appId
     ) }
-    private val guestConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
-        configuration.baseUrl
-    ) }
-    private val guestConsentManager2: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
-        configuration.baseUrl
-    ) }
+    private val authConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
+        configuration.baseUrl, "authorize") }
+    private val onboardConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
+        configuration.baseUrl, "onboard") }
 
     private val repository: MainRepository by lazy { DefaultMainRepository() }
 
@@ -138,7 +135,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            guestConsentManager.beginConsentAction(
+                            authConsentManager.beginConsentAction(
                                 fromActivity,
                                 it
                             ) { authSession, error ->
@@ -337,7 +334,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         when (response) {
             is Resource.Success -> {
                 response.data?.preAuthorizationCode?.let {
-                    guestConsentManager.beginConsentAction(fromActivity, it, completion)
+                    authConsentManager.beginConsentAction(fromActivity, it, completion = completion)
                 }
             }
             is Resource.Failure -> completion(
@@ -351,12 +348,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fromActivity: Activity,
         serviceId: String,
         codeValue: String?,
-        completion: OnboardingCompletion
+        completion: AuthorizationCompletion
     ) {
         DMELog.i("Launching user onboarding request.")
 
         codeValue?.let {
-            guestConsentManager2.beginOnboardAction(fromActivity, completion, serviceId, it)
+            onboardConsentManager.beginConsentAction(fromActivity, it, serviceId, completion)
         }
     }
 
@@ -429,8 +426,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 val payload: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                 val ooooo = Gson().fromJson(payload, Payload::class.java)
                 //Give consent
-                ooooo.preAuthorizationCode?.let { it1 ->
-                    guestConsentManager.beginConsentAction(fromActivity, it1, completion)
+                ooooo.preAuthorizationCode?.let { code ->
+                    authConsentManager.beginConsentAction(fromActivity, code, completion = completion)
                 }
             }, onError = {
                 DMELog.e("An error occurred whilst communicating with our servers: ${it.message}")
@@ -479,7 +476,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            guestConsentManager.beginConsentAction(
+                            authConsentManager.beginConsentAction(
                                 fromActivity,
                                 it
                             ) { authSession, error ->
@@ -524,13 +521,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     fun onboard(
         fromActivity: Activity,
         authSession: AuthSession,
-        completion: OnboardingCompletion
+        completion: AuthorizationCompletion
     ) {
 
         DMELog.i("Launching user onboarding request.")
 
-                authSession.code?.let { it1 ->
-                    guestConsentManager2.beginOnboardAction(fromActivity, completion, "420", it1)
+                authSession.code?.let { code ->
+                    onboardConsentManager.beginConsentAction(fromActivity, code, "420", completion)
                 }
 
     }
@@ -540,13 +537,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fromActivity: Activity,
         serviceId: String,
         codeValue: String?,
-        completion: OnboardingCompletion
+        completion: AuthorizationCompletion
     ) {
 
         DMELog.i("Launching user onboarding request.")
 
         codeValue?.let {
-            guestConsentManager2.beginOnboardAction(fromActivity, completion, serviceId, it)
+            onboardConsentManager.beginConsentAction(fromActivity, it, serviceId, completion)
         }
     }
 

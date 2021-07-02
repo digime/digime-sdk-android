@@ -20,7 +20,7 @@ class MainRemoteDataAccessImpl(private val clients: SaasClients) : MainRemoteDat
 
     override fun onboardService(activity: Activity, codeValue: String, serviceId: String): Single<Boolean> =
         Single.create { emitter ->
-            clients.getPullClient().onboardNew(activity, codeValue, serviceId) { error ->
+            clients.getPullClient().onboardNew(activity, codeValue, serviceId) { authsession, error ->
                 error?.let(emitter::onError)
                 ?: emitter.onSuccess(true)
             }
