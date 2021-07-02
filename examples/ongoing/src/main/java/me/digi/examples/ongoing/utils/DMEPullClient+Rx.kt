@@ -8,17 +8,16 @@ import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.DMEDataRequest
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMETokenExchange
-import me.digi.sdk.entities.Session
 
 fun DMEPullClient.authOngoingSaasAccess(
     activity: Activity,
     scope: DMEDataRequest? = null,
     credentials: DMETokenExchange? = null
-): Single<Pair<Session, DMETokenExchange>> = Single.create { emitter ->
-    authorizeOngoingSaasAccess(activity, scope, credentials) { session, credentials, error ->
+): Single<DMETokenExchange> = Single.create { emitter ->
+    authorizeOngoingSaasAccess(activity, scope, credentials) { credentials, error ->
         error?.let(emitter::onError)
-            ?: (if (session != null && credentials != null)
-                emitter.onSuccess(Pair(session, credentials))
+            ?: (if (credentials != null)
+                emitter.onSuccess(credentials)
             else emitter.onError(DMEAuthError.General()))
     }
 }

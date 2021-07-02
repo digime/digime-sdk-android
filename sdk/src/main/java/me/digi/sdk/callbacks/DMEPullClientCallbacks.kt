@@ -22,4 +22,4 @@ typealias DMEIncrementalFileListUpdate = (fileList: DMEFileList, updatedFileIds:
 
 typealias DMEServicesForContractCompletion = (services: List<Service>?, error: DMEError?) -> Unit
 
-typealias DMESaasOngoingAuthorizationCompletion = (session: Session?, exchangeTokens: DMETokenExchange?, error: DMEError?) -> Unit
+typealias DMESaasOngoingAuthorizationCompletion = (exchangeTokens: DMETokenExchange?, error: DMEError?) -> Unit

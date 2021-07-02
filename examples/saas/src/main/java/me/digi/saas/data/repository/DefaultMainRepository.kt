@@ -5,6 +5,7 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.DMEFileList
 
 class DefaultMainRepository(private val remoteAccess: MainRemoteDataAccess, private val localAccess: MainLocalDataAccess) : MainRepository {
 
@@ -14,4 +15,5 @@ class DefaultMainRepository(private val remoteAccess: MainRemoteDataAccess, priv
             .compose(localAccess.cacheAuthSessionCredentials())
             .map { it }
 
+    override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
 }

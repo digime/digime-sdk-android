@@ -315,11 +315,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     println("Session: ${result.first}")
                     println("Token: ${result.second}")
                     sessionManager.newSession = result.first
-                    completion(result.first, result.second, null)
+                    completion(result.second, null)
                 },
                 onError = { error ->
                     completion.invoke(
-                        null,
                         null,
                         error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
                             0,
@@ -439,6 +438,87 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             })
     }
 
+    fun authorizeNew(fromActivity: Activity, completion: AuthorizationCompletion) {
+
+        fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
+
+            val codeVerifier =
+                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+
+            val jwt = DMEPreauthorizationRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                codeVerifier
+            )
+
+            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader = jwt.sign(signingKey).tokenize()
+
+            apiClient.makeCall(apiClient.argonService.fetchPreAuthorizationCode1(authHeader)) { response, error ->
+                when {
+                    response != null -> {
+                        val chunks: List<String> = response.token.split(".")
+                        val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val payload = Gson().fromJson(payloadJson, Payload::class.java)
+
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
+                            codeVerifier
+
+                        val result = Pair(response.session, payload)
+
+                        emitter.onSuccess(result)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                }
+            }
+        }
+
+        fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> =
+            SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
+                it.flatMap { response ->
+                    Single.create { emitter ->
+                        response.second.preAuthorizationCode?.let {
+                            guestConsentManager.beginConsentAction(
+                                fromActivity,
+                                it
+                            ) { authSession, error ->
+                                when {
+                                    error != null -> emitter.onError(error)
+                                    authSession != null -> emitter.onSuccess(
+                                        Pair(
+                                            response.first,
+                                            authSession
+                                        )
+                                    )
+                                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        requestPreAuthCode()
+            .compose(requestConsent(fromActivity))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: Pair<Session, AuthSession> ->
+                    sessionManager.newSession = result.first
+                    completion.invoke(result.second, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                            0,
+                            error.localizedMessage
+                        )
+                    )
+                }
+            )
+    }
 
     @JvmOverloads
     fun onboard(
