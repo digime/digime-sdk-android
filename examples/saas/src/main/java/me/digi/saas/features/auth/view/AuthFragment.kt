@@ -29,8 +29,14 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
         contractType = arguments?.getString(ContractType.key, null)
 
+        setupViews()
         setupClickListeners()
         subscribeToObservers()
+    }
+
+    private fun setupViews() {
+        binding.tvAuthDescription.text =
+            "Begin your authentication for $contractType contract. You can always go back to change the type"
     }
 
     private fun subscribeToObservers() {
@@ -62,7 +68,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     private fun handleAuthResponse(response: AuthSession?) {
         Timber.d("Contract type: $contractType")
-        when(contractType) {
+        when (contractType) {
             ContractType.pull -> goToOnboardingScreen(response?.code!!)
             ContractType.push -> gotToPushScreen()
             else -> throw IllegalArgumentException("Unknown or empty contract type")

@@ -12,6 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:indeterminate="true"
+        android:indeterminateTint="@color/secondaryYellow"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -34,25 +35,31 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:fontFamily="@font/roboto_bold"
             android:text="Authenticate"
             android:textColor="?android:attr/textColorPrimary"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="24sp" />
 
         <TextView
+            android:id="@+id/tvAuthDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_light"
             android:gravity="center"
-            android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas rutrum pharetra convallis. Quisque euismod risus nec elementum facilisis"
-            android:textColor="?android:attr/textColorSecondary" />
+            android:textColor="?android:attr/textColorSecondary"
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas rutrum pharetra convallis. Quisque euismod risus nec elementum facilisis" />
     </LinearLayout>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/authenticate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
+        android:backgroundTint="#F4D843"
+        android:fontFamily="@font/roboto_regular"
         android:text="Authenticate"
+        android:textAllCaps="false"
+        app:cornerRadius="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
