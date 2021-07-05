@@ -20,11 +20,11 @@ class AuthViewModel(private val authenticate: AuthenticateUseCase) : ViewModel()
     val authStatus: StateFlow<Resource<AuthSession>>
         get() = _authStatus
 
-    fun authenticate(activity: Activity) {
+    fun authenticate(activity: Activity, contractType: String) {
         _authStatus.value = Resource.Loading()
 
         authenticate
-            .invoke(activity)
+            .invoke(activity, contractType)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(

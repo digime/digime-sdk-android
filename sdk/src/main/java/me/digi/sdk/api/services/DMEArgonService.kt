@@ -96,4 +96,7 @@ internal interface DMEArgonService {
     // TODO: Here for testing purposes?
     @GET("v1.5/discovery/services")
     suspend fun getServicesForContract(@Header("contractId") contractId: String): ServicesResponse
+
+    @GET("v1.5/discovery/services")
+    fun getServicesForContract1(@Header("contractId") contractId: String): Single<ServicesResponse>
 }

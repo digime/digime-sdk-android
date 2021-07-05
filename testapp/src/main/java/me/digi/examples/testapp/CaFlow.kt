@@ -89,7 +89,7 @@ class CaFlow : AppCompatActivity() {
 
         client.authorize(this, test) { session, error: DMEError? ->
             session?.let {
-                client.onboard(this, session){ session, error ->
+                client.onboard(this, session) {
                     client.getFileList{ fileList, error ->
                         val aaa = 0
                     }

@@ -6,6 +6,7 @@ import android.net.Uri
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.AuthorizationCompletion
+import me.digi.sdk.callbacks.OnboardingCompletion
 import me.digi.sdk.entities.AuthSession
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -17,13 +18,21 @@ import me.digi.sdk.utilities.toMap
  * Update to reflect entire Saas handler
  * Return different callback handlers
  */
-class SaasAuthorizaionManager(private val baseURL: String, private val type: String) :
+class SaasConsentManager(private val baseURL: String, private val type: String) :
     DMEAppCallbackHandler() {
 
     private var authorizationCallbackHandler: AuthorizationCompletion? = null
         set(value) {
             if (field != null && value != null) {
                 field?.invoke(null, DMEAuthError.Cancelled())
+            }
+            field = value
+        }
+
+    private var onboardingCallbackHandler: OnboardingCompletion? = null
+        set(value) {
+            if (field != null && value != null) {
+                field?.invoke(DMEAuthError.Cancelled())
             }
             field = value
         }
@@ -36,7 +45,21 @@ class SaasAuthorizaionManager(private val baseURL: String, private val type: Str
     ) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
         authorizationCallbackHandler = completion
+        handlerAction(fromActivity, serviceId, codeValue)
+    }
 
+    fun beginOnboardAction(
+        fromActivity: Activity,
+        codeValue: String,
+        serviceId: String? = null,
+        completion: OnboardingCompletion
+    ) {
+        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
+        onboardingCallbackHandler = completion
+        handlerAction(fromActivity, serviceId, codeValue)
+    }
+
+    private fun handlerAction(fromActivity: Activity, serviceId: String?, codeValue: String) {
         val guestRequestCode = DMEAppCommunicator.getSharedInstance()
             .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
@@ -59,6 +82,7 @@ class SaasAuthorizaionManager(private val baseURL: String, private val type: Str
             DMELog.e("There was a problem launching the guest consent browser activity.")
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
             authorizationCallbackHandler = null
+            onboardingCallbackHandler = null
             return
         }
 
@@ -91,8 +115,10 @@ class SaasAuthorizaionManager(private val baseURL: String, private val type: Str
         }
 
         authorizationCallbackHandler?.invoke(AuthSession(code, state, postboxId, publicKey), error)
+        onboardingCallbackHandler?.invoke(error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
+        onboardingCallbackHandler = null
     }
 
     override fun extractAndAppendMetadata(payload: Map<String, Any>) {

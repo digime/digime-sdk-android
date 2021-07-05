@@ -6,11 +6,11 @@ import me.digi.saas.data.repository.MainRepository
 import me.digi.sdk.entities.AuthSession
 
 interface AuthenticateUseCase {
-    operator fun invoke(activity: Activity): Single<AuthSession>
+    operator fun invoke(activity: Activity, contractType: String): Single<AuthSession>
 }
 
 class AuthenticateUseCaseImpl(private val repository: MainRepository): AuthenticateUseCase {
 
-    override fun invoke(activity: Activity): Single<AuthSession> =
-        repository.authenticate(activity)
+    override fun invoke(activity: Activity, contractType: String): Single<AuthSession> =
+        repository.authenticate(activity, contractType)
 }

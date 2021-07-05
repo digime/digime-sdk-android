@@ -1,7 +1,10 @@
 package me.digi.saas
 
 import android.app.Application
-import me.digi.saas.framework.di.*
+import me.digi.saas.framework.di.dataAccessModule
+import me.digi.saas.framework.di.repositoriesModule
+import me.digi.saas.framework.di.useCasesModule
+import me.digi.saas.framework.di.viewModelsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import timber.log.Timber
@@ -26,7 +29,6 @@ class SaasApp : Application() {
         startKoin {
             androidContext(applicationContext)
             modules(
-                clientsModule,
                 dataAccessModule,
                 repositoriesModule,
                 useCasesModule,

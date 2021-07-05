@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentAuthBinding
 import me.digi.saas.features.auth.viewmodel.AuthViewModel
+import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.AuthSession
@@ -21,9 +22,12 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     private val viewModel: AuthViewModel by viewModel()
     private val binding: FragmentAuthBinding by viewBinding()
+    private var contractType: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        contractType = arguments?.getString(ContractType.key, null)
 
         setupClickListeners()
         subscribeToObservers()
@@ -43,8 +47,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
                     is Resource.Success -> {
                         binding.authProgressBar.isVisible = false
                         binding.authenticate.isEnabled = true
-
-                        goToOnboardingScreen(resource.data?.code!!)
+                        handleAuthResponse(resource.data)
                     }
                     is Resource.Failure -> {
                         binding.authProgressBar.isVisible = false
@@ -55,6 +58,19 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
                 }
             }
         }
+    }
+
+    private fun handleAuthResponse(response: AuthSession?) {
+        Timber.d("Contract type: $contractType")
+        when(contractType) {
+            ContractType.pull -> goToOnboardingScreen(response?.code!!)
+            ContractType.push -> gotToPushScreen()
+            else -> throw IllegalArgumentException("Unknown or empty contract type")
+        }
+    }
+
+    private fun gotToPushScreen() {
+        findNavController().navigate(R.id.authToPush)
     }
 
     private fun goToOnboardingScreen(code: String) {
@@ -69,7 +85,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.authenticate -> viewModel.authenticate(requireActivity())
+            R.id.authenticate -> contractType?.let { viewModel.authenticate(requireActivity(), it) }
         }
     }
 }

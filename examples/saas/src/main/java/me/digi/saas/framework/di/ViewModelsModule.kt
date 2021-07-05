@@ -11,8 +11,8 @@ import org.koin.dsl.module
 
 val viewModelsModule: Module = module {
     viewModel { AuthViewModel(get()) }
-    viewModel { OnboardViewModel(get()) }
-    viewModel { PullViewModel() }
+    viewModel { OnboardViewModel(get(), get()) }
+    viewModel { PullViewModel(get()) }
     viewModel { PushViewModel() }
     viewModel { PullRawViewModel() }
 }

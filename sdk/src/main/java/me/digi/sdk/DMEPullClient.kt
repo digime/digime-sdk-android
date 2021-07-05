@@ -17,7 +17,7 @@ import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.interapp.managers.DMENativeConsentManager
-import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
+import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.saas.repositories.DefaultMainRepository
 import me.digi.sdk.saas.repositories.MainRepository
 import me.digi.sdk.saas.serviceentities.Service
@@ -44,10 +44,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         sessionManager,
         configuration.appId
     ) }
-    private val authConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
-        configuration.baseUrl, "authorize") }
-    private val onboardConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
-        configuration.baseUrl, "onboard") }
+    private val authConsentManager: SaasConsentManager by lazy { SaasConsentManager(
+        configuration.baseUrl, type = "authorize") }
+    private val onboardConsentManager: SaasConsentManager by lazy { SaasConsentManager(
+        configuration.baseUrl, type = "onboard") }
 
     private val repository: MainRepository by lazy { DefaultMainRepository() }
 
@@ -312,7 +312,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     println("Session: ${result.first}")
                     println("Token: ${result.second}")
                     sessionManager.newSession = result.first
-                    completion(result.second, null)
+                    completion.invoke(result.second, null)
                 },
                 onError = { error ->
                     completion.invoke(
@@ -348,12 +348,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fromActivity: Activity,
         serviceId: String,
         codeValue: String?,
-        completion: AuthorizationCompletion
+        completion: OnboardingCompletion
     ) {
         DMELog.i("Launching user onboarding request.")
 
         codeValue?.let {
-            onboardConsentManager.beginConsentAction(fromActivity, it, serviceId, completion)
+            onboardConsentManager.beginOnboardAction(fromActivity, it, serviceId, completion)
         }
     }
 
@@ -393,6 +393,23 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             }
         }
     }
+
+    fun getServicesForContractId(contractId: String, completion: DMEServicesForContract) {
+        DMELog.i("Fetching services for contract")
+
+        apiClient.argonService.getServicesForContract1(contractId)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    completion.invoke(it, null)
+                },
+                onError = {
+                    completion.invoke(null, DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Could not fetch services. Something went wrong"))
+                }
+            )
+    }
+
 
     @JvmOverloads
     fun authorize(
@@ -458,8 +475,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
-                            codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
                         val result = Pair(response.session, payload)
 
@@ -476,17 +492,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(
-                                fromActivity,
-                                it
-                            ) { authSession, error ->
+                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
-                                        Pair(
-                                            response.first,
-                                            authSession
-                                        )
+                                        Pair(response.first, authSession)
                                     )
                                     else -> emitter.onError(java.lang.IllegalArgumentException())
                                 }
@@ -515,19 +525,20 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     )
                 }
             )
+            .addTo(compositeDisposable)
     }
 
     @JvmOverloads
     fun onboard(
         fromActivity: Activity,
         authSession: AuthSession,
-        completion: AuthorizationCompletion
+        completion: OnboardingCompletion
     ) {
 
         DMELog.i("Launching user onboarding request.")
 
                 authSession.code?.let { code ->
-                    onboardConsentManager.beginConsentAction(fromActivity, code, "420", completion)
+                    onboardConsentManager.beginOnboardAction(fromActivity, code, "420", completion)
                 }
 
     }
@@ -537,13 +548,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fromActivity: Activity,
         serviceId: String,
         codeValue: String?,
-        completion: AuthorizationCompletion
+        completion: OnboardingCompletion
     ) {
 
         DMELog.i("Launching user onboarding request.")
 
         codeValue?.let {
-            onboardConsentManager.beginConsentAction(fromActivity, it, serviceId, completion)
+            onboardConsentManager.beginOnboardAction(fromActivity, it, serviceId, completion)
         }
     }
 
