@@ -47,7 +47,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.authStatus.collectLatest { resource: Resource<AuthSession> ->
+            viewModel.state.collectLatest { resource: Resource<AuthSession> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /** Do nothing */

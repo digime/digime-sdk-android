@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.PushDataUseCase
 import me.digi.saas.utils.Resource
 import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.DMETokenExchange
 import me.digi.sdk.entities.SaasOngoingPushResponse
 
 class PushViewModel(private val pushData: PushDataUseCase) : ViewModel() {
@@ -19,6 +18,8 @@ class PushViewModel(private val pushData: PushDataUseCase) : ViewModel() {
         get() = _state
 
     fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String) {
+        _state.value = Resource.Loading()
+
         pushData
             .invoke(payload, accessToken)
             .subscribeOn(Schedulers.io())

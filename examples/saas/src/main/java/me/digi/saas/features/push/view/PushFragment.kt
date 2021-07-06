@@ -37,10 +37,11 @@ class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
 
         println("Push data: $postboxId - $publicKey - $sessionKey")
 
-        if(postboxId != null && publicKey != null && sessionKey != null) {
+        if (postboxId != null && publicKey != null && sessionKey != null) {
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
-            val metadata: ByteArray = getFileContent(requireActivity(),"metadatapng.json")
-            val postbox: DMEPostbox = DMEPostbox().copy(key = sessionKey, postboxId = postboxId, publicKey = publicKey)
+            val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
+            val postbox: DMEPostbox =
+                DMEPostbox().copy(key = sessionKey, postboxId = postboxId, publicKey = publicKey)
             payload = DMEPushPayload(postbox, metadata, fileContent, DMEMimeType.IMAGE_PNG)
         }
 
@@ -55,13 +56,15 @@ class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
             viewModel.state.collectLatest { result: Resource<SaasOngoingPushResponse> ->
-                when(result) {
-                    is Resource.Idle -> { /** Do nothing */ }
+                when (result) {
+                    is Resource.Idle -> {
+                        /** Do nothing */
+                    }
                     is Resource.Loading -> binding.pbPush.isVisible = true
                     is Resource.Success -> {
                         binding.pbPush.isVisible = false
                         Timber.d("Response: ${result.data}")
-                        snackBar("Data pushed successfully")
+                        snackBar("Data is: ${result.data?.status} successfully")
                     }
                     is Resource.Failure -> {
                         binding.pbPush.isVisible = false
