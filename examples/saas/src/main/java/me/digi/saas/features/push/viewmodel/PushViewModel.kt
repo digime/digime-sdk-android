@@ -9,16 +9,18 @@ import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.PushDataUseCase
 import me.digi.saas.utils.Resource
 import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.SaasOngoingPushResponse
 
 class PushViewModel(private val pushData: PushDataUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<Boolean>> = MutableStateFlow(Resource.Idle())
-    val state: StateFlow<Resource<Boolean>>
+    private val _state: MutableStateFlow<Resource<SaasOngoingPushResponse>> = MutableStateFlow(Resource.Idle())
+    val state: StateFlow<Resource<SaasOngoingPushResponse>>
         get() = _state
 
-    fun pushDataToPostbox(payload: DMEPushPayload) {
+    fun pushDataToPostbox(payload: DMEPushPayload, credentials: DMETokenExchange) {
         pushData
-            .invoke(payload)
+            .invoke(payload, credentials)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(

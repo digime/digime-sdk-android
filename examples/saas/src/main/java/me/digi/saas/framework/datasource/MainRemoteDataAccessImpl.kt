@@ -86,10 +86,10 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
             }
         }
 
-    override fun pushDataToPostbox(payload: DMEPushPayload): Single<Boolean> =
+    override fun pushDataToPostbox(payload: DMEPushPayload, credentials: DMETokenExchange): Single<SaasOngoingPushResponse> =
         Single.create { emitter ->
-            pushClient.pushDataToPostbox(payload) { error ->
-                error?.let(emitter::onError) ?: emitter.onSuccess(true)
+            pushClient.pushDataToOngoingPostbox(payload, credentials) { response: SaasOngoingPushResponse?, error ->
+                error?.let(emitter::onError) ?: emitter.onSuccess(response)
             }
         }
 }

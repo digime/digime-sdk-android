@@ -142,21 +142,59 @@ class DMEPushClient(
                 }
             }
 
+        fun exchangeAuthorizationCode(): SingleTransformer<Pair<Session, AuthSession>, DMESaasOngoingPostbox> =
+            SingleTransformer<Pair<Session, AuthSession>, DMESaasOngoingPostbox> {
+                it.flatMap { response: Pair<Session, AuthSession> ->
+
+                    val codeVerifier =
+                        response.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+
+                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        response.second.code!!,
+                        codeVerifier
+                    )
+
+                    val signingKey =
+                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken1(authHeader))
+                        .map { exchangeToken: ExchangeTokenJWT ->
+
+                            val chunks: List<String> = exchangeToken.token.split(".")
+                            val payloadJson: String =
+                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+
+                            val postboxData = DMEOngoingPostboxData().copy(
+                                postboxId = response.second.postboxId,
+                                publicKey = response.second.publicKey
+                            )
+
+                            DMESaasOngoingPostbox(response.first, postboxData, tokenExchange)
+                        }
+                }
+            }
+
         requestPreAuthCode()
             .compose(requestConsent(fromActivity))
+            .compose(exchangeAuthorizationCode())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: Pair<Session, AuthSession> ->
-                    sessionManager.newSession = result.first
-                    println("Session: ${result.first}")
-                    println("Auth session: ${result.second}")
+                onSuccess = { result: DMESaasOngoingPostbox ->
+                    sessionManager.newSession = result.session
+                    println("Session: ${result.session}")
+                    println("Postbox: ${result.postboxData}")
+                    println("Token: ${result.authToken}")
                     val authSession = AuthSession().copy(
-                        code = result.second.code,
-                        state = result.second.state,
-                        postboxId = result.second.postboxId,
-                        publicKey = result.second.publicKey,
-                        sessionKey = result.first.key
+                        postboxId = result.postboxData?.postboxId,
+                        publicKey = result.postboxData?.publicKey,
+                        sessionKey = result.session?.key,
+                        accessToken = result.authToken?.accessToken?.value
                     )
                     completion.invoke(authSession, null)
                 },

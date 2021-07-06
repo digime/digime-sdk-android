@@ -86,6 +86,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         bundle.putString("postboxId", response?.postboxId)
         bundle.putString("publicKey", response?.publicKey)
         bundle.putString("sessionKey", response?.sessionKey)
+        bundle.putString("accessToken", response?.accessToken)
 
         findNavController().navigate(R.id.authToPush, bundle)
     }
