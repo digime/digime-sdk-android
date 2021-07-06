@@ -13,6 +13,6 @@ val viewModelsModule: Module = module {
     viewModel { AuthViewModel(get()) }
     viewModel { OnboardViewModel(get(), get()) }
     viewModel { PullViewModel(get()) }
-    viewModel { PushViewModel() }
+    viewModel { PushViewModel(get()) }
     viewModel { PullRawViewModel() }
 }

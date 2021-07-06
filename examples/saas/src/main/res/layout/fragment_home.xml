@@ -39,7 +39,7 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Begin pull flow"
+        android:text="Pull contract"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_read" />
@@ -52,7 +52,7 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Begin push flow"
+        android:text="Push contract"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_push" />
@@ -65,7 +65,7 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Begin read raw flow"
+        android:text="Read raw contract"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_read_raw" />

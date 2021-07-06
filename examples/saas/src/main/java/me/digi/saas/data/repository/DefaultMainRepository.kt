@@ -6,6 +6,7 @@ import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.AuthSession
 import me.digi.sdk.entities.DMEFileList
+import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.saas.serviceentities.Service
 
 class DefaultMainRepository(
@@ -29,4 +30,7 @@ class DefaultMainRepository(
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         remoteAccess.getServicesForContract(contractId)
+
+    override fun pushDataToPostbox(payload: DMEPushPayload): Single<Boolean> =
+        remoteAccess.pushDataToPostbox(payload)
 }

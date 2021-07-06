@@ -10,10 +10,7 @@ import me.digi.saas.framework.utils.AppConst
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.AuthSession
-import me.digi.sdk.entities.DMEFileList
-import me.digi.sdk.entities.DMEPullConfiguration
-import me.digi.sdk.entities.DMEPushConfiguration
+import me.digi.sdk.entities.*
 import me.digi.sdk.saas.serviceentities.Service
 
 class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAccess {
@@ -52,7 +49,10 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
                         ?: (if (authSession != null) emitter.onSuccess(authSession)
                         else emitter.onError(DMEAuthError.General()))
                 }
-                ContractType.push -> {
+                ContractType.push -> pushClient.authorize(activity) { authSession, error ->
+                    error?.let(emitter::onError)
+                        ?: (if (authSession != null) emitter.onSuccess(authSession)
+                        else emitter.onError(DMEAuthError.General()))
                 }
                 else -> throw IllegalArgumentException("Unknown or empty contract type")
             }
@@ -83,6 +83,13 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         Single.create { emitter ->
             pullClient.getServicesForContractId(contractId) { servicesResponse, error ->
                 error?.let(emitter::onError) ?: emitter.onSuccess(servicesResponse?.data?.services)
+            }
+        }
+
+    override fun pushDataToPostbox(payload: DMEPushPayload): Single<Boolean> =
+        Single.create { emitter ->
+            pushClient.pushDataToPostbox(payload) { error ->
+                error?.let(emitter::onError) ?: emitter.onSuccess(true)
             }
         }
 }

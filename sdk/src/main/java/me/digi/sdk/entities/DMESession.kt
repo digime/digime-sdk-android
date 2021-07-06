@@ -30,5 +30,6 @@ data class AuthSession(
     val code: String? = null,
     val state: String? = null,
     val postboxId: String? = null,
-    val publicKey: String? = null
+    val publicKey: String? = null,
+    val sessionKey: String? = null
 )

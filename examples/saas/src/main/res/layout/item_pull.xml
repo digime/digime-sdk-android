@@ -14,20 +14,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:fontFamily="@font/roboto_bold"
         android:textSize="18sp"
-        android:textStyle="bold"
         tools:text="Title" />
 
     <TextView
         android:id="@+id/itemDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/roboto_light"
         tools:text="Date" />
 
     <TextView
         android:id="@+id/itemVersion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/roboto_light"
         tools:text="Version" />
 
     <View

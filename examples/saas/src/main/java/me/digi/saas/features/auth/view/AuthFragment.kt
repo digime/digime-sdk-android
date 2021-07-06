@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
+import coil.load
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentAuthBinding
@@ -35,8 +36,13 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
     }
 
     private fun setupViews() {
-        binding.tvAuthDescription.text =
-            "Begin your authentication for $contractType contract. You can always go back to change the type"
+        binding.tvAuthDescription.text = getString(R.string.labelAuthDisclaimer, contractType)
+
+        when(contractType) {
+            ContractType.pull -> binding.ivContractType.load(R.drawable.ic_download) { crossfade(true) }
+            ContractType.push -> binding.ivContractType.load(R.drawable.ic_upload) { crossfade(true) }
+            ContractType.readRaw -> binding.ivContractType.load(R.drawable.ic_rraw) { crossfade(true) }
+        }
     }
 
     private fun subscribeToObservers() {
@@ -70,13 +76,18 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         Timber.d("Contract type: $contractType")
         when (contractType) {
             ContractType.pull -> goToOnboardingScreen(response?.code!!)
-            ContractType.push -> gotToPushScreen()
+            ContractType.push -> gotToPushScreen(response)
             else -> throw IllegalArgumentException("Unknown or empty contract type")
         }
     }
 
-    private fun gotToPushScreen() {
-        findNavController().navigate(R.id.authToPush)
+    private fun gotToPushScreen(response: AuthSession?) {
+        val bundle = Bundle()
+        bundle.putString("postboxId", response?.postboxId)
+        bundle.putString("publicKey", response?.publicKey)
+        bundle.putString("sessionKey", response?.sessionKey)
+
+        findNavController().navigate(R.id.authToPush, bundle)
     }
 
     private fun goToOnboardingScreen(code: String) {
