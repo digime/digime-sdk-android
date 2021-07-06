@@ -29,6 +29,6 @@ class DefaultMainRepository(
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         remoteAccess.getServicesForContract(contractId)
 
-    override fun pushDataToPostbox(payload: DMEPushPayload, credentials: DMETokenExchange): Single<SaasOngoingPushResponse> =
-        remoteAccess.pushDataToPostbox(payload, credentials)
+    override fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse> =
+        remoteAccess.pushDataToPostbox(payload, accessToken)
 }

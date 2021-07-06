@@ -236,6 +236,77 @@ class DMEPushClient(
         }
     }
 
+    fun pushData(postboxFile: DMEPushPayload?, accessToken: String, completion: DMEOngoingPostboxPushCompletion) {
+
+        val postbox = postboxFile as DMEPushPayload
+
+        if (sessionManager.isSessionValid()) {
+            val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
+                postbox.dmePostbox.publicKey!!,
+                postbox.content,
+                postbox.metadata
+            )
+
+            val multipartBody: DMEMultipartBody = DMEMultipartBody.Builder()
+                .postboxPushPayload(postbox)
+                .dataContent(encryptedData.fileContent, postbox.mimeType)
+                .build()
+
+            val jwt = DMEAuthTokenRequestJWT(
+                accessToken,
+                encryptedData.iv,
+                encryptedData.metadata,
+                encryptedData.symmetricalKey,
+                configuration.appId,
+                configuration.contractId
+            )
+
+            val signingKey: PrivateKey =
+                DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
+
+            apiClient.argonService.pushOngoingData(
+                authHeader,
+                postbox.dmePostbox.key!!,
+                encryptedData.symmetricalKey,
+                encryptedData.iv,
+                encryptedData.metadata,
+                postbox.dmePostbox.postboxId!!,
+                multipartBody.requestBody,
+                multipartBody.description
+            )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = {
+                        sessionManager.newSession = it.session
+                        completion(
+                            it,
+                            null
+                        ).also { DMELog.i("Successfully pushed data to postbox") }
+                    },
+                    onError = { error ->
+                        when {
+                            error is DMEAPIError && error.code == "InvalidToken" -> completion(
+                                null,
+                                DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
+                            )
+                            else -> {
+                                DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
+                                completion(
+                                    null,
+                                    DMEAuthError.ErrorWithMessage(error.localizedMessage)
+                                )
+                            }
+                        }
+                    }
+                )
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, DMEAuthError.InvalidSession())
+        }
+    }
+
     fun pushDataToOngoingPostbox(
         postboxFile: DMEPushPayload?,
         authToken: DMETokenExchange?,

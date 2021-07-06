@@ -7,11 +7,11 @@ import me.digi.sdk.entities.DMETokenExchange
 import me.digi.sdk.entities.SaasOngoingPushResponse
 
 interface PushDataUseCase {
-    operator fun invoke(payload: DMEPushPayload, credentials: DMETokenExchange): Single<SaasOngoingPushResponse>
+    operator fun invoke(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse>
 }
 
 class PushDataUseCaseImpl(private val repository: MainRepository) : PushDataUseCase {
 
-    override fun invoke(payload: DMEPushPayload, credentials: DMETokenExchange): Single<SaasOngoingPushResponse> =
-        repository.pushDataToPostbox(payload, credentials)
+    override fun invoke(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse> =
+        repository.pushDataToPostbox(payload, accessToken)
 }

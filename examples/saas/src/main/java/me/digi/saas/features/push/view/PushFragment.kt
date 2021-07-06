@@ -13,7 +13,10 @@ import me.digi.saas.features.push.viewmodel.PushViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEMimeType
+import me.digi.sdk.entities.DMEPostbox
+import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.SaasOngoingPushResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -72,8 +75,7 @@ class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnPushData -> payload?.let {
-                val credentials = DMETokenExchange().copy(accessToken = AccessToken(value = accessToken!!))
-                viewModel.pushDataToPostbox(it, credentials)
+                viewModel.pushDataToPostbox(it, accessToken!!)
             } ?: snackBar("Payload must not be empty")
         }
     }

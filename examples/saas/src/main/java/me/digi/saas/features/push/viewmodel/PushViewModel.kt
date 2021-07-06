@@ -18,9 +18,9 @@ class PushViewModel(private val pushData: PushDataUseCase) : ViewModel() {
     val state: StateFlow<Resource<SaasOngoingPushResponse>>
         get() = _state
 
-    fun pushDataToPostbox(payload: DMEPushPayload, credentials: DMETokenExchange) {
+    fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String) {
         pushData
-            .invoke(payload, credentials)
+            .invoke(payload, accessToken)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
