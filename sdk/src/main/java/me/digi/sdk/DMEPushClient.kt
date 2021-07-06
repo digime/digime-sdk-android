@@ -15,7 +15,6 @@ import me.digi.sdk.api.helpers.DMEMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.interapp.managers.DMEOngoingPostboxConsentManager
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMELog
@@ -47,18 +46,6 @@ class DMEPushClient(
             "authorize"
         )
     }
-    private val onboardServiceManger: SaasConsentManager by lazy {
-        SaasConsentManager(
-            configuration.baseUrl,
-            "onboard"
-        )
-    }
-
-    private val postboxOngoingManager: DMEOngoingPostboxConsentManager by lazy {
-        DMEOngoingPostboxConsentManager(sessionManager, configuration.appId)
-    }
-
-    private val pushHandler by lazy { PushClientHandler }
 
     private val disposable: CompositeDisposable = CompositeDisposable()
 
@@ -100,7 +87,7 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.fetchPreAuthorizationCode1(authHeader)) { response, error ->
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -160,7 +147,7 @@ class DMEPushClient(
                         DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
-                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken1(authHeader))
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
                         .map { exchangeToken: ExchangeTokenJWT ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
@@ -206,155 +193,6 @@ class DMEPushClient(
                             error.localizedMessage
                         )
                     )
-                }
-            )
-            .addTo(disposable)
-    }
-
-    fun authorizeOngoingPostbox(
-        fromActivity: Activity,
-        existingPostbox: DMEPostbox? = null,
-        credentials: DMEOAuthToken? = null,
-        completion: DMEPostboxOngoingCreationCompletion
-    ) {
-        DMELog.i("Launching user consent request.")
-
-        var activeCredentials = credentials
-        var activePostbox = existingPostbox
-        val request = DMESessionRequest(
-            configuration.appId,
-            configuration.contractId,
-            DMESDKAgent(),
-            "gzip",
-            null
-        )
-
-        // First, we get a session as normal.
-        pushHandler.requestSession(request, sessionManager)
-            // Next, we check if any credentials were supplied (for access restoration) as well as postbox.
-            // If not, we kick the user out to digi.me to authorise normally which will create postbox and new set of credentials.
-            .let { session ->
-                if (activeCredentials != null && activePostbox != null)
-                    session.map {
-                        DMEOngoingPostbox(it, activePostbox, activeCredentials)
-                    }
-                else
-                    session
-                        .compose(
-                            pushHandler.requestPreAuthorizationCode(
-                                context,
-                                configuration,
-                                apiClient
-                            )
-                        )
-                        .compose(pushHandler.requestConsent(fromActivity, postboxOngoingManager))
-                        .compose(
-                            pushHandler.exchangeAuthorizationCode(
-                                context,
-                                configuration,
-                                apiClient
-                            )
-                        )
-                        .doOnSuccess {
-                            activePostbox = it.postbox
-                            activeCredentials = it.authToken
-                        }
-            }
-            // At this point, we have a session, postbox and a set of credentials
-            .onErrorResumeNext { error: Throwable ->
-
-
-                // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
-                // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
-                // We process the consent flow for ongoing access
-                when {
-                    error is DMEAPIError && error.code == "InternalServerError" -> {
-                        Single.just(postboxOngoingManager.sessionManager.currentSession!!)
-                            .compose(
-                                pushHandler.requestPreAuthorizationCode(
-                                    context,
-                                    configuration,
-                                    apiClient
-                                )
-                            )
-                            .compose(
-                                pushHandler.requestConsent(
-                                    fromActivity,
-                                    postboxOngoingManager
-                                )
-                            )
-                            .compose(
-                                pushHandler.exchangeAuthorizationCode(
-                                    context,
-                                    configuration,
-                                    apiClient
-                                )
-                            )
-                            .doOnSuccess {
-                                activePostbox = it.postbox
-                                activeCredentials = it.authToken
-                            }
-                    }
-                    // If an error we encounter is "InvalidToken" error, which means that the ACCESS token
-                    // has expired.
-                    error is DMEAPIError && error.code == "InvalidToken" -> {
-                        // If so, we take the active session and expired credentials and try to refresh them.
-                        Single.just(
-                            Pair(
-                                postboxOngoingManager.sessionManager.currentSession!!,
-                                activeCredentials!!
-                            )
-                        )
-                            .compose(pushHandler.refreshCredentials(configuration, apiClient))
-                            .doOnSuccess { activeCredentials = it.authToken }
-                            .onErrorResumeNext { error ->
-
-                                // If an error is encountered from this call, we inspect it to see if it's an
-                                // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                                if (error is DMEAPIError && error.code == "InvalidToken") {
-                                    // If so, we need to obtain a new set of credentials from the digi.me
-                                    // application. Process the flow as before, for ongoing access, provided
-                                    // that auto-recover is enabled. If not, we throw a specific error and
-                                    // exit the flow.
-                                    if (configuration.autoRecoverExpiredCredentials)
-                                        Single.just(postboxOngoingManager.sessionManager.currentSession!!)
-                                            .compose(
-                                                pushHandler.requestPreAuthorizationCode(
-                                                    context,
-                                                    configuration,
-                                                    apiClient
-                                                )
-                                            )
-                                            .compose(
-                                                pushHandler.requestConsent(
-                                                    fromActivity,
-                                                    postboxOngoingManager
-                                                )
-                                            )
-                                            .compose(
-                                                pushHandler.exchangeAuthorizationCode(
-                                                    context,
-                                                    configuration,
-                                                    apiClient
-                                                )
-                                            )
-                                            .doOnSuccess {
-                                                activePostbox = it.postbox
-                                                activeCredentials = it.authToken
-                                            } else Single.error(DMEAuthError.TokenExpired())
-                                } else Single.error(error)
-                            }
-                    }
-                    else -> Single.error(error)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { result -> completion(result.postbox, result.authToken, null) },
-                onError = { error: Throwable ->
-                    completion(null, null, error.let { it as? DMEError }
-                        ?: DMEAPIError.GENERIC(0, error.localizedMessage ?: "Unknown"))
                 }
             )
             .addTo(disposable)
@@ -475,7 +313,7 @@ class DMEPushClient(
         }
     }
 
-    fun authorizeOngoingSaasAccess(
+    fun authorizeOngoingPostbox(
         fromActivity: Activity,
         existingPostbox: DMEOngoingPostboxData? = null,
         credentials: DMETokenExchange? = null,
@@ -500,7 +338,7 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.fetchPreAuthorizationCode1(authHeader)) { response, error ->
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -563,7 +401,7 @@ class DMEPushClient(
                         DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
-                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken1(authHeader))
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
                         .map { exchangeToken: ExchangeTokenJWT ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")

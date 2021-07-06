@@ -44,7 +44,7 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     override fun authenticate(activity: Activity, contractType: String): Single<AuthSession> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> pullClient.authorizeNew(activity) { authSession, error ->
+                ContractType.pull -> pullClient.authorize(activity) { authSession, error ->
                     error?.let(emitter::onError)
                         ?: (if (authSession != null) emitter.onSuccess(authSession)
                         else emitter.onError(DMEAuthError.General()))
@@ -65,7 +65,7 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         serviceId: String
     ): Single<Boolean> =
         Single.create { emitter ->
-            pullClient.onboardNew(activity, codeValue, serviceId) { error ->
+            pullClient.onboardService(activity, codeValue, serviceId) { error ->
                 error?.let(emitter::onError)
                     ?: emitter.onSuccess(true)
             }

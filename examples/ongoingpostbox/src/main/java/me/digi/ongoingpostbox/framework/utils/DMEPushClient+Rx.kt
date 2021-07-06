@@ -6,12 +6,12 @@ import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.*
 
-fun DMEPushClient.authorizeSaasPostbox(
+fun DMEPushClient.authorizePostbox(
     activity: Activity,
     existingPostboxData: DMEOngoingPostboxData? = null,
     credentials: DMETokenExchange? = null
 ): Single<DMESaasOngoingPostbox> = Single.create { emitter ->
-    authorizeOngoingSaasAccess(
+    authorizeOngoingPostbox(
         activity,
         existingPostboxData,
         credentials

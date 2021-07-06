@@ -9,12 +9,12 @@ import me.digi.sdk.entities.DMEDataRequest
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.DMETokenExchange
 
-fun DMEPullClient.authOngoingSaasAccess(
+fun DMEPullClient.authorizeOngoingAccess(
     activity: Activity,
     scope: DMEDataRequest? = null,
     credentials: DMETokenExchange? = null
 ): Single<DMETokenExchange> = Single.create { emitter ->
-    authorizeOngoingSaasAccess(activity, scope, credentials) { credentials, error ->
+    authorizeOngoingAccess(activity, scope, credentials) { credentials, error ->
         error?.let(emitter::onError)
             ?: (if (credentials != null)
                 emitter.onSuccess(credentials)
@@ -22,7 +22,7 @@ fun DMEPullClient.authOngoingSaasAccess(
     }
 }
 
-fun DMEPullClient.getSessionData() = Observable.create<DMEFile> { emitter ->
+fun DMEPullClient.getSessionData(): Observable<DMEFile> = Observable.create { emitter ->
     getSessionData({ file, error ->
         file?.let { emitter.onNext(it) }
     }) { fileList, error ->

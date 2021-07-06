@@ -7,15 +7,19 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.examples.ongoing.model.Song
 import me.digi.examples.ongoing.utils.FileUtils
-import me.digi.examples.ongoing.utils.authOngoingSaasAccess
+import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
 import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class DigiMeService(private val context: Application) {
 
@@ -39,15 +43,15 @@ class DigiMeService(private val context: Application) {
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
-    fun obtainAccessRights(activity: Activity) = client.authOngoingSaasAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
+    fun obtainAccessRights(activity: Activity): Completable = client.authorizeOngoingAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
         .map { it }
         .compose(cacheCredential())
         .flatMapCompletable { Completable.complete() }
 
-    fun fetchData() = client.getSessionData()
+    fun fetchData(): Observable<Song> = client.getSessionData()
         .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
         .flatMapIterable { it }
-//        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
+        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))
