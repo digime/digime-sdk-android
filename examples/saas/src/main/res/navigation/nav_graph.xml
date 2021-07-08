@@ -21,7 +21,7 @@
         android:id="@+id/read_raw"
         android:name="me.digi.saas.features.readraw.view.ReadRawFragment"
         android:label="PullRawFragment"
-        tools:layout="@layout/fragment_pull_raw" />
+        tools:layout="@layout/fragment_read_raw" />
 
     <fragment
         android:id="@+id/authFragment"
