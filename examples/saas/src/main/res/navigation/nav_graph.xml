@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/read_raw"
-        android:name="me.digi.saas.features.pullraw.view.ReadRawFragment"
+        android:name="me.digi.saas.features.readraw.view.ReadRawFragment"
         android:label="PullRawFragment"
         tools:layout="@layout/fragment_pull_raw" />
 

@@ -1,4 +1,4 @@
-package me.digi.saas.features.pullraw.viewmodel
+package me.digi.saas.features.readraw.viewmodel
 
 import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
