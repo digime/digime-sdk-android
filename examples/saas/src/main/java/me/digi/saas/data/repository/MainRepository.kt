@@ -11,6 +11,7 @@ import me.digi.sdk.saas.serviceentities.Service
 interface MainRepository {
     fun authenticate(activity: Activity, contractType: String) : Single<AuthSession>
     fun getFileList(): Single<DMEFileList>
+    fun getRawFileList(): Single<DMEFileList>
     fun onboardService(activity: Activity, codeValue: String, serviceId: String): Single<Boolean>
     fun getServicesForContract(contractId: String): Single<List<Service>>
     fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse>

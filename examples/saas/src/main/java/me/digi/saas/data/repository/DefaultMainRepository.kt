@@ -4,7 +4,10 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.DMEFileList
+import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.SaasOngoingPushResponse
 import me.digi.sdk.saas.serviceentities.Service
 
 class DefaultMainRepository(
@@ -19,6 +22,8 @@ class DefaultMainRepository(
             .map { it }
 
     override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
+
+    override fun getRawFileList(): Single<DMEFileList> = remoteAccess.getRawFileList()
 
     override fun onboardService(
         activity: Activity,

@@ -28,7 +28,7 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         DMEPullClient(context, configuration)
     }
 
-    val pushClient: DMEPushClient by lazy {
+    private val pushClient: DMEPushClient by lazy {
 
         val configuration = DMEPushConfiguration(
             context.getString(R.string.appId),
@@ -41,6 +41,19 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         DMEPushClient(context, configuration)
     }
 
+    private val readRawClient: DMEPullClient by lazy {
+
+        val configuration = DMEPullConfiguration(
+            context.getString(R.string.appId),
+            context.getString(R.string.readRawContractId),
+            context.getString(R.string.readRawContractPrivateKey)
+        )
+
+        configuration.baseUrl = AppConst.BASE_URL
+
+        DMEPullClient(context, configuration)
+    }
+
     override fun authenticate(activity: Activity, contractType: String): Single<AuthSession> =
         Single.create { emitter ->
             when (contractType) {
@@ -50,6 +63,11 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
                         else emitter.onError(DMEAuthError.General()))
                 }
                 ContractType.push -> pushClient.authorize(activity) { authSession, error ->
+                    error?.let(emitter::onError)
+                        ?: (if (authSession != null) emitter.onSuccess(authSession)
+                        else emitter.onError(DMEAuthError.General()))
+                }
+                ContractType.readRaw -> readRawClient.authorize(activity) { authSession, error ->
                     error?.let(emitter::onError)
                         ?: (if (authSession != null) emitter.onSuccess(authSession)
                         else emitter.onError(DMEAuthError.General()))
@@ -74,9 +92,17 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     override fun getFileList(): Single<DMEFileList> = Single.create { emitter ->
         pullClient.getFileList { fileList: DMEFileList?, error ->
             error?.let(emitter::onError)
-                ?: if (fileList != null) emitter.onSuccess(fileList)
-                else emitter.onError(DMEAuthError.General())
+                ?: (if (fileList != null) emitter.onSuccess(fileList)
+                else emitter.onError(DMEAuthError.General()))
         }
+    }
+
+    override fun getRawFileList(): Single<DMEFileList> = Single.create { emitter ->
+        readRawClient.getFileList { fileList: DMEFileList?, error ->
+        error?.let(emitter::onError)
+            ?: (if (fileList != null) emitter.onSuccess(fileList)
+            else emitter.onError(DMEAuthError.General()))
+    }
     }
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
@@ -86,7 +112,10 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
             }
         }
 
-    override fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse> =
+    override fun pushDataToPostbox(
+        payload: DMEPushPayload,
+        accessToken: String
+    ): Single<SaasOngoingPushResponse> =
         Single.create { emitter ->
             pushClient.pushData(payload, accessToken) { response: SaasOngoingPushResponse?, error ->
                 error?.let(emitter::onError) ?: emitter.onSuccess(response)

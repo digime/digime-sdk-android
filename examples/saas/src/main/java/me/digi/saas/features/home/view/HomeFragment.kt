@@ -22,6 +22,7 @@ class HomeFragment: Fragment(R.layout.fragment_home), View.OnClickListener {
     private fun setupClickListeners() {
         binding.triggerPullContract.setOnClickListener(this)
         binding.triggerPushContract.setOnClickListener(this)
+        binding.triggerReadRawContract.setOnClickListener(this)
     }
 
     private fun navigateToAuthentication(type: String) {
@@ -34,6 +35,7 @@ class HomeFragment: Fragment(R.layout.fragment_home), View.OnClickListener {
         when(view?.id) {
             R.id.triggerPullContract -> navigateToAuthentication(ContractType.pull)
             R.id.triggerPushContract -> navigateToAuthentication(ContractType.push)
+            R.id.triggerReadRawContract -> navigateToAuthentication(ContractType.readRaw)
         }
     }
 }

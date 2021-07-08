@@ -3,7 +3,7 @@ package me.digi.saas.framework.di
 import me.digi.saas.features.auth.viewmodel.AuthViewModel
 import me.digi.saas.features.onboard.viewmodel.OnboardViewModel
 import me.digi.saas.features.pull.viewmodel.PullViewModel
-import me.digi.saas.features.pullraw.viewmodel.PullRawViewModel
+import me.digi.saas.features.pullraw.viewmodel.ReadRawViewModel
 import me.digi.saas.features.push.viewmodel.PushViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
@@ -14,5 +14,5 @@ val viewModelsModule: Module = module {
     viewModel { OnboardViewModel(get(), get()) }
     viewModel { PullViewModel(get()) }
     viewModel { PushViewModel(get()) }
-    viewModel { PullRawViewModel() }
+    viewModel { ReadRawViewModel(get()) }
 }

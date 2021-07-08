@@ -9,9 +9,13 @@ import me.digi.sdk.entities.SaasOngoingPushResponse
 import me.digi.sdk.saas.serviceentities.Service
 
 interface MainRemoteDataAccess {
-    fun authenticate(activity: Activity, contractType: String) : Single<AuthSession>
+    fun authenticate(activity: Activity, contractType: String): Single<AuthSession>
     fun onboardService(activity: Activity, codeValue: String, serviceId: String): Single<Boolean>
     fun getFileList(): Single<DMEFileList>
+    fun getRawFileList(): Single<DMEFileList>
     fun getServicesForContract(contractId: String): Single<List<Service>>
-    fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse>
+    fun pushDataToPostbox(
+        payload: DMEPushPayload,
+        accessToken: String
+    ): Single<SaasOngoingPushResponse>
 }

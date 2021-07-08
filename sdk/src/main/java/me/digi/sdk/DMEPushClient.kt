@@ -34,17 +34,8 @@ class DMEPushClient(
     private val postboxConsentManager: DMEPostboxConsentManager by lazy {
         DMEPostboxConsentManager(sessionManager, configuration.appId)
     }
-    private val authConsentManager: SaasConsentManager by lazy {
-        SaasConsentManager(
-            configuration.baseUrl, type = "authorize"
-        )
-    }
-
     private val authorizeManger: SaasConsentManager by lazy {
-        SaasConsentManager(
-            configuration.baseUrl,
-            "authorize"
-        )
+        SaasConsentManager(configuration.baseUrl, "authorize")
     }
 
     private val disposable: CompositeDisposable = CompositeDisposable()
@@ -112,10 +103,7 @@ class DMEPushClient(
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(
-                                fromActivity,
-                                it
-                            ) { authSession, error ->
+                            authorizeManger.beginConsentAction(fromActivity, it) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -400,7 +388,14 @@ class DMEPushClient(
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = DMEPreauthorizationRequestJWT(
+            val jwt = if(credentials != null)
+                DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier,
+                    credentials.accessToken.value
+                )
+            else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier

@@ -77,8 +77,14 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         when (contractType) {
             ContractType.pull -> goToOnboardingScreen(response?.code!!)
             ContractType.push -> gotToPushScreen(response)
+            ContractType.readRaw -> goToReadRawScreen(response)
             else -> throw IllegalArgumentException("Unknown or empty contract type")
         }
+    }
+
+    private fun goToReadRawScreen(response: AuthSession?) {
+        Timber.d("Data: $response")
+        findNavController().navigate(R.id.authToReadRaw)
     }
 
     private fun gotToPushScreen(response: AuthSession?) {

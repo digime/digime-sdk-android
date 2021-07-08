@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/read_raw"
-        android:name="me.digi.saas.features.pullraw.view.PullRawFragment"
+        android:name="me.digi.saas.features.pullraw.view.ReadRawFragment"
         android:label="PullRawFragment"
         tools:layout="@layout/fragment_pull_raw" />
 
@@ -42,6 +42,11 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             app:popUpTo="@id/authFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/authToReadRaw"
+            app:destination="@id/read_raw"
+            app:popUpTo="@id/authFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -60,7 +65,7 @@
         android:id="@+id/homeFragment"
         android:name="me.digi.saas.features.home.view.HomeFragment"
         android:label="HomeFragment"
-        tools:layout="@layout/fragment_home" >
+        tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/homeToAuth"
             app:destination="@id/authFragment" />

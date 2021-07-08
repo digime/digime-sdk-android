@@ -7,7 +7,7 @@ import java.security.MessageDigest
 import java.util.*
 
 @Suppress("UNUSED")
-internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String): JsonWebToken() {
+internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, val codeVerifier: String, credential: String? = null): JsonWebToken() {
 
     @JwtClaim val clientId = "${appId}_${contractId}"
     @JwtClaim val nonce: String
@@ -18,6 +18,7 @@ internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, 
     @JwtClaim val responseMode = "query"
     @JwtClaim val responseType = "code"
     @JwtClaim val timestamp = Date().time
+    @JwtClaim var accessToken: String? = null
 
     init {
         val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)
@@ -25,6 +26,8 @@ internal class DMEPreauthorizationRequestJWT(appId: String, contractId: String, 
 
         val stateBytes = DMECryptoUtilities.generateSecureRandom(32)
         state = DMEByteTransformer.hexStringFromBytes(stateBytes)
+
+        credential?.let { accessToken = it }
 
         codeChallenge = generateCodeChallenge()
     }

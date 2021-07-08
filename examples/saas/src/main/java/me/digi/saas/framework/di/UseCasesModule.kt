@@ -8,6 +8,7 @@ val useCasesModule: Module = module {
     single<AuthenticateUseCase> { AuthenticateUseCaseImpl(get()) }
     single<OnboardServiceUseCase> { OnboardServiceUseCaseImpl(get()) }
     single<GetSessionDataUseCase> { GetSessionDataUseCaseImpl(get()) }
+    single<GetRawSessionDataUseCase> { GetRawSessionDataUseCaseImpl(get()) }
     single<PushDataUseCase> { PushDataUseCaseImpl(get()) }
     single<GetServicesForContractUseCase> { GetServicesForContractUseCaseImpl(get()) }
 }

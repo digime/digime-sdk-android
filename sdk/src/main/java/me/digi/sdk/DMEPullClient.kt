@@ -27,15 +27,21 @@ import java.security.PrivateKey
 import java.util.*
 import kotlin.math.max
 
-class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(
+class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration) : DMEClient(
     context,
     configuration
 ) {
 
-    private val authConsentManager: SaasConsentManager by lazy { SaasConsentManager(
-        configuration.baseUrl, type = "authorize") }
-    private val onboardConsentManager: SaasConsentManager by lazy { SaasConsentManager(
-        configuration.baseUrl, type = "onboard") }
+    private val authConsentManager: SaasConsentManager by lazy {
+        SaasConsentManager(
+            configuration.baseUrl, type = "authorize"
+        )
+    }
+    private val onboardConsentManager: SaasConsentManager by lazy {
+        SaasConsentManager(
+            configuration.baseUrl, type = "onboard"
+        )
+    }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
@@ -88,7 +94,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = DMEPreauthorizationRequestJWT(
+            val jwt = if (credentials != null)
+                DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier,
+                    credentials.accessToken.value
+                ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
