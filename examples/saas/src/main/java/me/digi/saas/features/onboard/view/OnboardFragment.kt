@@ -29,7 +29,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.fetchServicesForContract(getString(R.string.digime_contract_id))
+        viewModel.fetchServicesForContract(getString(R.string.pullContractId))
 
         onboardingCode = arguments?.getString("code", null)
 
@@ -61,7 +61,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
                     is Resource.Loading -> binding.onboardProgressBar.isVisible = true
                     is Resource.Success -> {
                         binding.onboardProgressBar.isVisible = false
-                        findNavController().navigate(R.id.onboardToHome)
+                        findNavController().navigate(R.id.onboardToRead)
                     }
                     is Resource.Failure -> {
                         binding.onboardProgressBar.isVisible = false
@@ -97,7 +97,9 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.skip -> findNavController().navigate(R.id.onboardToHome)
+            R.id.skip -> {
+                findNavController().navigate(R.id.onboardToRead)
+            }
         }
     }
 }

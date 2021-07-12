@@ -38,7 +38,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun getCachesSession(): Session? =
+    override fun getCachedSession(): Session? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_SESSION_KEY, null)?.let {
                 Gson().fromJson(it, Session::class.java)

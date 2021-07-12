@@ -4,9 +4,6 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.saas.serviceentities.ServicesResponse
-import me.digi.sdk.utilities.jwt.DMEAuthCodeExchangeResponseJWT
-import me.digi.sdk.utilities.jwt.DMEPreAuthorizationResponse
-import me.digi.sdk.utilities.jwt.DMEPreauthorizationResponseJWT
 import me.digi.sdk.utilities.jwt.ExchangeTokenJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -38,7 +35,7 @@ internal interface DMEArgonService {
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.6/permission-access/postbox/{id}")
+    @POST("/v1.4/permission-access/postbox/{id}")
     fun pushData(
         @Header("sessionKey") sessionKey: String,
         @Header("symmetricalKey") symmetricalKey: String,
@@ -66,34 +63,15 @@ internal interface DMEArgonService {
     @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
 
-    @POST("v1.6/oauth/authorize")
-    fun getPreauthorizationCode1(@Header("Authorization") jwt: String): Single<DMEPreAuthorizationResponse>
-
-    @POST("v1.6/oauth/authorize")
-    fun getPreauthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreauthorizationResponseJWT>
-
     @POST("v1.6/oauth/token")
-    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<DMEAuthCodeExchangeResponseJWT>
-
-    @POST("v1.6/oauth/token")
-    fun exchangeAuthToken1(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
 
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(@Header("Authorization") jwt: String): Call<DataQueryResponse>
 
-    /**
-     * Suspend calls
-     */
     @POST("v1.6/oauth/authorize")
-    suspend fun fetchPreAuthorizationCode(@Header("Authorization") jwt: String): DMEPreAuthorizationResponse
+    fun getPreAuthorizationCode(@Header("Authorization") jwt: String): Call<DMEPreAuthResponse>
 
-    @POST("v1.6/oauth/authorize")
-    fun fetchPreAuthorizationCode1(@Header("Authorization") jwt: String): Call<DMEPreAuthResponse?>
-
-    @GET("/v1.6/permission-access/query/{sessionKey}")
-    suspend fun getFileListForServices(@Path("sessionKey") sessionKey: String): DMEFileList
-
-    // TODO: Here for testing purposes?
     @GET("v1.5/discovery/services")
-    suspend fun getServicesForContract(@Header("contractId") contractId: String): ServicesResponse
+    fun getServicesForContract(@Header("contractId") contractId: String): Single<ServicesResponse>
 }

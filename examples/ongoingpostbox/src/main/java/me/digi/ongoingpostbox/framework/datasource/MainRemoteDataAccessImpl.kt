@@ -6,7 +6,7 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.ongoingpostbox.framework.utils.authorizeSaasPostbox
+import me.digi.ongoingpostbox.framework.utils.authorizePostbox
 import me.digi.ongoingpostbox.framework.utils.pushData
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.*
@@ -36,7 +36,7 @@ class MainRemoteDataAccessImpl(
     }
 
     override fun createPostbox(activity: Activity): Single<DMESaasOngoingPostbox?> =
-        client.authorizeSaasPostbox(
+        client.authorizePostbox(
             activity,
             localDataAccess.getCachedPostbox(),
             localDataAccess.getCachedCredential()

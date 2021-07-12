@@ -14,16 +14,7 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
-import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.interapp.managers.DMENativeConsentManager
-import me.digi.sdk.interapp.managers.SaaSOnboardingManager
-import me.digi.sdk.interapp.managers.SaasAuthorizaionManager
-import me.digi.sdk.saas.repositories.DefaultMainRepository
-import me.digi.sdk.saas.repositories.MainRepository
-import me.digi.sdk.saas.serviceentities.Service
-import me.digi.sdk.saas.serviceentities.ServicesResponse
-import me.digi.sdk.saas.utils.Resource
+import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
@@ -36,23 +27,21 @@ import java.security.PrivateKey
 import java.util.*
 import kotlin.math.max
 
-class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration): DMEClient(
+class DMEPullClient(val context: Context, val configuration: DMEPullConfiguration) : DMEClient(
     context,
     configuration
 ) {
 
-    private val nativeConsentManager: DMENativeConsentManager by lazy { DMENativeConsentManager(
-        sessionManager,
-        configuration.appId
-    ) }
-    private val guestConsentManager: SaasAuthorizaionManager by lazy { SaasAuthorizaionManager(
-        configuration.baseUrl
-    ) }
-    private val guestConsentManager2: SaaSOnboardingManager by lazy { SaaSOnboardingManager(
-        configuration.baseUrl
-    ) }
-
-    private val repository: MainRepository by lazy { DefaultMainRepository() }
+    private val authConsentManager: SaasConsentManager by lazy {
+        SaasConsentManager(
+            configuration.baseUrl, type = "authorize"
+        )
+    }
+    private val onboardConsentManager: SaasConsentManager by lazy {
+        SaasConsentManager(
+            configuration.baseUrl, type = "onboard"
+        )
+    }
 
     private var activeFileDownloadHandler: DMEFileContentCompletion? = null
     private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
@@ -93,7 +82,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     private val compositeDisposable = CompositeDisposable()
 
-    fun authorizeOngoingSaasAccess(
+    fun authorizeOngoingAccess(
         fromActivity: Activity,
         scope: DMEDataRequest? = null,
         credentials: DMETokenExchange? = null,
@@ -105,7 +94,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = DMEPreauthorizationRequestJWT(
+            val jwt = if (credentials != null)
+                DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier,
+                    credentials.accessToken.value
+                ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -114,7 +109,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.fetchPreAuthorizationCode1(authHeader)) { response, error ->
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -123,7 +118,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                         response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
 
-                        val result = Pair(response.session, payload)
+                        val result: Pair<Session, Payload> = Pair(response.session, payload)
 
                         emitter.onSuccess(result)
                     }
@@ -138,10 +133,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            guestConsentManager.beginConsentAction(
-                                fromActivity,
-                                it
-                            ) { authSession, error ->
+                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -176,7 +168,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
-                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken1(authHeader))
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
                         .map { exchangeToken: ExchangeTokenJWT ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
@@ -315,11 +307,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     println("Session: ${result.first}")
                     println("Token: ${result.second}")
                     sessionManager.newSession = result.first
-                    completion(result.first, result.second, null)
+                    completion.invoke(result.second, null)
                 },
                 onError = { error ->
                     completion.invoke(
-                        null,
                         null,
                         error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
                             0,
@@ -330,22 +321,96 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .addTo(compositeDisposable)
     }
 
-    suspend fun authenticate(fromActivity: Activity, completion: AuthorizationCompletion) {
-        DMELog.i("Launching user authentication request.")
+    fun getServicesForContractId(contractId: String, completion: DMEServicesForContract) {
+        DMELog.i("Fetching services for contract")
 
-        val response: Resource<Payload> = repository.fetchPreAuthorizationCode(configuration, apiClient, sessionManager)
+        apiClient.argonService.getServicesForContract(contractId)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    completion.invoke(it, null)
+                },
+                onError = {
+                    completion.invoke(null, DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Could not fetch services. Something went wrong"))
+                }
+            )
+    }
 
-        when (response) {
-            is Resource.Success -> {
-                response.data?.preAuthorizationCode?.let {
-                    guestConsentManager.beginConsentAction(fromActivity, it, completion)
+    fun authorize(fromActivity: Activity, completion: AuthorizationCompletion) {
+
+        fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
+
+            val codeVerifier =
+                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+
+            val jwt = DMEPreauthorizationRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                codeVerifier
+            )
+
+            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader = jwt.sign(signingKey).tokenize()
+
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
+                when {
+                    response != null -> {
+                        val chunks: List<String> = response.token.split(".")
+                        val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val payload = Gson().fromJson(payloadJson, Payload::class.java)
+
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
+
+                        val result = Pair(response.session, payload)
+
+                        emitter.onSuccess(result)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(java.lang.IllegalArgumentException())
                 }
             }
-            is Resource.Failure -> completion(
-                null,
-                DMEAuthError.ErrorWithMessage(response.message ?: "Unknown error occurred")
-            )
         }
+
+        fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> =
+            SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
+                it.flatMap { response ->
+                    Single.create { emitter ->
+                        response.second.preAuthorizationCode?.let {
+                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
+                                when {
+                                    error != null -> emitter.onError(error)
+                                    authSession != null -> emitter.onSuccess(
+                                        Pair(response.first, authSession)
+                                    )
+                                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        requestPreAuthCode()
+            .compose(requestConsent(fromActivity))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: Pair<Session, AuthSession> ->
+                    sessionManager.newSession = result.first
+                    completion.invoke(result.second, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                            0,
+                            error.localizedMessage
+                        )
+                    )
+                }
+            )
+            .addTo(compositeDisposable)
     }
 
     fun onboardService(
@@ -355,343 +420,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         completion: OnboardingCompletion
     ) {
         DMELog.i("Launching user onboarding request.")
-
         codeValue?.let {
-            guestConsentManager2.beginOnboardAction(fromActivity, completion, serviceId, it)
+            onboardConsentManager.beginOnboardAction(fromActivity, it, serviceId, completion)
         }
-    }
-
-    suspend fun fetchFileList(completion: DMEFileListCompletion) {
-        DMELog.i("Fetching file list for services")
-
-        val currentSession = sessionManager.currentSession
-        var response: Resource<DMEFileList>? = null
-
-        if (currentSession != null && sessionManager.isSessionValid())
-            response = repository.getFileList(apiClient, currentSession.key)
-        else {
-            DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
-        }
-
-        when (response) {
-            is Resource.Success -> completion.invoke(response.data, null)
-            is Resource.Failure -> completion(null, DMEAuthError.InvalidSession())
-        }
-    }
-
-    suspend fun getServicesForContract(contractId: String, completion: DMEServicesForContractCompletion) {
-        DMELog.i("Fetching services for contract")
-
-        val response: Resource<ServicesResponse> = repository.getServicesForContract(apiClient, contractId)
-
-        when(response) {
-            is Resource.Success -> {
-                DMELog.d("Services list fetched: ${response.data}")
-                val services: List<Service> = response.data?.data?.services!!
-                completion.invoke(services, null)
-            }
-            is Resource.Failure -> {
-                DMELog.e("Error: ${response.message ?: "Could not fetch services. Something went wrong"}")
-                completion.invoke(null, DMEAuthError.ErrorWithMessage(response.message ?: "Could not fetch services. Something went wrong"))
-            }
-        }
-    }
-
-    @JvmOverloads
-    fun authorize(
-        fromActivity: Activity,
-        scope: DMEDataRequest? = null,
-        completion: AuthorizationCompletion
-    ) {
-
-        DMELog.i("Launching user authorize request.")
-
-        val codeVerifier = DMEByteTransformer.hexStringFromBytes(
-            DMECryptoUtilities.generateSecureRandom(
-                64
-            )
-        )
-
-        val jwt = DMEPreauthorizationRequestJWT(
-            configuration.appId,
-            configuration.contractId,
-            codeVerifier
-        )
-
-        val authHeader = jwt.sign(DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)).tokenize()
-
-        apiClient.argonService.getPreauthorizationCode1(authHeader)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = {
-                sessionManager.currentSession = it.session
-                val chunks: List<String> = it.token.split(".")
-                val payload: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                val ooooo = Gson().fromJson(payload, Payload::class.java)
-                //Give consent
-                ooooo.preAuthorizationCode?.let { it1 ->
-                    guestConsentManager.beginConsentAction(fromActivity, it1, completion)
-                }
-            }, onError = {
-                DMELog.e("An error occurred whilst communicating with our servers: ${it.message}")
-                completion(null, DMEAuthError.General())
-            })
-    }
-
-
-    @JvmOverloads
-    fun onboard(
-        fromActivity: Activity,
-        authSession: AuthSession,
-        completion: OnboardingCompletion
-    ) {
-
-        DMELog.i("Launching user onboarding request.")
-
-                authSession.code?.let { it1 ->
-                    guestConsentManager2.beginOnboardAction(fromActivity, completion, "420", it1)
-                }
-
-    }
-
-
-    @JvmOverloads
-    fun authorizeOngoingAccess(
-        fromActivity: Activity,
-        scope: DMEDataRequest? = null,
-        credentials: DMEOAuthToken? = null,
-        completion: DMEOngoingAuthorizationCompletion
-    ) {
-
-        fun requestSession(req: DMESessionRequest) = Single.create<DMESession> {
-            sessionManager.getSession(req) { session, error ->
-                when {
-                    error != null -> it.onError(error)
-                    session != null -> it.onSuccess(session)
-                    else -> it.onError(java.lang.IllegalArgumentException())
-                }
-            }
-        }
-
-        fun requestPreauthorizationCode() = SingleTransformer<DMESession, DMESession> {
-
-            it.flatMap { session ->
-
-                val codeVerifier = DMEByteTransformer.hexStringFromBytes(
-                    DMECryptoUtilities.generateSecureRandom(
-                        64
-                    )
-                )
-                session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
-
-                val jwt = DMEPreauthorizationRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    codeVerifier
-                )
-
-                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-                val authHeader = jwt.sign(signingKey).tokenize()
-
-                apiClient.makeCall(apiClient.argonService.getPreauthorizationCode(authHeader))
-                    .map {
-                        session.apply {
-                            preauthorizationCode = it.preauthorizationCode
-                        }
-                    }
-            }
-        }
-
-        fun requestConsent(fromActivity: Activity) = SingleTransformer<DMESession, DMESession> {
-            it.flatMap { session ->
-                Single.create<DMESession> { emitter ->
-                    when (Pair(DMEAppCommunicator.getSharedInstance().canOpenDMEApp(), false)) {
-                        Pair(
-                            true,
-                            false
-                        ) -> nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
-                            when {
-                                error != null -> emitter.onError(error)
-                                session != null -> emitter.onSuccess(session)
-                                else -> emitter.onError(java.lang.IllegalArgumentException())
-                            }
-                        }
-                        Pair(false, false) -> {
-                            DMEAppCommunicator.getSharedInstance().requestInstallOfDMEApp(
-                                fromActivity
-                            ) {
-                                nativeConsentManager.beginAuthorization(fromActivity) { session, error ->
-                                    when {
-                                        error != null -> emitter.onError(error)
-                                        session != null -> emitter.onSuccess(session)
-                                        else -> emitter.onError(java.lang.IllegalArgumentException())
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        fun exchangeAuthorizationCode() = SingleTransformer<DMESession, Pair<DMESession, DMEOAuthToken>> {
-            it.flatMap { session ->
-
-                val codeVerifier = session.metadata[context.getString(R.string.key_code_verifier)].toString()
-                val jwt = DMEAuthCodeExchangeRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    session.authorizationCode!!,
-                    codeVerifier
-                )
-
-                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-                val authHeader = jwt.sign(signingKey).tokenize()
-
-                apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
-                    .map { token ->
-                        Pair(session, DMEOAuthToken(token))
-                    }
-            }
-        }
-
-        fun triggerDataQuery() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
-            it.flatMap { result ->
-                val jwt = DMETriggerDataQueryRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    result.second.accessToken
-                )
-                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-                val authHeader = jwt.sign(signingKey).tokenize()
-                apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
-                    .map { result }
-            }
-        }
-
-        fun refreshCredentials() = SingleTransformer<Pair<DMESession, DMEOAuthToken>, Pair<DMESession, DMEOAuthToken>> {
-            it.flatMap { result ->
-                val jwt = RefreshCredentialsRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    result.second.refreshToken
-                )
-                val signingKey = DMEKeyTransformer.javaPrivateKeyFromHex(configuration.privateKeyHex)
-                val authHeader = jwt.sign(signingKey).tokenize()
-                apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
-                    .map { result }
-            }
-        }
-
-        // Defined above are a number of 'modules' that are used within the Cyclic CA flow.
-        // These can be combined in various ways as the auth state demands.
-        // See the flow below for details.
-
-        val sessionReq = DMESessionRequest(
-            configuration.appId,
-            configuration.contractId,
-            DMESDKAgent(),
-            "gzip",
-            scope
-        )
-        var activeCredentials = credentials
-
-        // First, we get a session as normal.
-        requestSession(sessionReq)
-
-            // Next, we check if any credentials were supplied (for access restoration).
-            // If not, we kick the user out to digi.me to authorise normally.
-            .let {
-                if (activeCredentials != null) {
-                    it.map { Pair(it, activeCredentials!!) }
-                }
-                else {
-                    it.compose(requestPreauthorizationCode())
-                    .compose(requestConsent(fromActivity))
-                    .compose(exchangeAuthorizationCode())
-                    .doOnSuccess {
-                        activeCredentials = it.second
-                    }
-                }
-            }
-
-            // At this point, we have a session and a set of credentials, so we can trigger
-            // the data query to 'pair' the credentials with the session.
-            .compose(triggerDataQuery())
-            .onErrorResumeNext { error ->
-
-                // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
-                // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
-                // We process the consent flow for ongoing access
-                if (error is DMEAPIError && error.code == "InternalServerError") {
-                    Single.just(nativeConsentManager.sessionManager.currentSession!!)
-                        .compose(requestPreauthorizationCode())
-                        .compose(requestConsent(fromActivity))
-                        .compose(exchangeAuthorizationCode())
-                        .doOnSuccess {
-                            activeCredentials = it.second
-                        }
-
-                    // If an error we encountere a "InvalidToken" error, which means that the ACCESS token
-                    // has expired.
-                } else if (error is DMEAPIError && error.code == "InvalidToken") {
-                    // If so, we take the active session and expired credentials and try to refresh them.
-                    Single.just(
-                        Pair(
-                            nativeConsentManager.sessionManager.currentSession!!,
-                            activeCredentials!!
-                        )
-                    )
-                        .compose(refreshCredentials())
-                        .doOnSuccess { activeCredentials = it.second }
-                        .onErrorResumeNext { error ->
-
-                            // If an error is encountered from this call, we inspect it to see if it's an
-                            // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                            if (error is DMEAPIError && error.code == "InvalidToken") {
-                                // If so, we need to obtain a new set of credentials from the digi.me
-                                // application. Process the flow as before, for ongoing acces, provided
-                                // that auto-recover is enabled. If not, we throw a specific error and
-                                // exit the flow.
-                                if (configuration.autoRecoverExpiredCredentials) {
-                                    Single.just(nativeConsentManager.sessionManager.currentSession!!)
-                                        .compose(requestPreauthorizationCode())
-                                        .compose(requestConsent(fromActivity))
-                                        .compose(exchangeAuthorizationCode())
-                                        .doOnSuccess {
-                                            activeCredentials = it.second
-                                        }
-
-                                        // Once new credentials are obtained, re-trigger the data query.
-                                        // If it fails here, credentials are not the issue. The error
-                                        // will be propagated down to the callback as normal.
-                                        .compose(triggerDataQuery())
-                                }
-                                else {
-                                    Single.error(DMEAuthError.TokenExpired())
-                                }
-                            }
-                            else {
-                                Single.error(error)
-                            }
-                        }
-                }
-                else {
-                    Single.error(error)
-                }
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ result ->
-                completion(result.first, result.second, null)
-            }, { error ->
-                completion(null, null, error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
-                    0,
-                    error.localizedMessage
-                ))
-            })
-            .addTo(compositeDisposable)
     }
 
     fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEFileListCompletion) {

@@ -163,7 +163,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
             val postbox: DMEOngoingPostboxData = localAccess.getCachedPostbox()!!
             val credentials: DMETokenExchange = localAccess.getCachedCredential()!!
-            val session: Session = localAccess.getCachesSession()!!
+            val session: Session = localAccess.getCachedSession()!!
 
             val saasPostbox = DMEPostbox().copy(
                 key = session.key,

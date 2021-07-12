@@ -3,20 +3,48 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph.xml"
-    app:startDestination="@id/authFragment">
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/read"
+        android:name="me.digi.saas.features.pull.view.PullFragment"
+        android:label="PullFragment"
+        tools:layout="@layout/fragment_pull" />
+
+    <fragment
+        android:id="@+id/push"
+        android:name="me.digi.saas.features.push.view.PushFragment"
+        android:label="PushFragment"
+        tools:layout="@layout/fragment_push" />
+
+    <fragment
+        android:id="@+id/read_raw"
+        android:name="me.digi.saas.features.readraw.view.ReadRawFragment"
+        android:label="PullRawFragment"
+        tools:layout="@layout/fragment_read_raw" />
 
     <fragment
         android:id="@+id/authFragment"
         android:name="me.digi.saas.features.auth.view.AuthFragment"
-        android:label="fragment_auth"
+        android:label="AuthFragment"
         tools:layout="@layout/fragment_auth">
         <action
             android:id="@+id/authToOnboard"
             app:destination="@id/onboardFragment"
+            app:popUpTo="@id/authFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/authToPush"
+            app:destination="@id/push"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            app:popUpTo="@id/authFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/authToReadRaw"
+            app:destination="@id/read_raw"
             app:popUpTo="@id/authFragment"
             app:popUpToInclusive="true" />
     </fragment>
@@ -25,14 +53,10 @@
         android:id="@+id/onboardFragment"
         android:name="me.digi.saas.features.onboard.view.OnboardFragment"
         android:label="OnboardFragment"
-        tools:layout="@layout/fragment_onboard" >
+        tools:layout="@layout/fragment_onboard">
         <action
-            android:id="@+id/onboardToHome"
-            app:destination="@id/homeFragment"
-            app:enterAnim="@anim/nav_default_enter_anim"
-            app:exitAnim="@anim/nav_default_exit_anim"
-            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            android:id="@+id/onboardToRead"
+            app:destination="@id/read"
             app:popUpTo="@id/onboardFragment"
             app:popUpToInclusive="true" />
     </fragment>
@@ -41,5 +65,9 @@
         android:id="@+id/homeFragment"
         android:name="me.digi.saas.features.home.view.HomeFragment"
         android:label="HomeFragment"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/homeToAuth"
+            app:destination="@id/authFragment" />
+    </fragment>
 </navigation>

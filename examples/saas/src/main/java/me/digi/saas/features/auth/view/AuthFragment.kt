@@ -7,10 +7,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
+import coil.load
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentAuthBinding
 import me.digi.saas.features.auth.viewmodel.AuthViewModel
+import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.AuthSession
@@ -21,17 +23,31 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     private val viewModel: AuthViewModel by viewModel()
     private val binding: FragmentAuthBinding by viewBinding()
+    private var contractType: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        contractType = arguments?.getString(ContractType.key, null)
+
+        setupViews()
         setupClickListeners()
         subscribeToObservers()
     }
 
+    private fun setupViews() {
+        binding.tvAuthDescription.text = getString(R.string.labelAuthDisclaimer, contractType)
+
+        when(contractType) {
+            ContractType.pull -> binding.ivContractType.load(R.drawable.ic_download) { crossfade(true) }
+            ContractType.push -> binding.ivContractType.load(R.drawable.ic_upload) { crossfade(true) }
+            ContractType.readRaw -> binding.ivContractType.load(R.drawable.ic_rraw) { crossfade(true) }
+        }
+    }
+
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.authStatus.collectLatest { resource: Resource<AuthSession> ->
+            viewModel.state.collectLatest { resource: Resource<AuthSession> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -43,10 +59,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
                     is Resource.Success -> {
                         binding.authProgressBar.isVisible = false
                         binding.authenticate.isEnabled = true
-
-                        // TODO: Save @AuthSession locally in cache?
-                        // TODO: Navigate to home screen
-                        goToOnboardingScreen(resource.data?.code!!)
+                        handleAuthResponse(resource.data)
                     }
                     is Resource.Failure -> {
                         binding.authProgressBar.isVisible = false
@@ -57,6 +70,31 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
                 }
             }
         }
+    }
+
+    private fun handleAuthResponse(response: AuthSession?) {
+        Timber.d("Contract type: $contractType")
+        when (contractType) {
+            ContractType.pull -> goToOnboardingScreen(response?.code!!)
+            ContractType.push -> gotToPushScreen(response)
+            ContractType.readRaw -> goToReadRawScreen(response)
+            else -> throw IllegalArgumentException("Unknown or empty contract type")
+        }
+    }
+
+    private fun goToReadRawScreen(response: AuthSession?) {
+        Timber.d("Data: $response")
+        findNavController().navigate(R.id.authToReadRaw)
+    }
+
+    private fun gotToPushScreen(response: AuthSession?) {
+        val bundle = Bundle()
+        bundle.putString("postboxId", response?.postboxId)
+        bundle.putString("publicKey", response?.publicKey)
+        bundle.putString("sessionKey", response?.sessionKey)
+        bundle.putString("accessToken", response?.accessToken)
+
+        findNavController().navigate(R.id.authToPush, bundle)
     }
 
     private fun goToOnboardingScreen(code: String) {
@@ -71,7 +109,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.authenticate -> viewModel.authenticate(requireActivity())
+            R.id.authenticate -> contractType?.let { viewModel.authenticate(requireActivity(), it) }
         }
     }
 }

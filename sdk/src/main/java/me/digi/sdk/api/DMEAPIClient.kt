@@ -142,6 +142,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
             }
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
+                println("Error: ${error.localizedMessage}")
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
                 val genericAPIError = DMEAPIError.UNREACHABLE()
                 completion(null, genericAPIError)
