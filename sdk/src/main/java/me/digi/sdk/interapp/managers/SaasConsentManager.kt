@@ -23,17 +23,17 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
 
     private var authorizationCallbackHandler: AuthorizationCompletion? = null
         set(value) {
-            if (field != null && value != null) {
-                field?.invoke(null, DMEAuthError.Cancelled())
-            }
+            if (field != null && value != null)
+                field?.invoke(null, DMEAuthError.Cancelled)
+
             field = value
         }
 
     private var onboardingCallbackHandler: OnboardingCompletion? = null
         set(value) {
-            if (field != null && value != null) {
-                field?.invoke(DMEAuthError.Cancelled())
-            }
+            if (field != null && value != null)
+                field?.invoke(DMEAuthError.Cancelled)
+
             field = value
         }
 
@@ -90,24 +90,34 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
 
         val params = intent.extras?.toMap() ?: emptyMap()
 
-        val code = params["code"] as? String
-        val state = params["state"] as? String
-        val postboxId = params["postboxId"] as? String
-        val publicKey = params["publicKey"] as? String
-        val success = params["success"] as? String
-        val errorCode = params["error"] as? String
-        val result = params["result"] as? String
+        val code = params[ctx.getString(R.string.key_code)] as? String
+        val state = params[ctx.getString(R.string.key_state)] as? String
+        val postboxId = params[ctx.getString(R.string.key_s_postbox_id)] as? String
+        val publicKey = params[ctx.getString(R.string.key_s_public_key)] as? String
+        val errorCode = params[ctx.getString(R.string.key_error)] as? String
 
         var error: DMEAuthError? = null
 
-        when (result) {
-            ctx.getString(R.string.const_result_error) -> {
-                DMELog.e("There was a problem requesting consent.")
-                error = DMEAuthError.General()
+        when(errorCode) {
+           ctx.getString(R.string.error_check_fail) -> {
+               DMELog.e("Parameters passed in didn't pass initial checks.")
+               error = DMEAuthError.InitCheck
+           }
+            ctx.getString(R.string.error_invalid_code) -> {
+                DMELog.e("Code passed in was not valid.")
+                error = DMEAuthError.InvalidCode
             }
-            ctx.getString(R.string.const_result_cancel) -> {
+            ctx.getString(R.string.error_onboard) -> {
+                DMELog.e("There was an error when trying to onboard the given service.")
+                error = DMEAuthError.Onboard
+            }
+            ctx.getString(R.string.error_user_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                error = DMEAuthError.Cancelled()
+                error = DMEAuthError.Cancelled
+            }
+            ctx.getString(R.string.error_server) -> {
+                DMELog.e("An error is received from a server call.")
+                error = DMEAuthError.Server
             }
             else -> {
                 DMELog.i("User accepted consent request.")

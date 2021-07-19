@@ -17,7 +17,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
     private var pendingPostboxCallbackHandler: DMEPostboxCreationCompletion? = null
         set(value) {
             if (field != null && value != null) {
-                field?.invoke(null, DMEAuthError.Cancelled())
+                field?.invoke(null, DMEAuthError.Cancelled)
             }
             field = value
         }
@@ -84,7 +84,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             }
             ctx.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                DMEAuthError.Cancelled()
+                DMEAuthError.Cancelled
             }
             else -> {
                 DMELog.i("User accepted consent request; postbox created.")

@@ -22,8 +22,11 @@ sealed class DMESDKError(override val message: String) : DMEError(message) {
 sealed class DMEAuthError(override val message: String) : DMEError(message) {
 
     class General : DMEAuthError("Unknown authorization error has occurred.")
-    class Cancelled : DMEAuthError("User cancelled authorization.")
-    class InvalidSession : DMEAuthError("The session key is invalid or has expired.")
+    object InitCheck: DMEAuthError("Parameters passed in didn't pass initial checks.")
+    object InvalidCode: DMEAuthError("Code passed in was not valid.")
+    object Onboard: DMEAuthError("There was an error when trying to onboard the given service.")
+    object Server: DMEAuthError("An error is received from a server call.")
+    object Cancelled : DMEAuthError("User cancelled authorization.")    class InvalidSession : DMEAuthError("The session key is invalid or has expired.")
     class InvalidSessionKey : DMEAuthError("digi.me app returned an invalid session key.")
     class TokenExpired : DMEAuthError("The refresh token supplied has expired. As `autoRecoverExpiredCredentials` is turned off, you will need to repeat authorization without credentials to recover.")
     class ErrorWithMessage(message: String): DMEAuthError(message)
@@ -66,5 +69,6 @@ sealed class DMEAPIError(
 
     class UNMAPPED(argonCode: String? = "", argonMessage: String = "", argonReference: String? = ""): DMEAPIError(argonCode, argonMessage, argonReference)
     class GENERIC(httpStatusCode: Int? = 0, message: String? = ""): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
+    class GENERICMESSAGE(message: String? = ""): DMEAPIError(message = "Error: $message")
     class UNREACHABLE : DMEAPIError(message = "Couldn't reach the digi.me API - please check your network connection.")
 }

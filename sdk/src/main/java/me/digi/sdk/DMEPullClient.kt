@@ -134,15 +134,14 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let { code ->
-                            authConsentManager.beginConsentAction(fromActivity, code) { authSession, error ->
+                            authConsentManager.beginConsentAction(
+                                fromActivity,
+                                code
+                            ) { authSession, error ->
                                 when {
+                                    authSession != null ->
+                                        emitter.onSuccess(Pair(response.first, authSession))
                                     error != null -> emitter.onError(error)
-                                    authSession != null -> emitter.onSuccess(
-                                        Pair(
-                                            response.first,
-                                            authSession
-                                        )
-                                    )
                                     else -> emitter.onError(java.lang.IllegalArgumentException())
                                 }
                             }
@@ -314,10 +313,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
-                            0,
-                            error.localizedMessage
-                        ))
+                        error.let { it as? DMEError }
+                            ?: DMEAPIError.GENERICMESSAGE("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)
@@ -384,12 +381,20 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
                     Single.create { emitter ->
-                        response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
+                        response.second.preAuthorizationCode?.let { code ->
+                            authConsentManager.beginConsentAction(
+                                fromActivity,
+                                code
+                            ) { authSession, error ->
                                 when {
-                                    authSession != null -> emitter.onSuccess(Pair(response.first, authSession))
+                                    authSession != null -> emitter.onSuccess(
+                                        Pair(
+                                            response.first,
+                                            authSession
+                                        )
+                                    )
                                     error != null -> emitter.onError(error)
-                                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                                    else -> emitter.onError(IllegalArgumentException())
                                 }
                             }
                         }
@@ -420,7 +425,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                             val chunks: List<String> = exchangeToken.token.split(".")
                             val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange: DMETokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+                            val tokenExchange: DMETokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
                             Triple(response.first, response.second, tokenExchange)
                         }
@@ -447,11 +453,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
-                            0,
-                            error.localizedMessage
-                        )
-                    )
+                        error.let { it as? DMEError }
+                            ?: DMEAPIError.GENERICMESSAGE("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)

@@ -31,33 +31,22 @@ class GuestConsentBrowserActivity : Activity() {
     }
 
     private fun handleSaasCallback(intentUri: Uri) {
-        val state = intentUri.getQueryParameter("state")
-        val code = intentUri.getQueryParameter("code")
-        val postboxId = intentUri.getQueryParameter("postboxId")
-        val publicKey = intentUri.getQueryParameter("publicKey")
-        val success = intentUri.getQueryParameter("success")
-        val error = intentUri.getQueryParameter("errorCode")
+        val state = intentUri.getQueryParameter(getString(R.string.key_state))
+        val code = intentUri.getQueryParameter(getString(R.string.key_code))
+        val postboxId = intentUri.getQueryParameter(getString(R.string.key_s_postbox_id))
+        val publicKey = intentUri.getQueryParameter(getString(R.string.key_s_public_key))
+        val success: String? = intentUri.getQueryParameter(getString(R.string.key_success))
+        val error = intentUri.getQueryParameter(getString(R.string.key_error))
 
-        success?.let {
-            if(it == "true") {
-                intent?.putExtra(
-                    getString(R.string.key_result),
-                    getString(R.string.const_result_success)
-                )
-                intent?.putExtra("success", success)
-                intent?.putExtra("error", error)
-                intent?.putExtra("code", code)
-                intent?.putExtra("state", state)
-                intent?.putExtra("postboxId", postboxId)
-                intent?.putExtra("publicKey", publicKey)
-                setResult(RESULT_OK, intent)
-            } else {
-                intent?.putExtra(
-                    getString(R.string.key_result),
-                    getString(R.string.const_result_cancel)
-                )
-                setResult(RESULT_CANCELED, intent)
-            }
+        if(success.toBoolean()) {
+            intent?.putExtra(getString(R.string.key_code), code)
+            intent?.putExtra(getString(R.string.key_state), state)
+            intent?.putExtra(getString(R.string.key_s_postbox_id), postboxId)
+            intent?.putExtra(getString(R.string.key_s_public_key), publicKey)
+            setResult(RESULT_OK, intent)
+        } else {
+            intent?.putExtra(getString(R.string.key_error), error)
+            setResult(RESULT_CANCELED, intent)
         }
     }
 

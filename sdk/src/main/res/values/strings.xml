@@ -17,6 +17,12 @@
     <string name="key_authorization_code">authorizationCode</string>
     <string name="key_preauthorization_code">preauthorizationCode</string>
     <string name="key_code_verifier">codeVerifier</string>
+    <string name="key_success">success</string>
+    <string name="key_error">errorCode</string>
+    <string name="key_code">code</string>
+    <string name="key_state">state</string>
+    <string name="key_s_postbox_id">postboxId</string>
+    <string name="key_s_public_key">publicKey</string>
 
     <string name="key_timing_get_all_files">timingGetAllFiles</string>
     <string name="key_timing_get_file">timingGetFile</string>
@@ -52,6 +58,13 @@
     <string name="const_result_error">ERROR</string>
     <string name="const_result_cancel">CANCEL</string>
     <string name="const_result_data_ready">DATA_READY</string>
+
+    <!-- Error messages -->
+    <string name="error_server">SERVER_ERROR</string>
+    <string name="error_invalid_code">INVALID_CODE</string>
+    <string name="error_onboard">ONBOARD_ERROR</string>
+    <string name="error_user_cancel">USER_CANCEL</string>
+    <string name="error_check_fail">INITIALIZE_CHECK_FAIL</string>
 
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>

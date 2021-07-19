@@ -22,7 +22,7 @@ class DMEOngoingPostboxConsentManager(
     private var pendingOngoingPostboxCallbackHandler: DMEPostboxAuthCompletion? = null
         set(value) {
             if (field != null && value != null)
-                field?.invoke(null, null, DMEAuthError.Cancelled())
+                field?.invoke(null, null, DMEAuthError.Cancelled)
 
             field = value
         }
@@ -162,7 +162,7 @@ class DMEOngoingPostboxConsentManager(
             }
             context.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                DMEAuthError.Cancelled()
+                DMEAuthError.Cancelled
             }
             else -> {
                 DMELog.i("User accepted consent request.")

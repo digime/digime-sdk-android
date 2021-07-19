@@ -102,13 +102,15 @@ class DMEPushClient(
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
                     Single.create { emitter ->
-                        response.second.preAuthorizationCode?.let {
-                            authorizeManger.beginConsentAction(fromActivity, it) { authSession, error ->
+                        response.second.preAuthorizationCode?.let { code ->
+                            authorizeManger.beginConsentAction(
+                                fromActivity,
+                                code
+                            ) { authSession, error ->
                                 when {
+                                    authSession != null ->
+                                        emitter.onSuccess(Pair(response.first, authSession))
                                     error != null -> emitter.onError(error)
-                                    authSession != null -> emitter.onSuccess(
-                                        Pair(response.first, authSession)
-                                    )
                                     else -> emitter.onError(IllegalArgumentException())
                                 }
                             }
@@ -224,7 +226,11 @@ class DMEPushClient(
         }
     }
 
-    fun pushData(postboxFile: DMEPushPayload?, accessToken: String, completion: DMEOngoingPostboxPushCompletion) {
+    fun pushData(
+        postboxFile: DMEPushPayload?,
+        accessToken: String,
+        completion: DMEOngoingPostboxPushCompletion
+    ) {
 
         val postbox = postboxFile as DMEPushPayload
 
@@ -388,7 +394,7 @@ class DMEPushClient(
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = if(credentials != null)
+            val jwt = if (credentials != null)
                 DMEPreauthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
