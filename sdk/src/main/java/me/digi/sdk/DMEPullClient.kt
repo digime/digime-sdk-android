@@ -134,7 +134,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let { code ->
-                            authConsentManager.beginConsentAction(fromActivity, code, "16") { authSession, error ->
+                            authConsentManager.beginConsentAction(fromActivity, code) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
