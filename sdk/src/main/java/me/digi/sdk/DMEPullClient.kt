@@ -116,7 +116,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
+                            codeVerifier
 
                         val result: Pair<Session, Payload> = Pair(response.session, payload)
 
@@ -133,7 +134,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
+                            authConsentManager.beginConsentAction(
+                                fromActivity,
+                                it
+                            ) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -172,8 +176,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         .map { exchangeToken: ExchangeTokenJWT ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
-                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+                            val payloadJson: String =
+                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
                             Pair(response.first, tokenExchange)
                         }
@@ -219,8 +225,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         .map { exchangeToken ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
-                            val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+                            val payloadJson: String =
+                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange =
+                                Gson().fromJson(payloadJson, DMETokenExchange::class.java)
 
                             Pair(result.first, tokenExchange)
                         }
@@ -266,8 +274,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                     // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
                     // has expired.
-                }
-                else if (error is DMEAPIError && error.code == "InvalidToken") {
+                } else if (error is DMEAPIError && error.code == "InvalidToken") {
                     // If so, we take the active session and expired credentials and try to refresh them.
 
                     requestPreAuthCode()
@@ -293,12 +300,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                                         // If it fails here, credentials are not the issue. The error
                                         // will be propagated down to the callback as normal.
                                         .compose(triggerDataQuery())
-                                }
-                                else Single.error(DMEAuthError.TokenExpired())
+                                } else Single.error(DMEAuthError.TokenExpired())
                             } else Single.error(error)
                         }
-                }
-                else Single.error(error)
+                } else Single.error(error)
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -332,7 +337,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion.invoke(it, null)
                 },
                 onError = {
-                    completion.invoke(null, DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Could not fetch services. Something went wrong"))
+                    completion.invoke(
+                        null,
+                        DMEAuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Could not fetch services. Something went wrong"
+                        )
+                    )
                 }
             )
     }
@@ -360,7 +370,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
                         val payload = Gson().fromJson(payloadJson, Payload::class.java)
 
-                        response.session.metadata[context.getString(R.string.key_code_verifier)] = codeVerifier
+                        response.session.metadata[context.getString(R.string.key_code_verifier)] =
+                            codeVerifier
 
                         val result = Pair(response.session, payload)
 
@@ -377,7 +388,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
+                            authConsentManager.beginConsentAction(
+                                fromActivity,
+                                it
+                            ) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -416,16 +430,46 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     fun onboardService(
         fromActivity: Activity,
         serviceId: String,
-        codeValue: String?,
+        accessToken: String,
         completion: OnboardingCompletion
     ) {
-        DMELog.i("Launching user onboarding request.")
-        codeValue?.let {
-            onboardConsentManager.beginOnboardAction(fromActivity, it, serviceId, completion)
+        DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
+
+        val jwt = DMEReferenceCodeRequestJWT(
+            configuration.appId,
+            configuration.contractId,
+            accessToken
+        )
+
+        val signingKey: PrivateKey =
+            DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
+        apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
+            error?.let { completion.invoke(it) }
+                ?: tokenReference?.let {
+                    val chunks: List<String> = tokenReference.token.split(".")
+                    val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                    val result: TokenReferencePayload =
+                        Gson().fromJson(payloadJson, TokenReferencePayload::class.java)
+
+                    result.referenceCode?.let {
+                        DMELog.i(context.getString(R.string.labelUserOnboardingRequest))
+                        onboardConsentManager.beginOnboardAction(
+                            fromActivity,
+                            it,
+                            serviceId,
+                            completion
+                        )
+                    }
+                }
         }
     }
 
-    fun getSessionData(downloadHandler: DMEFileContentCompletion, completion: DMEFileListCompletion) {
+    fun getSessionData(
+        downloadHandler: DMEFileContentCompletion,
+        completion: DMEFileListCompletion
+    ) {
 
         DMELog.i("Starting fetch of session data.")
 
@@ -473,10 +517,16 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                     val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
 
-                    val contentBytes: ByteArray = DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+                    val contentBytes: ByteArray =
+                        DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
 
-                    val compression: String = try { payloadHeader.compression } catch(e: Throwable) { DMECompressor.COMPRESSION_NONE }
-                    val decompressedContentBytes: ByteArray = DMECompressor.decompressData(contentBytes, compression)
+                    val compression: String = try {
+                        payloadHeader.compression
+                    } catch (e: Throwable) {
+                        DMECompressor.COMPRESSION_NONE
+                    }
+                    val decompressedContentBytes: ByteArray =
+                        DMECompressor.decompressData(contentBytes, compression)
 
                     DMEFile().copy(fileContent = String(decompressedContentBytes))
                 }
@@ -487,12 +537,13 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     onError = {
                         completion.invoke(
                             null,
-                            DMEAuthError.ErrorWithMessage(it.localizedMessage ?: "Unknown error occurred")
+                            DMEAuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
                         )
                     }
                 )
-        }
-        else {
+        } else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
@@ -525,8 +576,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
         if (currentSession != null && sessionManager.isSessionValid()) {
             apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
-        }
-        else {
+        } else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
@@ -541,7 +591,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
             DMELog.i("Starting account fetch.")
 
-            apiClient.makeCall(apiClient.argonService.getFile(currentSession.key, "accounts.json")) { file, error ->
+            apiClient.makeCall(
+                apiClient.argonService.getFile(
+                    currentSession.key,
+                    "accounts.json"
+                )
+            ) { file, error ->
 
                 if (file == null) {
                     DMELog.e("Failed to fetch accounts. Error: ${error?.message}")
@@ -554,12 +609,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 //                DMELog.i("Successfully fetched accounts: ${accounts?.map { it.id }}")
 //                completion(accounts, error)
             }
-        }
-        else {
+        } else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, DMEAuthError.InvalidSession())
         }
-        
+
     }
 
     private fun scheduleNextPoll(immediately: Boolean = false) {

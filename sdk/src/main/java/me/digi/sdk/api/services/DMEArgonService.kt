@@ -74,4 +74,7 @@ internal interface DMEArgonService {
 
     @GET("v1.5/discovery/services")
     fun getServicesForContract(@Header("contractId") contractId: String): Single<ServicesResponse>
+
+    @POST("v1.6/oauth/token/reference")
+    fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
 }

@@ -72,4 +72,9 @@
     <string name="saas_successCallback">successCallback</string>
     <string name="saas_service">service</string>
 
+    <!-- Pull client -->
+    <string name="labelReferenceOnboardingCode">Fetching reference code for onboarding</string>
+    <string name="labelUserOnboardingRequest">Launching user onboarding request</string>
+    <string name="labelUnknownError">Unknown error occurred</string>
+
 </resources>

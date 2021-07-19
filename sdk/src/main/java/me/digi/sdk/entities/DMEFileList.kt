@@ -51,8 +51,8 @@ private class DMEFileListDeserializer : JsonDeserializer<DMEFileList> {
             val syncState = DMEFileList.SyncStatus(syncStateRaw)
 
             val accountsRaw = status.getAsJsonObject("details")
-            val accountIds = accountsRaw.keySet()
-            val accounts = accountIds.map { accountId ->
+            val accountIds = accountsRaw?.keySet()
+            val accounts = accountIds?.map { accountId ->
                 val accountRaw = accountsRaw.getAsJsonObject(accountId)
                 val accSyncStateRaw = accountRaw.getAsJsonPrimitive("state").asString
                 val accSyncState = DMEFileList.SyncStatus(accSyncStateRaw)
