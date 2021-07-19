@@ -4,7 +4,7 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.AuthorizeResponse
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.SaasOngoingPushResponse
@@ -15,11 +15,9 @@ class DefaultMainRepository(
     private val localAccess: MainLocalDataAccess
 ) : MainRepository {
 
-    override fun authenticate(activity: Activity, contractType: String): Single<AuthSession> =
+    override fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse> =
         remoteAccess.authenticate(activity, contractType)
-            .map { it }
             .compose(localAccess.cacheAuthSessionCredentials())
-            .map { it }
 
     override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
 
@@ -27,9 +25,9 @@ class DefaultMainRepository(
 
     override fun onboardService(
         activity: Activity,
-        codeValue: String,
-        serviceId: String
-    ): Single<Boolean> = remoteAccess.onboardService(activity, codeValue, serviceId)
+        serviceId: String,
+        accessToken: String
+    ): Single<Boolean> = remoteAccess.onboardService(activity, serviceId, accessToken)
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         remoteAccess.getServicesForContract(contractId)

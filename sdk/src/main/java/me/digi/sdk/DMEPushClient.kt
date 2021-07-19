@@ -62,7 +62,7 @@ class DMEPushClient(
         }
     }
 
-    fun authorize(fromActivity: Activity, completion: AuthorizationCompletion) {
+    fun authorize(fromActivity: Activity, completion: AuthCompletion) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
@@ -165,7 +165,7 @@ class DMEPushClient(
                     println("Session: ${result.session}")
                     println("Postbox: ${result.postboxData}")
                     println("Token: ${result.authToken}")
-                    val authSession = AuthSession().copy(
+                    val authSession = AuthorizeResponse().copy(
                         postboxId = result.postboxData?.postboxId,
                         publicKey = result.postboxData?.publicKey,
                         sessionKey = result.session?.key,
@@ -602,7 +602,6 @@ class DMEPushClient(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
-                    println("Data: $it")
                     sessionManager.newSession = it.session
                     completion.invoke(it, null)
                 },

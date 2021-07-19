@@ -9,12 +9,14 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
+import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.databinding.FragmentOnboardBinding
 import me.digi.saas.features.onboard.adapter.ServicesAdapter
 import me.digi.saas.features.onboard.viewmodel.OnboardViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.saas.serviceentities.Service
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -22,16 +24,13 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
 
     private val viewModel: OnboardViewModel by viewModel()
     private val binding: FragmentOnboardBinding by viewBinding()
+    private val localAccess: MainLocalDataAccess by inject()
     private val serviceAdapter: ServicesAdapter by lazy { ServicesAdapter() }
-
-    private var onboardingCode: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.fetchServicesForContract(getString(R.string.pullContractId))
-
-        onboardingCode = arguments?.getString("code", null)
 
         setupAdapter()
         subscribeToObservers()
@@ -44,11 +43,15 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
 
     private fun setupAdapter() {
         binding.serviceList.adapter = serviceAdapter
+        serviceAdapter.setOnServiceClickListener(::onboardService)
+    }
 
-        serviceAdapter.setOnServiceClickListener { service ->
-            onboardingCode?.let { viewModel.onboard(requireActivity(), service.id.toString(), it) }
-                ?: snackBar("Code is no longer valid! Try again")
-        }
+    private fun onboardService(service: Service) {
+        localAccess
+            .getCachedCredential()
+            ?.accessToken
+            ?.value
+            ?.let { viewModel.onboard(requireActivity(), service.id.toString(), it) }
     }
 
     private fun subscribeToObservers() {
@@ -97,9 +100,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.skip -> {
-                findNavController().navigate(R.id.onboardToRead)
-            }
+            R.id.skip -> findNavController().navigate(R.id.onboardToRead)
         }
     }
 }

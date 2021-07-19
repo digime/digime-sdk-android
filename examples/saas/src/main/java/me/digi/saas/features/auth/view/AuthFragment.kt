@@ -15,7 +15,7 @@ import me.digi.saas.features.auth.viewmodel.AuthViewModel
 import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.AuthorizeResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -47,7 +47,7 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { resource: Resource<AuthSession> ->
+            viewModel.state.collectLatest { resource: Resource<AuthorizeResponse> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -72,22 +72,17 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         }
     }
 
-    private fun handleAuthResponse(response: AuthSession?) {
-        Timber.d("Contract type: $contractType")
+    private fun handleAuthResponse(response: AuthorizeResponse?) {
+        Timber.d("Contract type: $contractType - $response")
         when (contractType) {
-            ContractType.pull -> goToOnboardingScreen(response?.code!!)
+            ContractType.pull -> findNavController().navigate(R.id.authToOnboard)
             ContractType.push -> gotToPushScreen(response)
-            ContractType.readRaw -> goToReadRawScreen(response)
+            ContractType.readRaw -> findNavController().navigate(R.id.authToReadRaw)
             else -> throw IllegalArgumentException("Unknown or empty contract type")
         }
     }
 
-    private fun goToReadRawScreen(response: AuthSession?) {
-        Timber.d("Data: $response")
-        findNavController().navigate(R.id.authToReadRaw)
-    }
-
-    private fun gotToPushScreen(response: AuthSession?) {
+    private fun gotToPushScreen(response: AuthorizeResponse?) {
         val bundle = Bundle()
         bundle.putString("postboxId", response?.postboxId)
         bundle.putString("publicKey", response?.publicKey)
@@ -95,12 +90,6 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         bundle.putString("accessToken", response?.accessToken)
 
         findNavController().navigate(R.id.authToPush, bundle)
-    }
-
-    private fun goToOnboardingScreen(code: String) {
-        val bundle = Bundle()
-        bundle.putString("code", code)
-        findNavController().navigate(R.id.authToOnboard, bundle)
     }
 
     private fun setupClickListeners() {

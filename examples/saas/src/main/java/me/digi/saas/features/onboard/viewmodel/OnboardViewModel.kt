@@ -14,7 +14,10 @@ import me.digi.saas.usecases.OnboardServiceUseCase
 import me.digi.saas.utils.Resource
 import me.digi.sdk.saas.serviceentities.Service
 
-class OnboardViewModel(private val onboardService: OnboardServiceUseCase, private val getServicesForContract: GetServicesForContractUseCase) : ViewModel() {
+class OnboardViewModel(
+    private val onboardService: OnboardServiceUseCase,
+    private val getServicesForContract: GetServicesForContractUseCase
+) : ViewModel() {
 
     private val _onboardStatus: MutableStateFlow<Resource<Boolean>> =
         MutableStateFlow(Resource.Idle())
@@ -26,16 +29,20 @@ class OnboardViewModel(private val onboardService: OnboardServiceUseCase, privat
     val servicesStatus: StateFlow<Resource<List<Service>>>
         get() = _servicesStatus
 
-    fun onboard(activity: Activity, onboardingCode: String, codeValue: String) {
+    fun onboard(
+        activity: Activity,
+        serviceId: String,
+        accessToken: String
+    ) {
         _onboardStatus.value = Resource.Loading()
 
         onboardService
-            .invoke(activity, onboardingCode, codeValue)
+            .invoke(activity, serviceId, accessToken)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { _onboardStatus.value = Resource.Success(true) },
-                onError = { error -> _onboardStatus.value = Resource.Failure(error.localizedMessage) }
+                onError = { _onboardStatus.value = Resource.Failure(it.localizedMessage) }
             )
     }
 

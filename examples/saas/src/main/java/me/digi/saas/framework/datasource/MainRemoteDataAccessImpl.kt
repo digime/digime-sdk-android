@@ -54,22 +54,22 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         DMEPullClient(context, configuration)
     }
 
-    override fun authenticate(activity: Activity, contractType: String): Single<AuthSession> =
+    override fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> pullClient.authorize(activity) { authSession, error ->
+                ContractType.pull -> pullClient.authorize(activity) { authResponse, error ->
                     error?.let(emitter::onError)
-                        ?: (if (authSession != null) emitter.onSuccess(authSession)
+                        ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
-                ContractType.push -> pushClient.authorize(activity) { authSession, error ->
+                ContractType.push -> pushClient.authorize(activity) { authResponse, error ->
                     error?.let(emitter::onError)
-                        ?: (if (authSession != null) emitter.onSuccess(authSession)
+                        ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
-                ContractType.readRaw -> readRawClient.authorize(activity) { authSession, error ->
+                ContractType.readRaw -> readRawClient.authorize(activity) { authResponse, error ->
                     error?.let(emitter::onError)
-                        ?: (if (authSession != null) emitter.onSuccess(authSession)
+                        ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
                 else -> throw IllegalArgumentException("Unknown or empty contract type")
@@ -79,13 +79,12 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
 
     override fun onboardService(
         activity: Activity,
-        codeValue: String,
-        serviceId: String
+        serviceId: String,
+        accessToken: String
     ): Single<Boolean> =
         Single.create { emitter ->
-            pullClient.onboardService(activity, codeValue, serviceId) { error ->
-                error?.let(emitter::onError)
-                    ?: emitter.onSuccess(true)
+            pullClient.onboardService(activity, serviceId, accessToken) { error ->
+                error?.let(emitter::onError) ?: emitter.onSuccess(true)
             }
         }
 
@@ -99,10 +98,10 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
 
     override fun getRawFileList(): Single<DMEFileList> = Single.create { emitter ->
         readRawClient.getFileList { fileList: DMEFileList?, error ->
-        error?.let(emitter::onError)
-            ?: (if (fileList != null) emitter.onSuccess(fileList)
-            else emitter.onError(DMEAuthError.General()))
-    }
+            error?.let(emitter::onError)
+                ?: (if (fileList != null) emitter.onSuccess(fileList)
+                else emitter.onError(DMEAuthError.General()))
+        }
     }
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =

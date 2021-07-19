@@ -8,6 +8,8 @@ typealias DMEAuthorizationCompletion = (session: DMESession?, error: DMEError?) 
 
 typealias AuthorizationCompletion = (authSession: AuthSession?, error: DMEError?) -> Unit
 
+typealias AuthCompletion = (authResponse: AuthorizeResponse?, error: DMEError?) -> Unit
+
 typealias OnboardingCompletion = (error: DMEError?) -> Unit
 
 typealias DMEFileListCompletion = (fileList: DMEFileList?, error: DMEError?) -> Unit

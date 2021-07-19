@@ -113,8 +113,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
-                        val payloadJson: String = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val payload = Gson().fromJson(payloadJson, Payload::class.java)
+                        val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val payload: Payload = Gson().fromJson(payloadJson, Payload::class.java)
 
                         response.session.metadata[context.getString(R.string.key_code_verifier)] =
                             codeVerifier
@@ -133,11 +133,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
                     Single.create { emitter ->
-                        response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(
-                                fromActivity,
-                                it
-                            ) { authSession, error ->
+                        response.second.preAuthorizationCode?.let { code ->
+                            authConsentManager.beginConsentAction(fromActivity, code, "16") { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)
                                     authSession != null -> emitter.onSuccess(
@@ -347,7 +344,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             )
     }
 
-    fun authorize(fromActivity: Activity, completion: AuthorizationCompletion) {
+    fun authorize(fromActivity: Activity, completion: AuthCompletion) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
@@ -388,15 +385,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.second.preAuthorizationCode?.let {
-                            authConsentManager.beginConsentAction(
-                                fromActivity,
-                                it
-                            ) { authSession, error ->
+                            authConsentManager.beginConsentAction(fromActivity, it) { authSession, error ->
                                 when {
+                                    authSession != null -> emitter.onSuccess(Pair(response.first, authSession))
                                     error != null -> emitter.onError(error)
-                                    authSession != null -> emitter.onSuccess(
-                                        Pair(response.first, authSession)
-                                    )
                                     else -> emitter.onError(java.lang.IllegalArgumentException())
                                 }
                             }
@@ -405,14 +397,52 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 }
             }
 
+        fun exchangeAuthorizationCode(): SingleTransformer<Pair<Session, AuthSession>, Triple<Session, AuthSession, DMETokenExchange>> =
+            SingleTransformer<Pair<Session, AuthSession>, Triple<Session, AuthSession, DMETokenExchange>> {
+                it.flatMap { response: Pair<Session, AuthSession> ->
+
+                    val codeVerifier =
+                        response.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+
+                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        response.second.code!!,
+                        codeVerifier
+                    )
+
+                    val signingKey =
+                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
+                        .map { exchangeToken: ExchangeTokenJWT ->
+
+                            val chunks: List<String> = exchangeToken.token.split(".")
+                            val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange: DMETokenExchange = Gson().fromJson(payloadJson, DMETokenExchange::class.java)
+
+                            Triple(response.first, response.second, tokenExchange)
+                        }
+                }
+            }
+
         requestPreAuthCode()
             .compose(requestConsent(fromActivity))
+            .compose(exchangeAuthorizationCode())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: Pair<Session, AuthSession> ->
+                onSuccess = { result: Triple<Session, AuthSession, DMETokenExchange> ->
                     sessionManager.newSession = result.first
-                    completion.invoke(result.second, null)
+
+                    val authResponse = AuthorizeResponse()
+                        .copy(
+                            sessionKey = result.first.key,
+                            accessToken = result.third.accessToken.value
+                        )
+
+                    completion.invoke(authResponse, null)
                 },
                 onError = { error ->
                     completion.invoke(

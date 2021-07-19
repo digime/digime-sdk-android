@@ -9,13 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.AuthenticateUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.AuthorizeResponse
 
 class AuthViewModel(private val authenticate: AuthenticateUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<AuthSession>> =
+    private val _state: MutableStateFlow<Resource<AuthorizeResponse>> =
         MutableStateFlow(Resource.Idle())
-    val state: StateFlow<Resource<AuthSession>>
+    val state: StateFlow<Resource<AuthorizeResponse>>
         get() = _state
 
     fun authenticate(activity: Activity, contractType: String) {

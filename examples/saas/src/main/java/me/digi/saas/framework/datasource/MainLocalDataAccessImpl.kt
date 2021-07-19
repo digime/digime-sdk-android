@@ -8,10 +8,7 @@ import me.digi.saas.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.saas.framework.utils.AppConst.CACHED_POSTBOX_KEY
 import me.digi.saas.framework.utils.AppConst.CACHED_SESSION_KEY
 import me.digi.saas.framework.utils.AppConst.SHAREDPREFS_KEY
-import me.digi.sdk.entities.AuthSession
-import me.digi.sdk.entities.DMEOngoingPostboxData
-import me.digi.sdk.entities.DMETokenExchange
-import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.*
 
 class MainLocalDataAccessImpl(private val context: Context): MainLocalDataAccess {
 
@@ -36,7 +33,7 @@ class MainLocalDataAccessImpl(private val context: Context): MainLocalDataAccess
             }
         }
 
-    override fun cacheAuthSessionCredentials(): SingleTransformer<AuthSession?, AuthSession?> =
+    override fun cacheAuthSessionCredentials(): SingleTransformer<AuthorizeResponse?, AuthorizeResponse?> =
         SingleTransformer {
             it.map { credential ->
                 credential?.apply {
@@ -44,6 +41,11 @@ class MainLocalDataAccessImpl(private val context: Context): MainLocalDataAccess
                         val postbox = DMEOngoingPostboxData().copy(postboxId = credential.postboxId, publicKey = credential.publicKey)
                         val encodedPostbox = Gson().toJson(postbox)
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)
+
+                        val accessToken = DMETokenExchange().copy(accessToken = AccessToken(value = credential.accessToken!!))
+                        val encodedAccessToken = Gson().toJson(accessToken)
+                        putString(CACHED_CREDENTIAL_KEY, encodedAccessToken)
+
                         apply()
                     }
                 }
