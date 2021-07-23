@@ -3,6 +3,7 @@ package me.digi.sdk
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -86,6 +87,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         fromActivity: Activity,
         scope: DMEDataRequest? = null,
         credentials: DMETokenExchange? = null,
+        serviceId: String? = null,
         completion: DMESaasOngoingAuthorizationCompletion
     ) {
 
@@ -136,7 +138,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         response.second.preAuthorizationCode?.let { code ->
                             authConsentManager.beginConsentAction(
                                 fromActivity,
-                                code
+                                code,
+                                serviceId
                             ) { authSession, error ->
                                 when {
                                     authSession != null ->
@@ -341,7 +344,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             )
     }
 
-    fun authorize(fromActivity: Activity, completion: AuthCompletion) {
+    fun authorize(fromActivity: Activity, serviceId: String? = null, completion: AuthCompletion) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
@@ -384,7 +387,8 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         response.second.preAuthorizationCode?.let { code ->
                             authConsentManager.beginConsentAction(
                                 fromActivity,
-                                code
+                                code,
+                                serviceId
                             ) { authSession, error ->
                                 when {
                                     authSession != null -> emitter.onSuccess(
@@ -654,7 +658,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         DMELog.d("Session data poll scheduled.")
 
         val delay = (if (immediately) 0 else (max(configuration.pollInterval, 3) * 1000).toLong())
-        Handler().postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
 
             DMELog.d("Fetching file list.")
             getFileList { fileList, listFetchError ->

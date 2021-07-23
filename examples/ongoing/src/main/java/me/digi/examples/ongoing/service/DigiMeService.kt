@@ -43,15 +43,30 @@ class DigiMeService(private val context: Application) {
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
-    fun obtainAccessRights(activity: Activity): Completable = client.authorizeOngoingAccess(activity, createScopeForDailyPlayHistory(), getCachedCredential())
+    fun obtainAccessRights(activity: Activity): Completable = client.authorizeOngoingAccess(
+        activity,
+        createScopeForDailyPlayHistory(),
+        getCachedCredential(),
+        "16"
+    )
         .map { it }
         .compose(cacheCredential())
         .flatMapCompletable { Completable.complete() }
 
     fun fetchData(): Observable<Song> = client.getSessionData()
-        .map { gsonAgent.fromJson<List<Song>>(it.fileContent, object: TypeToken<List<Song>>() {}.type) }
+        .map {
+            gsonAgent.fromJson<List<Song>>(
+                it.fileContent,
+                object : TypeToken<List<Song>>() {}.type
+            )
+        }
         .flatMapIterable { it }
-        .filter { TimeUnit.HOURS.convert(abs(Date().time - it.createdDate), TimeUnit.MILLISECONDS) <= 24 }
+        .filter {
+            TimeUnit.HOURS.convert(
+                abs(Date().time - it.createdDate),
+                TimeUnit.MILLISECONDS
+            ) <= 24
+        }
 
     private fun createScopeForDailyPlayHistory(): DMEScope {
         val objects = listOf(DMEServiceObjectType(406))

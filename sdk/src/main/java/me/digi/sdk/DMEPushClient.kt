@@ -62,7 +62,7 @@ class DMEPushClient(
         }
     }
 
-    fun authorize(fromActivity: Activity, completion: AuthCompletion) {
+    fun authorize(fromActivity: Activity, serviceId: String? = null, completion: AuthCompletion) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
@@ -105,7 +105,8 @@ class DMEPushClient(
                         response.second.preAuthorizationCode?.let { code ->
                             authorizeManger.beginConsentAction(
                                 fromActivity,
-                                code
+                                code,
+                                serviceId
                             ) { authSession, error ->
                                 when {
                                     authSession != null ->
@@ -382,6 +383,7 @@ class DMEPushClient(
         fromActivity: Activity,
         existingPostbox: DMEOngoingPostboxData? = null,
         credentials: DMETokenExchange? = null,
+        serviceId: String? = null,
         completion: DMESaasPostboxOngoingCreationCompletion
     ) {
 
@@ -434,10 +436,11 @@ class DMEPushClient(
             SingleTransformer<Pair<Session, Payload>, Pair<Session, AuthSession>> {
                 it.flatMap { response ->
                     Single.create { emitter ->
-                        response.second.preAuthorizationCode?.let {
+                        response.second.preAuthorizationCode?.let { code ->
                             authorizeManger.beginConsentAction(
                                 fromActivity,
-                                it
+                                code,
+                                serviceId
                             ) { authSession, error ->
                                 when {
                                     error != null -> emitter.onError(error)

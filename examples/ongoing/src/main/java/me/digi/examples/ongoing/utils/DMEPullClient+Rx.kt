@@ -12,9 +12,10 @@ import me.digi.sdk.entities.DMETokenExchange
 fun DMEPullClient.authorizeOngoingAccess(
     activity: Activity,
     scope: DMEDataRequest? = null,
-    credentials: DMETokenExchange? = null
+    credentials: DMETokenExchange? = null,
+    serviceId: String? = null
 ): Single<DMETokenExchange> = Single.create { emitter ->
-    authorizeOngoingAccess(activity, scope, credentials) { credentials, error ->
+    authorizeOngoingAccess(activity, scope, credentials, serviceId) { credentials, error ->
         error?.let(emitter::onError)
             ?: (if (credentials != null)
                 emitter.onSuccess(credentials)
