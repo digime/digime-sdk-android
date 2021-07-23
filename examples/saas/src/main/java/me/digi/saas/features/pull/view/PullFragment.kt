@@ -29,6 +29,11 @@ class PullFragment : Fragment(R.layout.fragment_pull) {
 
         subscribeToObservers()
         setupAdapter()
+
+        binding.swipeRefresh.setOnRefreshListener {
+            viewModel.getData()
+            binding.swipeRefresh.isRefreshing = false
+        }
     }
 
     private fun setupAdapter() {

@@ -495,9 +495,10 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         onboardConsentManager.beginOnboardAction(
                             fromActivity,
                             it,
-                            serviceId,
-                            completion
-                        )
+                            serviceId
+                        ) { error ->
+                            error?.let(completion) ?: triggerDataQuery(accessToken, completion)
+                        }
                     }
                 }
         }
@@ -731,5 +732,29 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         activeSessionDataFetchCompletionHandler = null
         activeSyncStatus = null
         activeDownloadCount = 0
+    }
+
+    // Todo: Handle better if possible
+    private fun triggerDataQuery(accessToken: String, completion: OnboardingCompletion? = null) {
+        val jwt = DMETriggerDataQueryRequestJWT(
+            configuration.appId,
+            configuration.contractId,
+            accessToken
+        )
+
+        val signingKey: PrivateKey =
+            DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
+        apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader)) { response, error ->
+            error?.let {
+                completion?.invoke(it)
+                activeSyncStatus = null
+                return@makeCall
+            }
+
+            sessionManager.newSession = response?.session
+            completion?.invoke(null)
+        }
     }
 }
