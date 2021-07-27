@@ -154,10 +154,11 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                                 serviceId
                             ) { authSession, error ->
                                 when {
-                                    authSession != null ->
-                                        emitter.onSuccess(Pair(response.first, authSession))
+                                    authSession != null -> emitter.onSuccess(
+                                        Pair(response.first, authSession)
+                                    )
                                     error != null -> emitter.onError(error)
-                                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                                    else -> emitter.onError(IllegalArgumentException())
                                 }
                             }
                         }
@@ -213,7 +214,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
                     val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
 
-                    apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader, dataQueryScope))
+                    apiClient.makeCall(
+                        apiClient.argonService.triggerDataQuery(
+                            authHeader,
+                            dataQueryScope
+                        )
+                    )
                         .map { response: DataQueryResponse ->
                             Pair(response.session, result.second)
                         }
@@ -489,38 +495,108 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         accessToken: String,
         completion: OnboardingCompletion
     ) {
-        DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
 
-        val jwt = DMEReferenceCodeRequestJWT(
-            configuration.appId,
-            configuration.contractId,
-            accessToken
-        )
+        fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
+            DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
 
-        val signingKey: PrivateKey =
-            DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-        val authHeader: String = jwt.sign(signingKey).tokenize()
+            val jwt = DMEReferenceCodeRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                accessToken
+            )
 
-        apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
-            error?.let { completion.invoke(it) }
-                ?: tokenReference?.let {
-                    val chunks: List<String> = tokenReference.token.split(".")
-                    val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                    val result: TokenReferencePayload =
-                        Gson().fromJson(payloadJson, TokenReferencePayload::class.java)
+            val signingKey: PrivateKey =
+                DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                    result.referenceCode?.let {
+            apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
+                when {
+                    tokenReference != null -> {
+                        val chunks: List<String> = tokenReference.token.split(".")
+                        val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val result: TokenReferencePayload =
+                            Gson().fromJson(payloadJson, TokenReferencePayload::class.java)
+
+                        emitter.onSuccess(result)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
+            }
+        }
+
+        fun requestOnboard(): SingleTransformer<TokenReferencePayload, Boolean> =
+            SingleTransformer {
+                it.flatMap { payload ->
+                    Single.create { emitter ->
                         DMELog.i(context.getString(R.string.labelUserOnboardingRequest))
-                        onboardConsentManager.beginOnboardAction(
-                            fromActivity,
-                            it,
-                            serviceId
-                        ) { error ->
-                            error?.let(completion) ?: triggerDataQuery(accessToken, completion)
+
+                        payload.referenceCode?.let { code ->
+                            onboardConsentManager.beginOnboardAction(
+                                fromActivity,
+                                code,
+                                serviceId
+                            ) { error ->
+                                when {
+                                    error != null -> emitter.onError(error)
+                                    else -> emitter.onSuccess(true)
+                                }
+                            }
                         }
                     }
                 }
+            }
+
+        fun triggerDataQuery(): SingleTransformer<Boolean, Boolean> = SingleTransformer {
+            it.flatMap {
+                Single.create { emitter ->
+                    DMELog.i(context.getString(R.string.labelTriggeringDataQuery))
+
+                    val jwt = DMETriggerDataQueryRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        accessToken
+                    )
+
+                    val signingKey: PrivateKey =
+                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(
+                        apiClient.argonService.triggerDataQuery(
+                            authHeader,
+                            Pull()
+                        )
+                    ) { response, error ->
+                        when {
+                            response != null -> {
+                                sessionManager.newSession = response.session
+                                emitter.onSuccess(true)
+                            }
+                            error != null -> emitter.onError(error)
+                            else -> emitter.onError(IllegalArgumentException())
+                        }
+                    }
+                }
+            }
         }
+
+        requestCodeReference()
+            .compose(requestOnboard())
+            .compose(triggerDataQuery())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { completion.invoke(null) },
+                onError = {
+                    activeSyncStatus = null
+                    completion.invoke(
+                        DMEAuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
     }
 
     fun getSessionData(
@@ -751,29 +827,5 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
         activeSessionDataFetchCompletionHandler = null
         activeSyncStatus = null
         activeDownloadCount = 0
-    }
-
-    // Todo: Handle better if possible
-    private fun triggerDataQuery(accessToken: String, completion: OnboardingCompletion? = null) {
-        val jwt = DMETriggerDataQueryRequestJWT(
-            configuration.appId,
-            configuration.contractId,
-            accessToken
-        )
-
-        val signingKey: PrivateKey =
-            DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-        val authHeader: String = jwt.sign(signingKey).tokenize()
-
-        apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader, Pull())) { response, error ->
-            error?.let {
-                completion?.invoke(it)
-                activeSyncStatus = null
-                return@makeCall
-            }
-
-            sessionManager.newSession = response?.session
-            completion?.invoke(null)
-        }
     }
 }

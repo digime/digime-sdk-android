@@ -88,6 +88,7 @@
     <!-- Pull client -->
     <string name="labelReferenceOnboardingCode">Fetching reference code for onboarding</string>
     <string name="labelUserOnboardingRequest">Launching user onboarding request</string>
+    <string name="labelTriggeringDataQuery">Triggering data query</string>
     <string name="labelUnknownError">Unknown error occurred</string>
 
 </resources>
