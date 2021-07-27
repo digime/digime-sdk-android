@@ -78,7 +78,7 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader, AuthorizationScopeRequest())) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -412,7 +412,7 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
+            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader, AuthorizationScopeRequest())) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")

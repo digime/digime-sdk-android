@@ -1,11 +1,6 @@
 package me.digi.sdk.entities
 
-data class DMESDKAgent (
-
-    @JvmField
+data class DMESDKAgent(
     val name: String = "android",
-
-    @JvmField
-    val version: String = "3.0.0" //TODO: Change this to be dynamic
-
+    val version: String = "4.0.0" //TODO: Change this to be dynamic
 )

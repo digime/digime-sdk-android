@@ -51,6 +51,7 @@ class ResultsFragment(private val digiMeService: DigiMeService) :
             .subscribe(resultsAdapter::submitList, ::handleError) {
                 digiMeService.cacheSongs(songs)
                 dismissLoadingState()
+                resultsAdapter.submitList(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
             }
     }
 

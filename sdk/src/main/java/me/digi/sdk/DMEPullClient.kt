@@ -111,7 +111,19 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
+            val authScope: AuthorizationScopeRequest = scope?.let {
+                AuthorizationScopeRequest(
+                    actions = Actions(Pull(it)),
+                    agent = Agent()
+                )
+            } ?: AuthorizationScopeRequest()
+
+            apiClient.makeCall(
+                apiClient.argonService.getPreAuthorizationCode(
+                    authHeader,
+                    authScope
+                )
+            ) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -126,7 +138,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         emitter.onSuccess(result)
                     }
                     error != null -> emitter.onError(error)
-                    else -> emitter.onError(java.lang.IllegalArgumentException())
+                    else -> emitter.onError(IllegalArgumentException())
                 }
             }
         }
@@ -199,7 +211,9 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                         DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                    apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader))
+                    val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+
+                    apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader, dataQueryScope))
                         .map { response: DataQueryResponse ->
                             Pair(response.session, result.second)
                         }
@@ -360,7 +374,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader)) { response, error ->
+            apiClient.makeCall(
+                apiClient.argonService.getPreAuthorizationCode(
+                    authHeader,
+                    AuthorizationScopeRequest()
+                )
+            ) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -746,7 +765,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
-        apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader)) { response, error ->
+        apiClient.makeCall(apiClient.argonService.triggerDataQuery(authHeader, Pull())) { response, error ->
             error?.let {
                 completion?.invoke(it)
                 activeSyncStatus = null
