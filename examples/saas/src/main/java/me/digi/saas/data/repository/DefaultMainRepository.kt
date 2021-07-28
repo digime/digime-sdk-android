@@ -16,7 +16,7 @@ class DefaultMainRepository(
 ) : MainRepository {
 
     override fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse> =
-        remoteAccess.authenticate(activity, contractType)
+        remoteAccess.authenticate(activity, contractType, localAccess.getCachedCredential())
             .compose(localAccess.cacheAuthSessionCredentials())
 
     override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()

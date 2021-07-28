@@ -62,14 +62,25 @@ class DMEPushClient(
         }
     }
 
-    fun authorize(fromActivity: Activity, serviceId: String? = null, completion: AuthCompletion) {
+    fun authorize(
+        fromActivity: Activity,
+        credentials: DMETokenExchange? = null,
+        serviceId: String? = null,
+        completion: AuthCompletion
+    ) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = DMEPreauthorizationRequestJWT(
+            val jwt = if (credentials != null)
+                DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier,
+                    credentials.accessToken.value
+                ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -78,7 +89,12 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader, AuthorizationScopeRequest())) { response, error ->
+            apiClient.makeCall(
+                apiClient.argonService.getPreAuthorizationCode(
+                    authHeader,
+                    AuthorizationScopeRequest()
+                )
+            ) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -412,7 +428,12 @@ class DMEPushClient(
             val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(apiClient.argonService.getPreAuthorizationCode(authHeader, AuthorizationScopeRequest())) { response, error ->
+            apiClient.makeCall(
+                apiClient.argonService.getPreAuthorizationCode(
+                    authHeader,
+                    AuthorizationScopeRequest()
+                )
+            ) { response, error ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")

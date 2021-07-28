@@ -5,8 +5,9 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentPullBinding
 import me.digi.saas.features.pull.adapter.PullAdapter
@@ -16,7 +17,7 @@ import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.DMEFileListItem
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class PullFragment : Fragment(R.layout.fragment_pull) {
+class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
 
     private val viewModel: PullViewModel by viewModel()
     private val pullAdapter: PullAdapter by lazy { PullAdapter() }
@@ -29,11 +30,15 @@ class PullFragment : Fragment(R.layout.fragment_pull) {
 
         subscribeToObservers()
         setupAdapter()
+        setupViews()
+    }
 
+    private fun setupViews() {
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.getData()
             binding.swipeRefresh.isRefreshing = false
         }
+        binding.btnGoToOnboard.setOnClickListener(this)
     }
 
     private fun setupAdapter() {
@@ -42,14 +47,19 @@ class PullFragment : Fragment(R.layout.fragment_pull) {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { result: Resource<List<DMEFileListItem>> ->
-                when(result) {
-                    is Resource.Idle -> { /** Do nothing */ }
+            viewModel.state.collect { result: Resource<List<DMEFileListItem>> ->
+                when (result) {
+                    is Resource.Idle -> {
+                        /** Do nothing */
+                    }
                     is Resource.Loading -> binding.pbPull.isVisible = true
                     is Resource.Success -> {
                         binding.pbPull.isVisible = false
+
                         val data = result.data as List<DMEFileListItem>
                         pullAdapter.submitList(data)
+
+                        binding.incEmptyState.root.isVisible = data.isEmpty()
                     }
                     is Resource.Failure -> {
                         binding.pbPull.isVisible = false
@@ -57,6 +67,12 @@ class PullFragment : Fragment(R.layout.fragment_pull) {
                     }
                 }
             }
+        }
+    }
+
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.btnGoToOnboard -> findNavController().navigate(R.id.readToOnboard)
         }
     }
 }

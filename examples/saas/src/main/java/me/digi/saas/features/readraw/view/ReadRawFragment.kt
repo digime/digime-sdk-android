@@ -30,6 +30,14 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
 
         setupAdapter()
         subscribeToObservers()
+        setupViews()
+    }
+
+    private fun setupViews() {
+        binding.swipeRefresh.setOnRefreshListener {
+            viewModel.getData()
+            binding.swipeRefresh.isRefreshing = false
+        }
     }
 
     private fun setupAdapter() {
@@ -46,7 +54,11 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
                     is Resource.Loading -> binding.pbReadRaw.isVisible = true
                     is Resource.Success -> {
                         binding.pbReadRaw.isVisible = false
-                        readRawAdapter.submitList(result.data ?: emptyList())
+
+                        val data = result.data as List<DMEFileListItem>
+                        readRawAdapter.submitList(data)
+
+                        binding.incEmptyState.root.isVisible = data.isEmpty()
                     }
                     is Resource.Failure -> {
                         binding.pbReadRaw.isVisible = false

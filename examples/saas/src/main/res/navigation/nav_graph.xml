@@ -9,7 +9,17 @@
         android:id="@+id/read"
         android:name="me.digi.saas.features.pull.view.PullFragment"
         android:label="PullFragment"
-        tools:layout="@layout/fragment_pull" />
+        tools:layout="@layout/fragment_pull">
+        <action
+            android:id="@+id/readToOnboard"
+            app:destination="@id/onboardFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            app:popUpTo="@id/read"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/push"

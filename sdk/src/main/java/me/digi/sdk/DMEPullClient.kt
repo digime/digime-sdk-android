@@ -364,14 +364,25 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             )
     }
 
-    fun authorize(fromActivity: Activity, serviceId: String? = null, completion: AuthCompletion) {
+    fun authorize(
+        fromActivity: Activity,
+        credentials: DMETokenExchange? = null,
+        serviceId: String? = null,
+        completion: AuthCompletion
+    ) {
 
         fun requestPreAuthCode(): Single<Pair<Session, Payload>> = Single.create { emitter ->
 
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = DMEPreauthorizationRequestJWT(
+            val jwt = if (credentials != null)
+                DMEPreauthorizationRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    codeVerifier,
+                    credentials.accessToken.value
+                ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier

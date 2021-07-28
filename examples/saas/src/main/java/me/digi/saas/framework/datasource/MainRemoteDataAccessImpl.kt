@@ -54,27 +54,39 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         DMEPullClient(context, configuration)
     }
 
-    override fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse> =
+    override fun authenticate(
+        activity: Activity,
+        contractType: String,
+        credentials: DMETokenExchange?
+    ): Single<AuthorizeResponse> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> pullClient.authorize(activity) { authResponse, error ->
+                ContractType.pull -> pullClient.authorize(
+                    activity,
+                    credentials
+                ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
-                ContractType.push -> pushClient.authorize(activity) { authResponse, error ->
+                ContractType.push -> pushClient.authorize(
+                    activity,
+                    credentials
+                ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
-                ContractType.readRaw -> readRawClient.authorize(activity) { authResponse, error ->
+                ContractType.readRaw -> readRawClient.authorize(
+                    activity,
+                    credentials
+                ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
                         else emitter.onError(DMEAuthError.General()))
                 }
                 else -> throw IllegalArgumentException("Unknown or empty contract type")
             }
-
         }
 
     override fun onboardService(
