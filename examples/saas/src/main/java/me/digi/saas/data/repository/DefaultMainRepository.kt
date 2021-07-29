@@ -16,7 +16,11 @@ class DefaultMainRepository(
 ) : MainRepository {
 
     override fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse> =
-        remoteAccess.authenticate(activity, contractType, localAccess.getCachedCredential())
+        remoteAccess.authenticate(
+            activity,
+            contractType,
+            localAccess.getCachedCredential()?.accessToken?.value
+        )
             .compose(localAccess.cacheAuthSessionCredentials())
 
     override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
@@ -32,6 +36,12 @@ class DefaultMainRepository(
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         remoteAccess.getServicesForContract(contractId)
 
-    override fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String): Single<SaasOngoingPushResponse> =
+    override fun pushDataToPostbox(
+        payload: DMEPushPayload,
+        accessToken: String
+    ): Single<SaasOngoingPushResponse> =
         remoteAccess.pushDataToPostbox(payload, accessToken)
+
+    override fun deleteUsersLibrary(): Single<Boolean> =
+        remoteAccess.deleteUsersLibrary(localAccess.getCachedCredential()?.accessToken?.value)
 }

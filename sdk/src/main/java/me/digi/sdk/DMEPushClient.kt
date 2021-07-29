@@ -64,7 +64,7 @@ class DMEPushClient(
 
     fun authorize(
         fromActivity: Activity,
-        credentials: DMETokenExchange? = null,
+        accessToken: String? = null,
         serviceId: String? = null,
         completion: AuthCompletion
     ) {
@@ -74,12 +74,12 @@ class DMEPushClient(
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = if (credentials != null)
+            val jwt = if (accessToken != null)
                 DMEPreauthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
-                    credentials.accessToken.value
+                    accessToken
                 ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,

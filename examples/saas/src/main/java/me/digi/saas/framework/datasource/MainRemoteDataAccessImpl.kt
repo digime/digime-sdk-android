@@ -57,13 +57,13 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     override fun authenticate(
         activity: Activity,
         contractType: String,
-        credentials: DMETokenExchange?
+        accessToken: String?
     ): Single<AuthorizeResponse> =
         Single.create { emitter ->
             when (contractType) {
                 ContractType.pull -> pullClient.authorize(
                     activity,
-                    credentials
+                    accessToken
                 ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
@@ -71,7 +71,7 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
                 }
                 ContractType.push -> pushClient.authorize(
                     activity,
-                    credentials
+                    accessToken
                 ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
@@ -79,7 +79,7 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
                 }
                 ContractType.readRaw -> readRawClient.authorize(
                     activity,
-                    credentials
+                    accessToken
                 ) { authResponse, error ->
                     error?.let(emitter::onError)
                         ?: (if (authResponse != null) emitter.onSuccess(authResponse)
@@ -130,6 +130,13 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
         Single.create { emitter ->
             pushClient.pushData(payload, accessToken) { response: SaasOngoingPushResponse?, error ->
                 error?.let(emitter::onError) ?: emitter.onSuccess(response)
+            }
+        }
+
+    override fun deleteUsersLibrary(accessToken: String?): Single<Boolean> =
+        Single.create { emitter ->
+            pullClient.deleteUser(accessToken) { isLibraryDeleted, error ->
+                error?.let(emitter::onError) ?: emitter.onSuccess(isLibraryDeleted)
             }
         }
 }

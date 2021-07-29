@@ -11,4 +11,5 @@ val useCasesModule: Module = module {
     single<GetRawSessionDataUseCase> { GetRawSessionDataUseCaseImpl(get()) }
     single<PushDataUseCase> { PushDataUseCaseImpl(get()) }
     single<GetServicesForContractUseCase> { GetServicesForContractUseCaseImpl(get()) }
+    single<DeleteLibraryUseCase> { DeleteLibraryUseCaseImpl(get()) }
 }

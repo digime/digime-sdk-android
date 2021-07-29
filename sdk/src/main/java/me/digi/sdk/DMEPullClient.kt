@@ -337,7 +337,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion.invoke(
                         null,
                         error.let { it as? DMEError }
-                            ?: DMEAPIError.GENERICMESSAGE("Unknown error occurred"))
+                            ?: DMEAPIError.ErrorWithMessage("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)
@@ -366,7 +366,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun authorize(
         fromActivity: Activity,
-        credentials: DMETokenExchange? = null,
+        accessToken: String? = null,
         serviceId: String? = null,
         completion: AuthCompletion
     ) {
@@ -376,12 +376,12 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
-            val jwt = if (credentials != null)
+            val jwt = if (accessToken != null)
                 DMEPreauthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
-                    credentials.accessToken.value
+                    accessToken
                 ) else DMEPreauthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
@@ -494,10 +494,56 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     completion.invoke(
                         null,
                         error.let { it as? DMEError }
-                            ?: DMEAPIError.GENERICMESSAGE("Unknown error occurred"))
+                            ?: DMEAPIError.ErrorWithMessage("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)
+    }
+
+    fun deleteUser(accessToken: String?, completion: DMEUserLibraryDeletion) {
+        DMELog.i(context.getString(R.string.labelDeleteLibrary))
+
+        fun deleteLibrary() = Single.create<Boolean> { emitter ->
+            accessToken?.let {
+
+                val jwt = DMEUserDeletionRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    accessToken
+                )
+
+                val signingKey: PrivateKey =
+                    DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->
+                    when {
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onSuccess(true)
+                    }
+                }
+            }
+                ?: emitter.onError(DMEAPIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
+        }
+
+        deleteLibrary()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    completion.invoke(it, null)
+                },
+                onError = {
+                    it.localizedMessage?.let { message ->
+                        if (message.contains("204"))
+                            completion.invoke(true, null)
+                        else completion.invoke(
+                            null,
+                            DMEAPIError.ErrorWithMessage(message)
+                        )
+                    }
+                }
+            )
     }
 
     fun onboardService(

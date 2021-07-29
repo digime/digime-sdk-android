@@ -23,4 +23,6 @@ interface MainRepository {
         payload: DMEPushPayload,
         accessToken: String
     ): Single<SaasOngoingPushResponse>
+
+    fun deleteUsersLibrary(): Single<Boolean>
 }

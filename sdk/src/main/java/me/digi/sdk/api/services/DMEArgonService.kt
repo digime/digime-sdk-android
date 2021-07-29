@@ -67,14 +67,23 @@ internal interface DMEArgonService {
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
 
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
-    fun triggerDataQuery(@Header("Authorization") jwt: String, @Body scopeRequest: Pull): Call<DataQueryResponse>
+    fun triggerDataQuery(
+        @Header("Authorization") jwt: String,
+        @Body scopeRequest: Pull
+    ): Call<DataQueryResponse>
 
     @POST("v1.6/oauth/authorize")
-    fun getPreAuthorizationCode(@Header("Authorization") jwt: String, @Body scopeRequest: AuthorizationScopeRequest): Call<DMEPreAuthResponse>
+    fun getPreAuthorizationCode(
+        @Header("Authorization") jwt: String,
+        @Body scopeRequest: AuthorizationScopeRequest
+    ): Call<DMEPreAuthResponse>
 
     @GET("v1.5/discovery/services")
     fun getServicesForContract(@Header("contractId") contractId: String): Single<ServicesResponse>
 
     @POST("v1.6/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
+
+    @DELETE("v1.6/user")
+    fun deleteUser(@Header("Authorization") jwt: String): Call<Unit>
 }

@@ -69,6 +69,6 @@ sealed class DMEAPIError(
 
     class UNMAPPED(argonCode: String? = "", argonMessage: String = "", argonReference: String? = ""): DMEAPIError(argonCode, argonMessage, argonReference)
     class GENERIC(httpStatusCode: Int? = 0, message: String? = ""): DMEAPIError(message = "Http Status: $httpStatusCode\nError: $message")
-    class GENERICMESSAGE(message: String? = ""): DMEAPIError(message = "Error: $message")
+    class ErrorWithMessage(message: String): DMEAuthError(message)
     class UNREACHABLE : DMEAPIError(message = "Couldn't reach the digi.me API - please check your network connection.")
 }
