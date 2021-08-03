@@ -9,7 +9,12 @@ import me.digi.sdk.entities.SaasOngoingPushResponse
 import me.digi.sdk.saas.serviceentities.Service
 
 interface MainRemoteDataAccess {
-    fun authenticate(activity: Activity, contractType: String, accessToken: String?): Single<AuthorizeResponse>
+    fun authenticate(
+        activity: Activity,
+        contractType: String,
+        accessToken: String?
+    ): Single<AuthorizeResponse>
+
     fun onboardService(
         activity: Activity,
         serviceId: String,
@@ -23,5 +28,6 @@ interface MainRemoteDataAccess {
         payload: DMEPushPayload,
         accessToken: String
     ): Single<SaasOngoingPushResponse>
+
     fun deleteUsersLibrary(accessToken: String?): Single<Boolean>
 }

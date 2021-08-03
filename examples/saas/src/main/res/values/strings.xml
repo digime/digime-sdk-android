@@ -1,32 +1,59 @@
 <resources>
     <string name="app_name">Hive</string>
 
+    <!-- Endpoints -->
+    <string name="labelProductionUrl">https://api.digi.me/</string>
+    <string name="labelStagingUrl">https://api.stagingdigi.me/</string>
+    <string name="labelDevelopmentUrl">https://api.development.devdigi.me/</string>
+
+    <string-array name="endpoints">
+        <item>@string/labelProductionUrl</item>
+        <item>@string/labelStagingUrl</item>
+        <item>@string/labelDevelopmentUrl</item>
+    </string-array>
+
     <!-- Menu -->
     <string name="read">Read</string>
     <string name="push">Push</string>
     <string name="read_raw">Read Raw</string>
-    <string name="appId">lFrMvUSnWLRB0WkzKpW45y9USpA3Uygh</string>
 
     <!-- Empty state -->
     <string name="labelEmptyTitle">Oops!</string>
     <string name="labelEmptySubtitle">List seems to be empty. Try to pull down to refresh or reload the app</string>
 
-    <!-- Pull contract -->
-    <string name="pullContractId">jUYNVi7vcV3YVoxmy0sXBeyuHAVGNpnw</string>
-    <string name="pullContractPrivateKey">-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAlhZG2VBLbBK1aml0qViZb9fnr+aV9nQZtp9GYhjbOLtzmB39\nvlF27FZ7+jDpl0i1J3yLIIcGsM/ORjsocAjkXvhKwkWeg8NiO5Wl6XdLPNmJoy43\nWvNZFLNrRNjMEg761k4koJ448W2AV2VH5vLcVzzAx+5YIMh1DUxkPTf1APIbIr0f\nf9ElbwrYxQoRKC3Agh4EILzJ/mkT/m3ELjevOf88OdnLMCcwdk5/rx5Jnwmxenom\njJTqvsNYyp/VVaf0YrhYyTvx1ZrJ2T1WufMHnicyyi1JhLbPN+SznIv+yrwu/eBQ\n7MYJ1iOChTvGEICNMzOmObsQo8X6HQjVEO5ZmQIDAQABAoIBADhlcoXiCBU6CnVL\n3wxrQGyoYmTUbnFHOwpGWzotQOLWfR8h1eEX12oDLV7b1kqEhZ2qzNSSKE90Jnx5\naj5++OE+x0isxF2ao2TkXI2Xx+u7il6I1UAVxNlkeeBK3pPCkTrJ7jV0fs0palps\nslHz3BvjtkTqKK9Y47L1i4z9Y9DQlMyrnBaSzrPN92k6NBMU7MC/25lDh5xufxZn\nCWmdKIBEsq9amHWF5ExDYacoLuehAzC7du2ihNkGu2L5UVcs3KYJFyEJfubngAhL\nnMpM5gqxOZfh1TPbkJTQ0KdPQoRQUxVgo7k8JygwXFW+CnyEmchMsrGh8R3SaFVc\nPuQuTSkCgYEA1Xro+8Eal4NSE372Iupuosx+NZyJdtzIu52x2ZpXaHCJmWEAm5Wg\ncN7PRldSWUnzyfNNGlvBvZKriVHb15tr8ZabV8rk9M5ad16NArSx9qenBx5QAxDc\nQ457ppjfQ1aAzRtTnjns5Sg23L13111sSt8nhUdpgPE3yN2UFwNpcw8CgYEAs/sH\nttxExcepxINKaQ+vG9IkqGUQiEC6hrDh11GBUporEc7q8YU2P1SNnL1CMpMV1WFP\nBhEVLtcah5744Ve0H2ArQSHtdCgjdFmX2IshgH2BJRGvG5r+x56AV6HP7uqQ1vuw\nV90oxNREoTnc1nONHT+gJokxSS0/jx8urIrVyNcCgYEAmCmwkWm1w5M12HGhjYed\n7mpl916pWNDMP3aKgzkQ3n+AhJPws/U1093szg2Fw+EDZMoIBiaq9K3rmMiBM7Az\ng5K/DRewlJHVR8pcJjaXtuEPG/LOQzEsXvbbSgci9ENfMVMuCdTt9vTwDez608Zi\nXweqisQ4/lBxW7ocST8EVZ8CgYA1EYPIy1IL7z+DjiLWr6U2UtQ0QviI9G0LYgR1\ndLbpIEQq0BQ+esTwD4JiAPwP5Ya+kB647ziLwykzbBB+gVm/FqAqaFKXuW4a1IAN\nfZi3RkpaH8i+HwmY2oeFT1T8YXWrrjLk9XUb9Gr4DxOquA+X3Dbgpfs+VHU1QkCE\n57r5qQKBgE8cn39Q7IPQtcilMcdQ6canUTI0jXAG/Lh/peyu7QMACurMJ37WwHpr\niPlnwt46Y6D+9NlvHTKgaZeghyuVm+IbI2WdnaYbR2f93IV6BDiSq4a7OpU21SeU\nuW7hdOPTmpQ1je0KVhWElG8QmZiWU6pxEC+MPXViB0cKwipB2Y+D\n-----END RSA PRIVATE KEY-----</string>
-
-    <!-- Push contract -->
-    <string name="pushContractId">f2XLU3NYXn3LiWhoyi8urteaIRJGWmjE</string>
-    <string name="pushContractPrivateKey">-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAlhZG2VBLbBK1aml0qViZb9fnr+aV9nQZtp9GYhjbOLtzmB39\nvlF27FZ7+jDpl0i1J3yLIIcGsM/ORjsocAjkXvhKwkWeg8NiO5Wl6XdLPNmJoy43\nWvNZFLNrRNjMEg761k4koJ448W2AV2VH5vLcVzzAx+5YIMh1DUxkPTf1APIbIr0f\nf9ElbwrYxQoRKC3Agh4EILzJ/mkT/m3ELjevOf88OdnLMCcwdk5/rx5Jnwmxenom\njJTqvsNYyp/VVaf0YrhYyTvx1ZrJ2T1WufMHnicyyi1JhLbPN+SznIv+yrwu/eBQ\n7MYJ1iOChTvGEICNMzOmObsQo8X6HQjVEO5ZmQIDAQABAoIBADhlcoXiCBU6CnVL\n3wxrQGyoYmTUbnFHOwpGWzotQOLWfR8h1eEX12oDLV7b1kqEhZ2qzNSSKE90Jnx5\naj5++OE+x0isxF2ao2TkXI2Xx+u7il6I1UAVxNlkeeBK3pPCkTrJ7jV0fs0palps\nslHz3BvjtkTqKK9Y47L1i4z9Y9DQlMyrnBaSzrPN92k6NBMU7MC/25lDh5xufxZn\nCWmdKIBEsq9amHWF5ExDYacoLuehAzC7du2ihNkGu2L5UVcs3KYJFyEJfubngAhL\nnMpM5gqxOZfh1TPbkJTQ0KdPQoRQUxVgo7k8JygwXFW+CnyEmchMsrGh8R3SaFVc\nPuQuTSkCgYEA1Xro+8Eal4NSE372Iupuosx+NZyJdtzIu52x2ZpXaHCJmWEAm5Wg\ncN7PRldSWUnzyfNNGlvBvZKriVHb15tr8ZabV8rk9M5ad16NArSx9qenBx5QAxDc\nQ457ppjfQ1aAzRtTnjns5Sg23L13111sSt8nhUdpgPE3yN2UFwNpcw8CgYEAs/sH\nttxExcepxINKaQ+vG9IkqGUQiEC6hrDh11GBUporEc7q8YU2P1SNnL1CMpMV1WFP\nBhEVLtcah5744Ve0H2ArQSHtdCgjdFmX2IshgH2BJRGvG5r+x56AV6HP7uqQ1vuw\nV90oxNREoTnc1nONHT+gJokxSS0/jx8urIrVyNcCgYEAmCmwkWm1w5M12HGhjYed\n7mpl916pWNDMP3aKgzkQ3n+AhJPws/U1093szg2Fw+EDZMoIBiaq9K3rmMiBM7Az\ng5K/DRewlJHVR8pcJjaXtuEPG/LOQzEsXvbbSgci9ENfMVMuCdTt9vTwDez608Zi\nXweqisQ4/lBxW7ocST8EVZ8CgYA1EYPIy1IL7z+DjiLWr6U2UtQ0QviI9G0LYgR1\ndLbpIEQq0BQ+esTwD4JiAPwP5Ya+kB647ziLwykzbBB+gVm/FqAqaFKXuW4a1IAN\nfZi3RkpaH8i+HwmY2oeFT1T8YXWrrjLk9XUb9Gr4DxOquA+X3Dbgpfs+VHU1QkCE\n57r5qQKBgE8cn39Q7IPQtcilMcdQ6canUTI0jXAG/Lh/peyu7QMACurMJ37WwHpr\niPlnwt46Y6D+9NlvHTKgaZeghyuVm+IbI2WdnaYbR2f93IV6BDiSq4a7OpU21SeU\nuW7hdOPTmpQ1je0KVhWElG8QmZiWU6pxEC+MPXViB0cKwipB2Y+D\n-----END RSA PRIVATE KEY-----</string>
-
-    <!-- Read raw contract -->
-    <string name="readRawContractId">lY4Rr7mBNrSFjaqEAx2QGr54AMzs09Gz</string>
-    <string name="readRawContractPrivateKey">-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAlhZG2VBLbBK1aml0qViZb9fnr+aV9nQZtp9GYhjbOLtzmB39\nvlF27FZ7+jDpl0i1J3yLIIcGsM/ORjsocAjkXvhKwkWeg8NiO5Wl6XdLPNmJoy43\nWvNZFLNrRNjMEg761k4koJ448W2AV2VH5vLcVzzAx+5YIMh1DUxkPTf1APIbIr0f\nf9ElbwrYxQoRKC3Agh4EILzJ/mkT/m3ELjevOf88OdnLMCcwdk5/rx5Jnwmxenom\njJTqvsNYyp/VVaf0YrhYyTvx1ZrJ2T1WufMHnicyyi1JhLbPN+SznIv+yrwu/eBQ\n7MYJ1iOChTvGEICNMzOmObsQo8X6HQjVEO5ZmQIDAQABAoIBADhlcoXiCBU6CnVL\n3wxrQGyoYmTUbnFHOwpGWzotQOLWfR8h1eEX12oDLV7b1kqEhZ2qzNSSKE90Jnx5\naj5++OE+x0isxF2ao2TkXI2Xx+u7il6I1UAVxNlkeeBK3pPCkTrJ7jV0fs0palps\nslHz3BvjtkTqKK9Y47L1i4z9Y9DQlMyrnBaSzrPN92k6NBMU7MC/25lDh5xufxZn\nCWmdKIBEsq9amHWF5ExDYacoLuehAzC7du2ihNkGu2L5UVcs3KYJFyEJfubngAhL\nnMpM5gqxOZfh1TPbkJTQ0KdPQoRQUxVgo7k8JygwXFW+CnyEmchMsrGh8R3SaFVc\nPuQuTSkCgYEA1Xro+8Eal4NSE372Iupuosx+NZyJdtzIu52x2ZpXaHCJmWEAm5Wg\ncN7PRldSWUnzyfNNGlvBvZKriVHb15tr8ZabV8rk9M5ad16NArSx9qenBx5QAxDc\nQ457ppjfQ1aAzRtTnjns5Sg23L13111sSt8nhUdpgPE3yN2UFwNpcw8CgYEAs/sH\nttxExcepxINKaQ+vG9IkqGUQiEC6hrDh11GBUporEc7q8YU2P1SNnL1CMpMV1WFP\nBhEVLtcah5744Ve0H2ArQSHtdCgjdFmX2IshgH2BJRGvG5r+x56AV6HP7uqQ1vuw\nV90oxNREoTnc1nONHT+gJokxSS0/jx8urIrVyNcCgYEAmCmwkWm1w5M12HGhjYed\n7mpl916pWNDMP3aKgzkQ3n+AhJPws/U1093szg2Fw+EDZMoIBiaq9K3rmMiBM7Az\ng5K/DRewlJHVR8pcJjaXtuEPG/LOQzEsXvbbSgci9ENfMVMuCdTt9vTwDez608Zi\nXweqisQ4/lBxW7ocST8EVZ8CgYA1EYPIy1IL7z+DjiLWr6U2UtQ0QviI9G0LYgR1\ndLbpIEQq0BQ+esTwD4JiAPwP5Ya+kB647ziLwykzbBB+gVm/FqAqaFKXuW4a1IAN\nfZi3RkpaH8i+HwmY2oeFT1T8YXWrrjLk9XUb9Gr4DxOquA+X3Dbgpfs+VHU1QkCE\n57r5qQKBgE8cn39Q7IPQtcilMcdQ6canUTI0jXAG/Lh/peyu7QMACurMJ37WwHpr\niPlnwt46Y6D+9NlvHTKgaZeghyuVm+IbI2WdnaYbR2f93IV6BDiSq4a7OpU21SeU\nuW7hdOPTmpQ1je0KVhWElG8QmZiWU6pxEC+MPXViB0cKwipB2Y+D\n-----END RSA PRIVATE KEY-----</string>
-
-    <string name="labelAuthDisclaimer">Begin your authentication for <b>%s</b> contract. You can always go back to change the type</string>
-    <string name="dialogDeleteLibraryTitle">Delete library</string>
-    <string name="dialogDeleteLibrarySubtitle">Are you sure you want to delete current library?</string>
+    <!-- Actions -->
     <string name="actionYes">Yes</string>
     <string name="actionNo">No</string>
+
+    <!-- Delete library dialog -->
+    <string name="dialogDeleteLibraryTitle">Delete library</string>
+    <string name="dialogDeleteLibrarySubtitle">Are you sure you want to delete current library?</string>
+
+    <!-- Auth screen -->
+    <string name="labelAuthDisclaimer">Begin your authentication for <b>%s</b> contract. You can always go back to change the type</string>
+
+    <!-- Home screen -->
+    <string name="homeAppTitle">Hive</string>
+    <string name="homeAppSubtitle">Welcome to Saas client app. Select the contract bellow to get going</string>
+    <string name="homeLabelRead">Read contract</string>
+    <string name="homeLabelPush">Push contract</string>
+    <string name="homeLabelReadRaw">Read raw contract</string>
+    <string name="homeLabelConfiguration">Configuration</string>
+
+    <!-- Settings screen -->
+    <string name="settingsTitle">Disclaimer</string>
+    <string name="settingsSubtitle">If contract data is changed, we recommend to firstly delete the library and start fresh due to locally stored credentials, etc. which might cause problems if not correct.</string>
+    <string name="settingsSelectTarget">Select target</string>
+    <string name="settingsSelectEndpoint">Select endpoint</string>
+    <string name="settingsAppId">App ID</string>
+    <string name="settingsContractInfo">Specify contract information</string>
+    <string name="settingsContractId">Contract ID</string>
+    <string name="settingsPrivateKey">Private key</string>
+    <string name="settingsContractRead">Contract - Read</string>
+    <string name="settingsContractPush">Contract - Write</string>
+    <string name="settingsContractReadRaw">Contract - Read Raw</string>
+    <string name="settingsSaveConfiguration">Save configuration</string>
+    <string name="errorBaseUrl">Base URl must not be empty</string>
+    <string name="errorAppId">App ID must not be empty</string>
 
 </resources>

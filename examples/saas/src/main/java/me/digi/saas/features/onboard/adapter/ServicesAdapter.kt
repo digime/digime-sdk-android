@@ -44,9 +44,13 @@ class ServicesAdapter : ListAdapter<Service, ServicesAdapter.ServiceViewHolder>(
              * Init values
              */
             title.text = service.name
-            icon.load(service.resources[1].url) {
-                crossfade(true)
-            }
+            if (service.resources.isNotEmpty())
+                icon.load(service.resources[1].url) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_empty_set)
+                    error(R.drawable.ic_empty_set)
+                }
+            else icon.load(R.drawable.ic_empty_set)
 
             setOnClickListener {
                 onServiceClickListener?.let { click ->

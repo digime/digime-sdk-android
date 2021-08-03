@@ -26,6 +26,8 @@ class HomeViewModel(private val deleteLibrary: DeleteLibraryUseCase) : ViewModel
     private var job: Job? = null
 
     private fun deleteLibrary() {
+        _state.value = Resource.Loading()
+
         deleteLibrary
             .invoke()
             .subscribeOn(Schedulers.io())

@@ -30,7 +30,7 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.fetchServicesForContract(getString(R.string.pullContractId))
+        viewModel.fetchServicesForContract(localAccess.getCachedReadContract()?.contractId!!)
 
         setupAdapter()
         subscribeToObservers()

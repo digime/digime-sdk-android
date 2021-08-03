@@ -9,5 +9,5 @@ import org.koin.dsl.module
 
 val dataAccessModule: Module = module {
     single<MainLocalDataAccess> { MainLocalDataAccessImpl(get()) }
-    single<MainRemoteDataAccess> { MainRemoteDataAccessImpl(get()) }
+    single<MainRemoteDataAccess> { MainRemoteDataAccessImpl(get(), get()) }
 }

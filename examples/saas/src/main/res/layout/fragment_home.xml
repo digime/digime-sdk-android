@@ -31,7 +31,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/roboto_bold"
-        android:text="Hive"
+        android:text="@string/homeAppTitle"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="24sp" />
 
     <TextView
@@ -41,7 +42,8 @@
         android:layout_marginBottom="32dp"
         android:fontFamily="@font/roboto_light"
         android:gravity="center"
-        android:text="Welcome to Saas client app. Select the contract bellow to get going" />
+        android:text="@string/homeAppSubtitle"
+        android:textColor="?android:attr/textColorSecondary" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/triggerPullContract"
@@ -51,7 +53,7 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Pull contract"
+        android:text="@string/homeLabelRead"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_read" />
@@ -64,7 +66,7 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Push contract"
+        android:text="@string/homeLabelPush"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_push" />
@@ -77,9 +79,29 @@
         android:fontFamily="@font/roboto_regular"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:text="Read raw contract"
+        android:text="@string/homeLabelReadRaw"
         android:textAllCaps="false"
         app:cornerRadius="15dp"
         app:icon="@drawable/ic_read_raw" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="?android:attr/listDivider" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#F4D843"
+        android:fontFamily="@font/roboto_regular"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="@string/homeLabelConfiguration"
+        android:textAllCaps="false"
+        app:cornerRadius="15dp"
+        app:icon="@drawable/ic_settings" />
 
 </LinearLayout>

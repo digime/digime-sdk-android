@@ -3,27 +3,29 @@ package me.digi.saas.framework.datasource
 import android.app.Activity
 import android.content.Context
 import io.reactivex.rxjava3.core.Single
-import me.digi.saas.R
+import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
-import me.digi.saas.framework.utils.AppConst
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.*
 import me.digi.sdk.saas.serviceentities.Service
 
-class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAccess {
+class MainRemoteDataAccessImpl(
+    private val context: Context,
+    private val localAccess: MainLocalDataAccess
+) : MainRemoteDataAccess {
 
     private val pullClient: DMEPullClient by lazy {
 
         val configuration = DMEPullConfiguration(
-            context.getString(R.string.appId),
-            context.getString(R.string.pullContractId),
-            context.getString(R.string.pullContractPrivateKey)
+            localAccess.getCachedAppId()!!,
+            localAccess.getCachedReadContract()?.contractId!!,
+            localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n")
         )
 
-        configuration.baseUrl = AppConst.BASE_URL
+        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
         DMEPullClient(context, configuration)
     }
@@ -31,12 +33,12 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     private val pushClient: DMEPushClient by lazy {
 
         val configuration = DMEPushConfiguration(
-            context.getString(R.string.appId),
-            context.getString(R.string.pushContractId),
-            context.getString(R.string.pushContractPrivateKey)
+            localAccess.getCachedAppId()!!,
+            localAccess.getCachedPushContract()?.contractId!!,
+            localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n")
         )
 
-        configuration.baseUrl = AppConst.BASE_URL
+        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
         DMEPushClient(context, configuration)
     }
@@ -44,12 +46,12 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     private val readRawClient: DMEPullClient by lazy {
 
         val configuration = DMEPullConfiguration(
-            context.getString(R.string.appId),
-            context.getString(R.string.readRawContractId),
-            context.getString(R.string.readRawContractPrivateKey)
+            localAccess.getCachedAppId()!!,
+            localAccess.getCachedReadRawContract()?.contractId!!,
+            localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n")
         )
 
-        configuration.baseUrl = AppConst.BASE_URL
+        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
         DMEPullClient(context, configuration)
     }
@@ -119,7 +121,8 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         Single.create { emitter ->
             pullClient.getServicesForContractId(contractId) { servicesResponse, error ->
-                error?.let(emitter::onError) ?: emitter.onSuccess(servicesResponse?.data?.services)
+                error?.let(emitter::onError)
+                    ?: emitter.onSuccess(servicesResponse?.data?.services as List<Service>)
             }
         }
 
@@ -129,14 +132,15 @@ class MainRemoteDataAccessImpl(private val context: Context) : MainRemoteDataAcc
     ): Single<SaasOngoingPushResponse> =
         Single.create { emitter ->
             pushClient.pushData(payload, accessToken) { response: SaasOngoingPushResponse?, error ->
-                error?.let(emitter::onError) ?: emitter.onSuccess(response)
+                error?.let(emitter::onError)
+                    ?: emitter.onSuccess(response as SaasOngoingPushResponse)
             }
         }
 
     override fun deleteUsersLibrary(accessToken: String?): Single<Boolean> =
         Single.create { emitter ->
             pullClient.deleteUser(accessToken) { isLibraryDeleted, error ->
-                error?.let(emitter::onError) ?: emitter.onSuccess(isLibraryDeleted)
+                error?.let(emitter::onError) ?: emitter.onSuccess(isLibraryDeleted as Boolean)
             }
         }
 }
