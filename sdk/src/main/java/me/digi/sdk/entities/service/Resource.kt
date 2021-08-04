@@ -1,5 +1,4 @@
-package me.digi.sdk.saas.serviceentities
-
+package me.digi.sdk.entities.service
 
 data class Resource(
     val aspectratio: Aspectratio = Aspectratio(),

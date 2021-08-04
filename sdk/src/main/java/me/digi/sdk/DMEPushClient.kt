@@ -40,6 +40,39 @@ class DMEPushClient(
 
     private val disposable: CompositeDisposable = CompositeDisposable()
 
+    fun updateSession(sessionRequest: DMESessionRequest, completion: GetSessionCompletion) {
+
+        fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
+            Single.create { emitter ->
+                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
+                    when {
+                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
+                    }
+                }
+            }
+
+        requestSession(sessionRequest)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    val session = Session().copy(key = it.key, expiry = it.expiry)
+                    sessionManager.updatedSession = session
+                    completion.invoke(true, null)
+                },
+                onError = {
+                    completion.invoke(
+                        false,
+                        DMEAuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+    }
+
     fun createPostbox(fromActivity: Activity, completion: DMEPostboxCreationCompletion) {
 
         DMELog.i("Launching user consent request.")
@@ -180,7 +213,7 @@ class DMEPushClient(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { result: DMESaasOngoingPostbox ->
-                    sessionManager.newSession = result.session
+                    sessionManager.updatedSession = result.session
                     println("Session: ${result.session}")
                     println("Postbox: ${result.postboxData}")
                     println("Token: ${result.authToken}")
@@ -290,7 +323,7 @@ class DMEPushClient(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = {
-                        sessionManager.newSession = it.session
+                        sessionManager.updatedSession = it.session
                         completion(
                             it,
                             null
@@ -367,7 +400,7 @@ class DMEPushClient(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = {
-                        sessionManager.newSession = it.session
+                        sessionManager.updatedSession = it.session
                         completion(
                             it,
                             null
@@ -632,7 +665,7 @@ class DMEPushClient(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
-                    sessionManager.newSession = it.session
+                    sessionManager.updatedSession = it.session
                     completion.invoke(it, null)
                 },
                 onError = { error ->

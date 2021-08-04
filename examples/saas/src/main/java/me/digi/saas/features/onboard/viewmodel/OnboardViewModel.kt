@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import me.digi.saas.usecases.GetServicesForContractUseCase
 import me.digi.saas.usecases.OnboardServiceUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.entities.service.Service
 
 class OnboardViewModel(
     private val onboardService: OnboardServiceUseCase,

@@ -15,6 +15,7 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.api.DMESessionRequest
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.DMEFileListItemCache
@@ -82,6 +83,39 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     private var stalePollCount = 0
 
     private val compositeDisposable = CompositeDisposable()
+
+    fun updateSession(sessionRequest: DMESessionRequest, completion: GetSessionCompletion) {
+
+        fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
+            Single.create { emitter ->
+                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
+                    when {
+                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
+                    }
+                }
+            }
+
+        requestSession(sessionRequest)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    val session = Session().copy(key = it.key, expiry = it.expiry)
+                    sessionManager.updatedSession = session
+                    completion.invoke(true, null)
+                },
+                onError = {
+                    completion.invoke(
+                        false,
+                        DMEAuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+    }
 
     fun authorizeOngoingAccess(
         fromActivity: Activity,
@@ -330,7 +364,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                 onSuccess = { result: Pair<Session, DMETokenExchange> ->
                     println("Session: ${result.first}")
                     println("Token: ${result.second}")
-                    sessionManager.newSession = result.first
+                    sessionManager.updatedSession = result.first
                     completion.invoke(result.second, null)
                 },
                 onError = { error ->
@@ -480,7 +514,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { result: Triple<Session, AuthSession, DMETokenExchange> ->
-                    sessionManager.newSession = result.first
+                    sessionManager.updatedSession = result.first
 
                     val authResponse = AuthorizeResponse()
                         .copy(
@@ -627,7 +661,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
                     ) { response, error ->
                         when {
                             response != null -> {
-                                sessionManager.newSession = response.session
+                                sessionManager.updatedSession = response.session
                                 emitter.onSuccess(true)
                             }
                             error != null -> emitter.onError(error)
@@ -695,7 +729,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     private fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
 
-        val currentSession = sessionManager.newSession
+        val currentSession = sessionManager.updatedSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 
@@ -762,7 +796,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
 
     fun getFileList(completion: DMEFileListCompletion) {
 
-        val currentSession = sessionManager.newSession
+        val currentSession = sessionManager.updatedSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
             apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
@@ -775,7 +809,7 @@ class DMEPullClient(val context: Context, val configuration: DMEPullConfiguratio
     // TODO: Handle better if possible
     fun getSessionAccounts(completion: DMEAccountsCompletion) {
 
-        val currentSession = sessionManager.newSession
+        val currentSession = sessionManager.updatedSession
 
         if (currentSession != null && sessionManager.isSessionValid()) {
 

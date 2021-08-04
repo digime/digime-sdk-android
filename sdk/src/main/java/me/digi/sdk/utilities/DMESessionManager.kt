@@ -3,15 +3,18 @@ package me.digi.sdk.utilities
 import me.digi.sdk.api.DMEAPIClient
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.entities.DMEClientConfiguration
-import me.digi.sdk.entities.DMESession
 import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.SessionResponse
 import me.digi.sdk.entities.api.DMESessionRequest
 import java.util.*
 
-class DMESessionManager(private val apiClient: DMEAPIClient, private val clientConfig: DMEClientConfiguration) {
+class DMESessionManager(
+    private val apiClient: DMEAPIClient,
+    private val clientConfig: DMEClientConfiguration
+) {
 
-    var currentSession: DMESession? = null
-    var newSession: Session? = null
+    var currentSession: SessionResponse? = null
+    var updatedSession: Session? = null
     var currentScope: DMESessionRequest? = null
 
     fun getSession(sessionRequest: DMESessionRequest, completion: DMEAuthorizationCompletion) {
@@ -30,7 +33,7 @@ class DMESessionManager(private val apiClient: DMEAPIClient, private val clientC
         }
     }
 
-    fun isSessionValid() = newSession?.let {
+    fun isSessionValid() = updatedSession?.let {
         Date(it.expiry).after(Date())
     } ?: false
 

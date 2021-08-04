@@ -6,7 +6,7 @@ import me.digi.sdk.entities.AuthorizeResponse
 import me.digi.sdk.entities.DMEFileList
 import me.digi.sdk.entities.DMEPushPayload
 import me.digi.sdk.entities.SaasOngoingPushResponse
-import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.entities.service.Service
 
 interface MainRepository {
     fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse>

@@ -10,7 +10,7 @@ import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.*
-import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.entities.service.Service
 
 class MainRemoteDataAccessImpl(
     private val context: Context,

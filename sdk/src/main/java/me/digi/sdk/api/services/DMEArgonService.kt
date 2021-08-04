@@ -3,7 +3,7 @@ package me.digi.sdk.api.services
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.api.DMESessionRequest
-import me.digi.sdk.saas.serviceentities.ServicesResponse
+import me.digi.sdk.entities.service.ServicesResponse
 import me.digi.sdk.utilities.jwt.ExchangeTokenJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -14,8 +14,8 @@ import retrofit2.http.*
 
 internal interface DMEArgonService {
 
-    @POST("v1.4/permission-access/session")
-    fun getSession(@Body sessionRequest: DMESessionRequest): Call<DMESession>
+    @POST("v1.6/permission-access/session")
+    fun getSession(@Body sessionRequest: DMESessionRequest): Call<SessionResponse>
 
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>

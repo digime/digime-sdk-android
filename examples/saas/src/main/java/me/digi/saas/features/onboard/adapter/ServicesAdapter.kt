@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import me.digi.saas.R
-import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.entities.service.Service
 
 class ServicesAdapter : ListAdapter<Service, ServicesAdapter.ServiceViewHolder>(Companion) {
 

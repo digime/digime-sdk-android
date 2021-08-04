@@ -2,9 +2,9 @@ package me.digi.sdk.callbacks
 
 import me.digi.sdk.DMEError
 import me.digi.sdk.entities.*
-import me.digi.sdk.saas.serviceentities.ServicesResponse
+import me.digi.sdk.entities.service.ServicesResponse
 
-typealias DMEAuthorizationCompletion = (session: DMESession?, error: DMEError?) -> Unit
+typealias DMEAuthorizationCompletion = (session: SessionResponse?, error: DMEError?) -> Unit
 
 typealias AuthorizationCompletion = (authSession: AuthSession?, error: DMEError?) -> Unit
 
@@ -25,3 +25,5 @@ typealias DMESaasOngoingAuthorizationCompletion = (exchangeTokens: DMETokenExcha
 typealias DMEServicesForContract = (ServicesResponse?, error: DMEError?) -> Unit
 
 typealias DMEUserLibraryDeletion = (isLibraryDeleted: Boolean?, error: DMEError?) -> Unit
+
+typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: DMEError?) -> Unit

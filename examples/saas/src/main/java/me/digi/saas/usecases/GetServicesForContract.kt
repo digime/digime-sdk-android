@@ -2,7 +2,7 @@ package me.digi.saas.usecases
 
 import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.repository.MainRepository
-import me.digi.sdk.saas.serviceentities.Service
+import me.digi.sdk.entities.service.Service
 
 interface GetServicesForContractUseCase {
     fun invoke(contractId: String): Single<List<Service>>
