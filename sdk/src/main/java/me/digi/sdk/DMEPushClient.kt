@@ -20,7 +20,6 @@ import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.request.DMESessionRequest
 import me.digi.sdk.entities.response.AuthorizeResponse
-import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.entities.response.SessionResponse
 import me.digi.sdk.entities.response.TokenResponse
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
@@ -148,7 +147,7 @@ class DMEPushClient(
         completion: AuthCompletion
     ) {
 
-        fun requestPreAuthCode(): Single<Pair<Session, PreAuthorizationCodePayload>> = Single.create { emitter ->
+        fun requestPreAuthCode(): Single<GetPreAuthCodeDone> = Single.create { emitter ->
 
             val codeVerifier =
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
@@ -178,12 +177,14 @@ class DMEPushClient(
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val payload: PreAuthorizationCodePayload = Gson().fromJson(payloadJson, PreAuthorizationCodePayload::class.java)
+                        val payload: PreAuthorizationCodePayload =
+                            Gson().fromJson(payloadJson, PreAuthorizationCodePayload::class.java)
 
                         response.session.metadata[context.getString(R.string.key_code_verifier)] =
                             codeVerifier
 
-                        val result: Pair<Session, PreAuthorizationCodePayload> = Pair(response.session, payload)
+                        val result =
+                            GetPreAuthCodeDone().copy(session = response.session, payload = payload)
 
                         emitter.onSuccess(result)
                     }
@@ -193,19 +194,24 @@ class DMEPushClient(
             }
         }
 
-        fun requestConsent(fromActivity: Activity): SingleTransformer<Pair<Session, PreAuthorizationCodePayload>, Pair<Session, ConsentAuthResponse>> =
-            SingleTransformer<Pair<Session, PreAuthorizationCodePayload>, Pair<Session, ConsentAuthResponse>> {
+        fun requestConsent(fromActivity: Activity): SingleTransformer<GetPreAuthCodeDone, GetConsentDone> =
+            SingleTransformer<GetPreAuthCodeDone, GetConsentDone> {
                 it.flatMap { response ->
                     Single.create { emitter ->
-                        response.second.preAuthorizationCode?.let { code ->
+                        response.payload.preAuthorizationCode?.let { code ->
                             authorizeManger.beginConsentAction(
                                 fromActivity,
                                 code,
                                 serviceId
                             ) { authSession, error ->
                                 when {
-                                    authSession != null ->
-                                        emitter.onSuccess(Pair(response.first, authSession))
+                                    authSession != null -> {
+                                        val consentDone = GetConsentDone().copy(
+                                            session = response.session,
+                                            consentAuthResponse = authSession
+                                        )
+                                        emitter.onSuccess(consentDone)
+                                    }
                                     error != null -> emitter.onError(error)
                                     else -> emitter.onError(IllegalArgumentException())
                                 }
@@ -215,17 +221,17 @@ class DMEPushClient(
                 }
             }
 
-        fun exchangeAuthorizationCode(): SingleTransformer<Pair<Session, ConsentAuthResponse>, OngoingPostbox> =
-            SingleTransformer<Pair<Session, ConsentAuthResponse>, OngoingPostbox> {
-                it.flatMap { response: Pair<Session, ConsentAuthResponse> ->
+        fun exchangeAuthorizationCode(): SingleTransformer<GetConsentDone, OngoingPostbox> =
+            SingleTransformer<GetConsentDone, OngoingPostbox> {
+                it.flatMap { response: GetConsentDone ->
 
                     val codeVerifier =
-                        response.first.metadata[context.getString(R.string.key_code_verifier)].toString()
+                        response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.second.code!!,
+                        response.consentAuthResponse.code!!,
                         codeVerifier
                     )
 
@@ -237,17 +243,16 @@ class DMEPushClient(
                         .map { token: TokenResponse ->
 
                             val chunks: List<String> = token.token.split(".")
-                            val payloadJson: String =
-                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange =
+                            val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
                             val postboxData = OngoingPostboxData().copy(
-                                postboxId = response.second.postboxId,
-                                publicKey = response.second.publicKey
+                                postboxId = response.consentAuthResponse.postboxId,
+                                publicKey = response.consentAuthResponse.publicKey
                             )
 
-                            OngoingPostbox(response.first, postboxData, tokenExchange)
+                            OngoingPostbox(response.session, postboxData, tokenExchange)
                         }
                 }
             }
@@ -282,15 +287,6 @@ class DMEPushClient(
             )
             .addTo(disposable)
     }
-
-    data class GetPreAuthCodeDone(
-        val session: Session,
-        val payload: PreAuthorizationCodePayload
-    )
-    data class GetConsentDone(
-        val session: Session,
-        val consentAuthResponse: ConsentAuthResponse
-    )
 
     fun authorizeOngoingPostbox(
         fromActivity: Activity,
@@ -335,12 +331,14 @@ class DMEPushClient(
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val payload: PreAuthorizationCodePayload = Gson().fromJson(payloadJson, PreAuthorizationCodePayload::class.java)
+                        val payload: PreAuthorizationCodePayload =
+                            Gson().fromJson(payloadJson, PreAuthorizationCodePayload::class.java)
 
                         response.session.metadata[context.getString(R.string.key_code_verifier)] =
                             codeVerifier
 
-                        val result = GetPreAuthCodeDone(response.session, payload)
+                        val result =
+                            GetPreAuthCodeDone().copy(session = response.session, payload = payload)
 
                         emitter.onSuccess(result)
                     }
@@ -355,9 +353,19 @@ class DMEPushClient(
                 it.flatMap { response ->
                     Single.create { emitter ->
                         response.payload.preAuthorizationCode?.let { code ->
-                            authorizeManger.beginConsentAction(fromActivity, code, serviceId) { authSession, error ->
+                            authorizeManger.beginConsentAction(
+                                fromActivity,
+                                code,
+                                serviceId
+                            ) { authSession, error ->
                                 when {
-                                    authSession != null -> emitter.onSuccess(GetConsentDone(response.session, authSession))
+                                    authSession != null -> {
+                                        val consentDone = GetConsentDone().copy(
+                                            session = response.session,
+                                            consentAuthResponse = authSession
+                                        )
+                                        emitter.onSuccess(consentDone)
+                                    }
                                     error != null -> emitter.onError(error)
                                     else -> emitter.onError(IllegalArgumentException())
                                 }
@@ -371,7 +379,8 @@ class DMEPushClient(
             SingleTransformer<GetConsentDone, OngoingPostbox> {
                 it.flatMap { response: GetConsentDone ->
 
-                    val codeVerifier = response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
+                    val codeVerifier =
+                        response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
@@ -389,7 +398,8 @@ class DMEPushClient(
 
                             val chunks: List<String> = token.token.split(".")
                             val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange: CredentialsPayload = Gson().fromJson(payloadJson, CredentialsPayload::class.java)
+                            val tokenExchange: CredentialsPayload =
+                                Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
                             val postboxData = OngoingPostboxData().copy(
                                 postboxId = response.consentAuthResponse.postboxId,
@@ -419,12 +429,15 @@ class DMEPushClient(
                         .map { exchangeToken ->
 
                             val chunks: List<String> = exchangeToken.token.split(".")
-                            val payloadJson: String =
-                                String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                            val tokenExchange =
+                            val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                            val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            OngoingPostbox(result.session, result.postboxData, tokenExchange)
+                            OngoingPostbox().copy(
+                                session = result.session,
+                                postboxData = result.postboxData,
+                                authToken = tokenExchange
+                            )
                         }
                 }
             }
@@ -495,7 +508,7 @@ class DMEPushClient(
                                 // 'InvalidToken' error, meaning that the REFRESH token has expired.
                                 if (innerError is DMEAPIError && error.code == "InvalidToken") {
                                     // If so, we need to obtain a new set of credentials from the digi.me
-                                    // application. Process the flow as before, for ongoing acces, provided
+                                    // application. Process the flow as before, for ongoing access, provided
                                     // that auto-recover is enabled. If not, we throw a specific error and
                                     // exit the flow.
                                     if (configuration.autoRecoverExpiredCredentials) {
@@ -581,7 +594,10 @@ class DMEPushClient(
                 .subscribeBy(
                     onSuccess = {
                         sessionManager.updatedSession = it.session
-                        completion(it, null).also { DMELog.i("Successfully pushed data to postbox") }
+                        completion(
+                            it,
+                            null
+                        ).also { DMELog.i("Successfully pushed data to postbox") }
                     },
                     onError = { error ->
                         when {
