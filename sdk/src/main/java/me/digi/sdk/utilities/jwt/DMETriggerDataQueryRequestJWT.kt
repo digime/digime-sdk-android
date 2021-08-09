@@ -13,7 +13,7 @@ internal class DMETriggerDataQueryRequestJWT (
 
 ): JsonWebToken() {
 
-    @JwtClaim val redirectUri = "digime-ca://auth"
+    @JwtClaim val redirectUri = "digime-ca://callback"
     @JwtClaim val clientId = "${appId}_${contractId}"
     @JwtClaim val timestamp = Date().time
     @JwtClaim val nonce: String

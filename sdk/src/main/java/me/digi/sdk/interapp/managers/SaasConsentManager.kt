@@ -144,7 +144,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         val uri: Uri.Builder = Uri.parse("${baseURL}apps/saas/$type")
             .buildUpon()
             .appendQueryParameter(code, codeValue)
-            .appendQueryParameter("callback", "digime-ca://auth")
+            .appendQueryParameter("callback", "digime-ca://callback")
 
         serviceId?.let { uri.appendQueryParameter("service", serviceId) }
 

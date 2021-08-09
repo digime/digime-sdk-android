@@ -12,7 +12,7 @@ internal class DMEReferenceCodeRequestJWT(
 ) : JsonWebToken() {
 
     @JwtClaim
-    val redirectUri = "digime-ca://auth"
+    val redirectUri = "digime-ca://callback"
 
     @JwtClaim
     val clientId = "${appId}_${contractId}"

@@ -18,7 +18,7 @@ internal class DMEAuthTokenRequestJWT(
     @JwtClaim
     val nonce: String
     @JwtClaim
-    val redirectUri = "digime-ca://auth"
+    val redirectUri = "digime-ca://callback"
     @JwtClaim
     val timestamp = Date().time
 
