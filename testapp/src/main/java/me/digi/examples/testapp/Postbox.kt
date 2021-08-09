@@ -8,15 +8,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox.*
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.DMEMimeType
-import me.digi.sdk.entities.DMEPushConfiguration
-import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.MimeType
+import me.digi.sdk.entities.configuration.WriteConfiguration
+import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.io.IOException
 
 class Postbox : AppCompatActivity() {
-    private lateinit var cfg: DMEPushConfiguration
+    private lateinit var cfg: WriteConfiguration
     private var jsonRadio : Boolean =  false
     private var pngRadio : Boolean = false
     private var pdfRadio : Boolean = false
@@ -49,7 +49,7 @@ class Postbox : AppCompatActivity() {
             this.getString(R.string.digime_p12_filename)
         )
 
-        val configuration = DMEPushConfiguration(
+        val configuration = WriteConfiguration(
             this.getString(R.string.digime_application_id),
             this.getString(R.string.digime_postbox_contract_id),
             privateKey
@@ -126,7 +126,7 @@ class Postbox : AppCompatActivity() {
                             dmePostbox,
                             metadata,
                             fileContent,
-                            DMEMimeType.APPLICATION_JSON
+                            MimeType.APPLICATION_JSON
                         )
                     ) {
                         if (error == null) {
@@ -148,7 +148,7 @@ class Postbox : AppCompatActivity() {
                             dmePostbox,
                             metadata,
                             fileContent,
-                            DMEMimeType.IMAGE_PNG
+                            MimeType.IMAGE_PNG
                         )
                     ) {
                         if (error == null) {
@@ -170,7 +170,7 @@ class Postbox : AppCompatActivity() {
                             dmePostbox,
                             metadata,
                             fileContent,
-                            DMEMimeType.APPLICATION_PDF
+                            MimeType.APPLICATION_PDF
                         )
                     ) {
                         if (error == null) {

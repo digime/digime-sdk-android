@@ -13,7 +13,7 @@ import me.digi.saas.features.pull.adapter.PullAdapter
 import me.digi.saas.features.readraw.viewmodel.ReadRawViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -46,7 +46,7 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { result: Resource<List<DMEFileListItem>> ->
+            viewModel.state.collectLatest { result: Resource<List<FileListItem>> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -55,7 +55,7 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
                     is Resource.Success -> {
                         binding.pbReadRaw.isVisible = false
 
-                        val data = result.data as List<DMEFileListItem>
+                        val data = result.data as List<FileListItem>
                         readRawAdapter.submitList(data)
 
                         binding.incEmptyState.root.isVisible = data.isEmpty()

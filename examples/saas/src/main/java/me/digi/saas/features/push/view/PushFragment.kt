@@ -13,10 +13,10 @@ import me.digi.saas.features.push.viewmodel.PushViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.DMEMimeType
-import me.digi.sdk.entities.DMEPostbox
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.MimeType
+import me.digi.sdk.entities.Postbox
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -40,9 +40,9 @@ class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
         if (postboxId != null && publicKey != null && sessionKey != null) {
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
-            val postbox: DMEPostbox =
-                DMEPostbox().copy(key = sessionKey, postboxId = postboxId, publicKey = publicKey)
-            payload = DMEPushPayload(postbox, metadata, fileContent, DMEMimeType.IMAGE_PNG)
+            val postbox: Postbox =
+                Postbox().copy(key = sessionKey, postboxId = postboxId, publicKey = publicKey)
+            payload = DMEPushPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
         }
 
         subscribeToObservers()

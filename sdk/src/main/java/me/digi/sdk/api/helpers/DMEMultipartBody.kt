@@ -1,7 +1,7 @@
 package me.digi.sdk.api.helpers
 
-import me.digi.sdk.entities.DMEMimeType
-import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.MimeType
+import me.digi.sdk.entities.payload.DMEPushPayload
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -33,7 +33,7 @@ internal class DMEMultipartBody(description : RequestBody, requestBody: Multipar
             return this
         }
 
-        fun dataContent(dataContent: ByteArray, mimetype: DMEMimeType): Builder {
+        fun dataContent(dataContent: ByteArray, mimetype: MimeType): Builder {
             val file = File.createTempFile(REQUEST_BODY_NAME, "json")
             val bos = BufferedOutputStream(FileOutputStream(file, false))
             bos.write(dataContent)

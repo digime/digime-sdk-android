@@ -8,7 +8,7 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.DMEFileMetadata
+import me.digi.sdk.entities.FileMetadata
 import me.digi.sdk.entities.Status
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
@@ -35,11 +35,11 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
         return DMEFile(String(decompressedContentBytes), status = Status())
     }
 
-    private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): DMEFileMetadata? {
+    private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): FileMetadata? {
 
         return try {
             val metadataJSON = rootJSON["fileMetadata"].asJsonObject ?: throw DMESDKError.InvalidData()
-            val metadataObjectType = object: TypeToken<DMEFileMetadata>() {}.type
+            val metadataObjectType = object: TypeToken<FileMetadata>() {}.type
             context.deserialize(metadataJSON, metadataObjectType)
         }
         catch(e: Throwable) {

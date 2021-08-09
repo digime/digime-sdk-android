@@ -15,10 +15,10 @@ import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.interceptors.DMERetryInterceptor
 import me.digi.sdk.api.services.DMEArgonService
-import me.digi.sdk.entities.DMEClientConfiguration
+import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.DMEPullConfiguration
-import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.request.DMESessionRequest
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
-class DMEAPIClient(private val context: Context, private val clientConfig: DMEClientConfiguration) {
+class DMEAPIClient(private val context: Context, private val clientConfig: ClientConfiguration) {
 
     private val httpClient: Retrofit
     internal val argonService: DMEArgonService
@@ -75,7 +75,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: DMECl
                     return Date(json?.asLong ?: 0)
                 }
             })
-        if (clientConfig is DMEPullConfiguration) {
+        if (clientConfig is ReadConfiguration) {
             gsonBuilder.registerTypeAdapter(DMEFile::class.java, DMEFileUnpackAdapter(clientConfig.privateKeyHex))
         }
 

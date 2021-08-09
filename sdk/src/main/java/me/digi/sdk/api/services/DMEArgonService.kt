@@ -1,10 +1,13 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.*
-import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.entities.AuthorizationScopeRequest
+import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.Pull
+import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
-import me.digi.sdk.utilities.jwt.ExchangeTokenJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -61,10 +64,10 @@ internal interface DMEArgonService {
     ): Single<SaasOngoingPushResponse>
 
     @POST("v1.6/oauth/token")
-    fun refreshCredentials(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+    fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>
 
     @POST("v1.6/oauth/token")
-    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<TokenResponse>
 
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(

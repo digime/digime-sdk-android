@@ -14,7 +14,7 @@ import me.digi.saas.features.pull.adapter.PullAdapter
 import me.digi.saas.features.pull.viewmodel.PullViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
@@ -47,7 +47,7 @@ class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collect { result: Resource<List<DMEFileListItem>> ->
+            viewModel.state.collect { result: Resource<List<FileListItem>> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -56,7 +56,7 @@ class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
                     is Resource.Success -> {
                         binding.pbPull.isVisible = false
 
-                        val data = result.data as List<DMEFileListItem>
+                        val data = result.data as List<FileListItem>
                         pullAdapter.submitList(data)
 
                         binding.incEmptyState.root.isVisible = data.isEmpty()

@@ -2,8 +2,8 @@ package me.digi.ongoingpostbox.usecases
 
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.MainRepository
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 /**
  * Use case - Push data to Postbox

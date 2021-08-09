@@ -16,20 +16,22 @@ import me.digi.saas.framework.utils.AppConst.CACHED_SESSION_KEY
 import me.digi.saas.framework.utils.AppConst.CONTRACT_PREFS_KEY
 import me.digi.saas.framework.utils.AppConst.SHAREDPREFS_KEY
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.response.AuthorizeResponse
 
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 
-    override fun getCachedCredential(): DMETokenExchange? =
+    override fun getCachedCredential(): CredentialsPayload? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMETokenExchange::class.java)
+                Gson().fromJson(it, CredentialsPayload::class.java)
             }
         }
 
-    override fun getCachedPostbox(): DMEOngoingPostboxData? =
+    override fun getCachedPostbox(): OngoingPostboxData? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_KEY, null)?.let {
-                Gson().fromJson(it, DMEOngoingPostboxData::class.java)
+                Gson().fromJson(it, OngoingPostboxData::class.java)
             }
         }
 
@@ -45,7 +47,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             it.map { credential ->
                 credential?.apply {
                     context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                        val postbox = DMEOngoingPostboxData().copy(
+                        val postbox = OngoingPostboxData().copy(
                             postboxId = credential.postboxId,
                             publicKey = credential.publicKey
                         )
@@ -53,7 +55,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)
 
                         val accessToken =
-                            DMETokenExchange().copy(accessToken = AccessToken(value = credential.accessToken!!))
+                            CredentialsPayload().copy(accessToken = AccessToken(value = credential.accessToken!!))
                         val encodedAccessToken = Gson().toJson(accessToken)
                         putString(CACHED_CREDENTIAL_KEY, encodedAccessToken)
 

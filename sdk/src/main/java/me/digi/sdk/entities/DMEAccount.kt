@@ -11,5 +11,5 @@ data class DMEAccount (
     val name: String,
 
     @SerializedName("service")
-    val service: DMEServiceDescriptor
+    val service: ServiceDescriptor
 )

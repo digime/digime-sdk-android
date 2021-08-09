@@ -4,12 +4,12 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import me.digi.sdk.api.DMEAPIClient
-import me.digi.sdk.entities.DMEClientConfiguration
+import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMEDeepLinkBuilder
 import me.digi.sdk.utilities.DMESessionManager
 
-abstract class DMEClient(private val context: Context, private val config: DMEClientConfiguration) {
+abstract class DMEClient(private val context: Context, private val config: ClientConfiguration) {
 
     protected val apiClient: DMEAPIClient
     protected val sessionManager: DMESessionManager

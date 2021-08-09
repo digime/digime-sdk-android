@@ -8,9 +8,9 @@ import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_SESSION_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
-import me.digi.sdk.entities.DMEOngoingPostboxData
-import me.digi.sdk.entities.DMESaasOngoingPostbox
-import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.OngoingPostboxData
+import me.digi.sdk.entities.OngoingPostbox
+import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.Session
 
 /**
@@ -24,17 +24,17 @@ import me.digi.sdk.entities.Session
  */
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 
-    override fun getCachedCredential(): DMETokenExchange? =
+    override fun getCachedCredential(): CredentialsPayload? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMETokenExchange::class.java)
+                Gson().fromJson(it, CredentialsPayload::class.java)
             }
         }
 
-    override fun getCachedPostbox(): DMEOngoingPostboxData? =
+    override fun getCachedPostbox(): OngoingPostboxData? =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_KEY, null)?.let {
-                Gson().fromJson(it, DMEOngoingPostboxData::class.java)
+                Gson().fromJson(it, OngoingPostboxData::class.java)
             }
         }
 
@@ -45,7 +45,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun cacheCredentials(): SingleTransformer<DMESaasOngoingPostbox?, DMESaasOngoingPostbox?> =
+    override fun cacheCredentials(): SingleTransformer<OngoingPostbox?, OngoingPostbox?> =
         SingleTransformer {
             it.map { credential ->
                 credential?.apply {

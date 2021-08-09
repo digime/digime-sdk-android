@@ -21,6 +21,9 @@ import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
 import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -161,11 +164,11 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
              * so we can say they're not null
              */
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
-            val postbox: DMEOngoingPostboxData = localAccess.getCachedPostbox()!!
-            val credentials: DMETokenExchange = localAccess.getCachedCredential()!!
+            val postbox: OngoingPostboxData = localAccess.getCachedPostbox()!!
+            val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
             val session: Session = localAccess.getCachedSession()!!
 
-            val saasPostbox = DMEPostbox().copy(
+            val saasPostbox = Postbox().copy(
                 key = session.key,
                 postboxId = postbox.postboxId,
                 publicKey = postbox.publicKey
@@ -175,7 +178,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                 saasPostbox,
                 metadata,
                 readBytes(requireContext(), data)!!,
-                DMEMimeType.IMAGE_PNG
+                MimeType.IMAGE_PNG
             )
 
             btnUploadImage?.setOnClickListener {

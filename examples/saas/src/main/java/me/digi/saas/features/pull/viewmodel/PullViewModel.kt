@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.GetSessionDataUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 
 class PullViewModel(private val getData: GetSessionDataUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<List<DMEFileListItem>>> =
+    private val _state: MutableStateFlow<Resource<List<FileListItem>>> =
         MutableStateFlow(Resource.Loading())
-    val state: StateFlow<Resource<List<DMEFileListItem>>>
+    val state: StateFlow<Resource<List<FileListItem>>>
         get() = _state
 
     fun getData() {

@@ -10,7 +10,7 @@ import me.digi.sdk.entities.*
 
 class CaScopingActivity : AppCompatActivity() {
 
-    val test = DMEScope()
+    val test = Scope()
     val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,69 +39,69 @@ class CaScopingActivity : AppCompatActivity() {
     }
 
     private fun getData(){
-        val serviceObjectTypesSocial : MutableList<DMEServiceObjectType> = mutableListOf()
-        val serviceObjectTypeHealth : MutableList<DMEServiceObjectType> = mutableListOf()
+        val serviceObjectTypesSocial : MutableList<ServiceObjectType> = mutableListOf()
+        val serviceObjectTypeHealth : MutableList<ServiceObjectType> = mutableListOf()
 
         if(post.isChecked)
-            serviceObjectTypesSocial.add(DMEServiceObjectType(2))
+            serviceObjectTypesSocial.add(ServiceObjectType(2))
 
         if(comment.isChecked)
-            serviceObjectTypesSocial.add(DMEServiceObjectType(7))
+            serviceObjectTypesSocial.add(ServiceObjectType(7))
 
         if(media.isChecked)
-            serviceObjectTypesSocial.add(DMEServiceObjectType(1))
+            serviceObjectTypesSocial.add(ServiceObjectType(1))
 
         if(activity.isChecked)
-            serviceObjectTypeHealth.add(DMEServiceObjectType(300))
+            serviceObjectTypeHealth.add(ServiceObjectType(300))
 
         if(daily_activity.isChecked)
-            serviceObjectTypeHealth.add(DMEServiceObjectType(301))
+            serviceObjectTypeHealth.add(ServiceObjectType(301))
 
         if(achievement.isChecked)
-            serviceObjectTypeHealth.add(DMEServiceObjectType(302))
+            serviceObjectTypeHealth.add(ServiceObjectType(302))
 
         if(sleep.isChecked)
-            serviceObjectTypeHealth.add(DMEServiceObjectType(303))
+            serviceObjectTypeHealth.add(ServiceObjectType(303))
 
-        val serviceTypesSocial: MutableList<DMEServiceType> = mutableListOf()
-        val serviceTypesHealth: MutableList<DMEServiceType> = mutableListOf()
+        val serviceTypesSocial: MutableList<ServiceType> = mutableListOf()
+        val serviceTypesHealth: MutableList<ServiceType> = mutableListOf()
 
         if(facebook.isChecked)
-            serviceTypesSocial.add(DMEServiceType(1, serviceObjectTypesSocial))
+            serviceTypesSocial.add(ServiceType(1, serviceObjectTypesSocial))
 
         if(instagram.isChecked)
-            serviceTypesSocial.add(DMEServiceType(40, serviceObjectTypesSocial))
+            serviceTypesSocial.add(ServiceType(40, serviceObjectTypesSocial))
 
         if(twitter.isChecked)
-            serviceTypesSocial.add(DMEServiceType(3, serviceObjectTypesSocial))
+            serviceTypesSocial.add(ServiceType(3, serviceObjectTypesSocial))
 
         if(pinterest.isChecked)
-            serviceTypesSocial.add(DMEServiceType(9, serviceObjectTypesSocial))
+            serviceTypesSocial.add(ServiceType(9, serviceObjectTypesSocial))
 
         if(flickr.isChecked)
-            serviceTypesSocial.add(DMEServiceType(12, serviceObjectTypesSocial))
+            serviceTypesSocial.add(ServiceType(12, serviceObjectTypesSocial))
 
         if(fitbit.isChecked)
-            serviceTypesHealth.add(DMEServiceType(18, serviceObjectTypeHealth))
+            serviceTypesHealth.add(ServiceType(18, serviceObjectTypeHealth))
 
         if(garmin.isChecked)
-            serviceTypesHealth.add(DMEServiceType(21, serviceObjectTypeHealth))
+            serviceTypesHealth.add(ServiceType(21, serviceObjectTypeHealth))
 
         if(google.isChecked)
-            serviceTypesHealth.add(DMEServiceType(33, serviceObjectTypeHealth))
+            serviceTypesHealth.add(ServiceType(33, serviceObjectTypeHealth))
 
-        val serviceGroups: MutableList<DMEServiceGroup> = mutableListOf()
+        val serviceGroups: MutableList<ServiceGroup> = mutableListOf()
 
 
         if(social.isChecked)
-            serviceGroups.add(DMEServiceGroup(1, serviceTypesSocial))
+            serviceGroups.add(ServiceGroup(1, serviceTypesSocial))
 
         if(health.isChecked)
-            serviceGroups.add(DMEServiceGroup(4, serviceTypesHealth))
+            serviceGroups.add(ServiceGroup(4, serviceTypesHealth))
 
         test.serviceGroups = serviceGroups
 
-        test.timeRanges = listOf(DMETimeRange(null, null, null, "all"))
+        test.timeRanges = listOf(TimeRange(null, null, null, "all"))
     }
 
 }

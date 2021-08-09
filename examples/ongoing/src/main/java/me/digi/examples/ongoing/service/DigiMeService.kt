@@ -16,6 +16,8 @@ import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.ongoing.R
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.payload.CredentialsPayload
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -30,7 +32,7 @@ class DigiMeService(private val context: Application) {
 
     private val client: DMEPullClient by lazy {
 
-        val configuration = DMEPullConfiguration(
+        val configuration = ReadConfiguration(
             context.getString(R.string.staging_app_id),
             context.getString(R.string.staging_contract_id),
             context.getString(R.string.staging_private_key)
@@ -68,24 +70,24 @@ class DigiMeService(private val context: Application) {
             ) <= 24
         }
 
-    private fun createScopeForDailyPlayHistory(): DMEScope {
-        val objects = listOf(DMEServiceObjectType(406))
-        val services = listOf(DMEServiceType(19, objects))
-        val groups = listOf(DMEServiceGroup(5, services))
-        return DMEScope().apply {
+    private fun createScopeForDailyPlayHistory(): Scope {
+        val objects = listOf(ServiceObjectType(406))
+        val services = listOf(ServiceType(19, objects))
+        val groups = listOf(ServiceGroup(5, services))
+        return Scope().apply {
             serviceGroups = groups
-            timeRanges = listOf(DMETimeRange(to = null, from = null, last = "1d", type = null))
+            timeRanges = listOf(TimeRange(to = null, from = null, last = "1d", type = null))
         }
     }
 
     fun getCachedCredential() =
         context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMETokenExchange::class.java)
+                Gson().fromJson(it, CredentialsPayload::class.java)
             }
         }
 
-    private fun cacheCredential() = SingleTransformer<DMETokenExchange, DMETokenExchange> {
+    private fun cacheCredential() = SingleTransformer<CredentialsPayload, CredentialsPayload> {
         it.map { credential ->
             credential.apply {
                 context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {

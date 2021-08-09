@@ -2,10 +2,10 @@ package me.digi.saas.data.remoteaccess
 
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.AuthorizeResponse
-import me.digi.sdk.entities.DMEFileList
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.AuthorizeResponse
+import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
 
 interface MainRemoteDataAccess {

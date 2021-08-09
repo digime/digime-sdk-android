@@ -6,18 +6,17 @@ import android.text.method.ScrollingMovementMethod
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.ca_flow.*
-import me.digi.sdk.DMEError
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.DMEPullConfiguration
-import me.digi.sdk.entities.DMEScope
+import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.Scope
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
 class CaFlow : AppCompatActivity() {
     private lateinit var client: DMEPullClient
     private lateinit var pk: String
-    private lateinit var cfg: DMEPullConfiguration
-    private var test : DMEScope? = null
+    private lateinit var cfg: ReadConfiguration
+    private var test : Scope? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,14 +24,14 @@ class CaFlow : AppCompatActivity() {
 
         if(intent != null) {
             val gson = Gson()
-            test = gson.fromJson<DMEScope>(intent.getStringExtra("DMEScope"), DMEScope::class.java)
+            test = gson.fromJson<Scope>(intent.getStringExtra("DMEScope"), Scope::class.java)
         }
 
         pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename)
         )
 
-        cfg = DMEPullConfiguration(
+        cfg = ReadConfiguration(
             applicationContext.getString(R.string.digime_application_id),
             applicationContext.getString(R.string.digime_contract_id),
             applicationContext.getString(R.string.digime_p12_filename)

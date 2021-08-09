@@ -1,22 +1,17 @@
 package me.digi.sdk.api.interceptors
 
-import me.digi.sdk.entities.DMEClientConfiguration
-import me.digi.sdk.entities.DMEPullConfiguration
+import me.digi.sdk.entities.configuration.ClientConfiguration
+import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.JsonWebToken
-import me.digi.sdk.utilities.jwt.JwtClaim
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.waitMillis
-import okio.Buffer
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 
-class DMERetryInterceptor(private val config: DMEClientConfiguration) : Interceptor {
+class DMERetryInterceptor(private val config: ClientConfiguration) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
 
         // Run request.
@@ -67,7 +62,7 @@ class DMERetryInterceptor(private val config: DMEClientConfiguration) : Intercep
 
     private fun Request.withRegeneratedJwtNonce(): Request {
         val authHeader = header("Authorization") ?: return this
-        val signingKey = (config as? DMEPullConfiguration)?.privateKeyHex?.let { DMEKeyTransformer.javaPrivateKeyFromHex(it) } ?: return this
+        val signingKey = (config as? ReadConfiguration)?.privateKeyHex?.let { DMEKeyTransformer.javaPrivateKeyFromHex(it) } ?: return this
         val tokenisedJwt = authHeader.split(" ").last()
         val jwt = JsonWebToken(tokenisedJwt)
 

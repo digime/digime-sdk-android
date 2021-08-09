@@ -15,7 +15,7 @@ import me.digi.saas.features.auth.viewmodel.AuthViewModel
 import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.AuthorizeResponse
+import me.digi.sdk.entities.response.AuthorizeResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 

@@ -5,7 +5,7 @@ import android.content.Intent
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
-import me.digi.sdk.entities.DMEPostbox
+import me.digi.sdk.entities.Postbox
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMELog
@@ -92,7 +92,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             }
         }
 
-        val postbox = DMEPostbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
+        val postbox = Postbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
         pendingPostboxCallbackHandler?.invoke(postbox, error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         pendingPostboxCallbackHandler = null

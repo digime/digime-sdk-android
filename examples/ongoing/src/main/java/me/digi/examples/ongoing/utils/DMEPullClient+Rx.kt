@@ -5,16 +5,16 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.DMEDataRequest
+import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.DMETokenExchange
+import me.digi.sdk.entities.payload.CredentialsPayload
 
 fun DMEPullClient.authorizeOngoingAccess(
     activity: Activity,
-    scope: DMEDataRequest? = null,
-    credentials: DMETokenExchange? = null,
+    scope: DataRequest? = null,
+    credentials: CredentialsPayload? = null,
     serviceId: String? = null
-): Single<DMETokenExchange> = Single.create { emitter ->
+): Single<CredentialsPayload> = Single.create { emitter ->
     authorizeOngoingAccess(activity, scope, credentials, serviceId) { credentials, error ->
         error?.let(emitter::onError)
             ?: (if (credentials != null)

@@ -9,14 +9,14 @@ import kotlinx.android.synthetic.main.consent_access_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.DMEPullConfiguration
+import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
 class ConsentAccessActivity : AppCompatActivity() {
     private lateinit var client: DMEPullClient
     private lateinit var pk: String
-    private lateinit var cfg: DMEPullConfiguration
+    private lateinit var cfg: ReadConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +27,7 @@ class ConsentAccessActivity : AppCompatActivity() {
             applicationContext.getString(R.string.digime_p12_password)
         )
 
-        cfg = DMEPullConfiguration(
+        cfg = ReadConfiguration(
             applicationContext.getString(R.string.digime_application_id),
             applicationContext.getString(R.string.digime_contract_id),
             pk

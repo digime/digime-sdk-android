@@ -9,7 +9,12 @@ import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.configuration.WriteConfiguration
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.AuthorizeResponse
+import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
 
 class MainRemoteDataAccessImpl(
@@ -19,7 +24,7 @@ class MainRemoteDataAccessImpl(
 
     private val pullClient: DMEPullClient by lazy {
 
-        val configuration = DMEPullConfiguration(
+        val configuration = ReadConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadContract()?.contractId!!,
             localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n")
@@ -32,7 +37,7 @@ class MainRemoteDataAccessImpl(
 
     private val pushClient: DMEPushClient by lazy {
 
-        val configuration = DMEPushConfiguration(
+        val configuration = WriteConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedPushContract()?.contractId!!,
             localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n")
@@ -45,7 +50,7 @@ class MainRemoteDataAccessImpl(
 
     private val readRawClient: DMEPullClient by lazy {
 
-        val configuration = DMEPullConfiguration(
+        val configuration = ReadConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadRawContract()?.contractId!!,
             localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n")

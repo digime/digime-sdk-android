@@ -5,12 +5,15 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPushClient
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 fun DMEPushClient.authorizePostbox(
     activity: Activity,
-    existingPostboxData: DMEOngoingPostboxData? = null,
-    credentials: DMETokenExchange? = null
-): Single<DMESaasOngoingPostbox> = Single.create { emitter ->
+    existingPostboxData: OngoingPostboxData? = null,
+    credentials: CredentialsPayload? = null
+): Single<OngoingPostbox> = Single.create { emitter ->
     authorizeOngoingPostbox(
         activity,
         existingPostboxData,

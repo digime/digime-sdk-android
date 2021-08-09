@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.PushDataUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 class PushViewModel(private val pushData: PushDataUseCase) : ViewModel() {
 

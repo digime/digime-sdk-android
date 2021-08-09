@@ -7,7 +7,7 @@ import me.digi.sdk.DMEAuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.AuthorizationCompletion
 import me.digi.sdk.callbacks.OnboardingCompletion
-import me.digi.sdk.entities.AuthSession
+import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
@@ -124,7 +124,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
             }
         }
 
-        authorizationCallbackHandler?.invoke(AuthSession(code, state, postboxId, publicKey), error)
+        authorizationCallbackHandler?.invoke(ConsentAuthResponse(code, state, postboxId, publicKey), error)
         onboardingCallbackHandler?.invoke(error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null

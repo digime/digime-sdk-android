@@ -3,7 +3,7 @@ package me.digi.saas.usecases
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.repository.MainRepository
-import me.digi.sdk.entities.AuthorizeResponse
+import me.digi.sdk.entities.response.AuthorizeResponse
 
 interface AuthenticateUseCase {
     operator fun invoke(

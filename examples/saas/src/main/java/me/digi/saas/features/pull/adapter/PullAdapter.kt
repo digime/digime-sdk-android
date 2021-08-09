@@ -9,18 +9,18 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import me.digi.saas.R
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 
-class PullAdapter : ListAdapter<DMEFileListItem, PullAdapter.PullViewHolder>(Companion) {
+class PullAdapter : ListAdapter<FileListItem, PullAdapter.PullViewHolder>(Companion) {
 
-    companion object : DiffUtil.ItemCallback<DMEFileListItem>() {
+    companion object : DiffUtil.ItemCallback<FileListItem>() {
 
-        override fun areItemsTheSame(oldItem: DMEFileListItem, newItem: DMEFileListItem): Boolean =
+        override fun areItemsTheSame(oldItem: FileListItem, newItem: FileListItem): Boolean =
             oldItem.fileId == newItem.fileId
 
         override fun areContentsTheSame(
-            oldItem: DMEFileListItem,
-            newItem: DMEFileListItem
+            oldItem: FileListItem,
+            newItem: FileListItem
         ): Boolean = oldItem.hashCode() == newItem.hashCode()
     }
 
@@ -34,7 +34,7 @@ class PullAdapter : ListAdapter<DMEFileListItem, PullAdapter.PullViewHolder>(Com
     }
 
     inner class PullViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun onBind(file: DMEFileListItem) = with(itemView) {
+        fun onBind(file: FileListItem) = with(itemView) {
             /**
              * Get views
              */

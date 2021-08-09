@@ -9,10 +9,10 @@ import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.ongoingpostbox.framework.utils.authorizePostbox
 import me.digi.ongoingpostbox.framework.utils.pushData
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.DMEPushConfiguration
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.DMESaasOngoingPostbox
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.configuration.WriteConfiguration
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.OngoingPostbox
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 /**
  * Idea behind remote main data access is to isolate
@@ -27,7 +27,7 @@ class MainRemoteDataAccessImpl(
 
     private val client: DMEPushClient by lazy {
 
-        val configuration = DMEPushConfiguration(
+        val configuration = WriteConfiguration(
             context.getString(R.string.digime_application_id),
             context.getString(R.string.digime_contract_id),
             context.getString(R.string.digime_private_key)
@@ -38,7 +38,7 @@ class MainRemoteDataAccessImpl(
         DMEPushClient(context, configuration)
     }
 
-    override fun createPostbox(activity: Activity): Single<DMESaasOngoingPostbox?> =
+    override fun createPostbox(activity: Activity): Single<OngoingPostbox?> =
         client.authorizePostbox(
             activity,
             localDataAccess.getCachedPostbox(),

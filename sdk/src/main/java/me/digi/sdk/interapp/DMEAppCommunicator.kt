@@ -7,7 +7,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import me.digi.sdk.DMESDKError
 import me.digi.sdk.R
-import me.digi.sdk.entities.DMESDKAgent
+import me.digi.sdk.entities.SdkAgent
 
 
 class DMEAppCommunicator(val context: Context) {
@@ -79,7 +79,7 @@ class DMEAppCommunicator(val context: Context) {
         params.forEach { intent.putExtra(it.key, it.value) }
 
         // Static params
-        intent.putExtra(context.getString(R.string.key_sdk_version), DMESDKAgent().version)
+        intent.putExtra(context.getString(R.string.key_sdk_version), SdkAgent().version)
         intent.putExtra(context.getString(R.string.key_app_name), embeddingAppName())
 
         return intent

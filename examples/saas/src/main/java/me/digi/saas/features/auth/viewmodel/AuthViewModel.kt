@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.AuthenticateUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.AuthorizeResponse
+import me.digi.sdk.entities.response.AuthorizeResponse
 
 class AuthViewModel(private val authenticate: AuthenticateUseCase) : ViewModel() {
 
