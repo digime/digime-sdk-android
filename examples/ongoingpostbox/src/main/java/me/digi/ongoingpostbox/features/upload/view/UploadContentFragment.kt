@@ -179,7 +179,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             )
 
             btnUploadImage?.setOnClickListener {
-                viewModel.uploadDataToOngoingPostbox(postboxPayload, credentials)
+                viewModel.pushDataToPostbox(postboxPayload, credentials.accessToken.value)
             }
         } ?: snackBarLong(getString(R.string.label_image_picker_cancelled))
     }

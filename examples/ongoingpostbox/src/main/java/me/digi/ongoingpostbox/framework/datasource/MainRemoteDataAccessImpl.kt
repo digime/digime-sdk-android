@@ -9,7 +9,10 @@ import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.ongoingpostbox.framework.utils.authorizePostbox
 import me.digi.ongoingpostbox.framework.utils.pushData
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEPushConfiguration
+import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.DMESaasOngoingPostbox
+import me.digi.sdk.entities.SaasOngoingPushResponse
 
 /**
  * Idea behind remote main data access is to isolate
@@ -45,8 +48,8 @@ class MainRemoteDataAccessImpl(
             .compose(localDataAccess.cacheCredentials())
             .map { it }
 
-    override fun uploadDataToOngoingPostbox(
-        pushPayload: DMEPushPayload?,
-        credentials: DMETokenExchange?
-    ): Single<SaasOngoingPushResponse> = client.pushData(pushPayload, credentials).map { it }
+    override fun pushDataToPostbox(
+        payload: DMEPushPayload,
+        accessToken: String
+    ): Single<SaasOngoingPushResponse> = client.pushData(payload, accessToken).map { it }
 }

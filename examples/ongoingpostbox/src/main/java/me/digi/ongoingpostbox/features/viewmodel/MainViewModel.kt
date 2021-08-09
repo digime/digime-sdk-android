@@ -22,7 +22,6 @@ import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
 import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
 import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.DMETokenExchange
 import me.digi.sdk.entities.SaasOngoingPushResponse
 
 /**
@@ -49,7 +48,8 @@ class MainViewModel(
     val createPostboxStatus: LiveData<Resource<OngoingPostboxPayload>>
         get() = _createPostboxStatus
 
-    private val _uploadDataStatus: MutableLiveData<Resource<SaasOngoingPushResponse>> = MutableLiveData()
+    private val _uploadDataStatus: MutableLiveData<Resource<SaasOngoingPushResponse>> =
+        MutableLiveData()
     val uploadDataStatus: LiveData<Resource<SaasOngoingPushResponse>>
         get() = _uploadDataStatus
 
@@ -73,11 +73,11 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun uploadDataToOngoingPostbox(postboxPayload: DMEPushPayload, credentials: DMETokenExchange) {
+    fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String) {
         _uploadDataStatus.postValue(Resource.Loading())
 
         uploadData
-            .invoke(postboxPayload, credentials)
+            .invoke(payload, accessToken)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
