@@ -70,14 +70,13 @@ class DigiMeService(private val context: Application) {
             ) <= 24
         }
 
-    private fun createScopeForDailyPlayHistory(): Scope {
-        val objects = listOf(ServiceObjectType(406))
-        val services = listOf(ServiceType(19, objects))
-        val groups = listOf(ServiceGroup(5, services))
-        return Scope().apply {
-            serviceGroups = groups
-            timeRanges = listOf(TimeRange(to = null, from = null, last = "1d", type = null))
-        }
+    private fun createScopeForDailyPlayHistory(): CaScope {
+        val objects: List<ServiceObjectType> = listOf(ServiceObjectType(id = 406))
+        val services: List<ServiceType> = listOf(ServiceType(id = 19, serviceObjectTypes = objects))
+        val groups: List<ServiceGroup> = listOf(ServiceGroup(id = 5, serviceTypes = services))
+        val timeRanges: List<TimeRange> =
+            listOf(TimeRange(to = null, from = null, last = "1d", type = null))
+        return CaScope(serviceGroups = groups, timeRanges = timeRanges)
     }
 
     fun getCachedCredential() =

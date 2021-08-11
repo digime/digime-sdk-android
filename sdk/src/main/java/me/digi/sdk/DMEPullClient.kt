@@ -19,7 +19,7 @@ import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.payload.TokenReferencePayload
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMECompressor
@@ -122,7 +122,6 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
             )
     }
 
-    // TODO: Fix
     fun authorizeOngoingAccess(
         fromActivity: Activity,
         scope: DataRequest? = null,

@@ -1,11 +1,10 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.AuthorizationScopeRequest
 import me.digi.sdk.entities.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
-import me.digi.sdk.entities.Pull
+import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.Pull
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 import okhttp3.MultipartBody

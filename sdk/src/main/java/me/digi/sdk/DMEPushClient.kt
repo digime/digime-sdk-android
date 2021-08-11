@@ -18,6 +18,7 @@ import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
+import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.DMESessionRequest
 import me.digi.sdk.entities.response.AuthorizeResponse
 import me.digi.sdk.entities.response.SessionResponse

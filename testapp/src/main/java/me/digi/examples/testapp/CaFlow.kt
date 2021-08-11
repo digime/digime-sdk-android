@@ -7,8 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.ca_flow.*
 import me.digi.sdk.DMEPullClient
+import me.digi.sdk.entities.CaScope
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.entities.Scope
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 
@@ -16,7 +16,7 @@ class CaFlow : AppCompatActivity() {
     private lateinit var client: DMEPullClient
     private lateinit var pk: String
     private lateinit var cfg: ReadConfiguration
-    private var test : Scope? = null
+    private var test : CaScope? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +24,7 @@ class CaFlow : AppCompatActivity() {
 
         if(intent != null) {
             val gson = Gson()
-            test = gson.fromJson<Scope>(intent.getStringExtra("DMEScope"), Scope::class.java)
+            test = gson.fromJson<CaScope>(intent.getStringExtra("DMEScope"), CaScope::class.java)
         }
 
         pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(

@@ -18,7 +18,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class DMESessionRequestAdapterSpec {
 
-    private var dummyScope: Scope = Scope()
+    private var dummyScope: CaScope = CaScope()
     private val mockContext = mockk<JsonSerializationContext>(relaxed = true)
     private val test = JsonObject()
     private val gson = Gson()
@@ -26,7 +26,7 @@ class DMESessionRequestAdapterSpec {
 
     @Before
     fun setup() {
-        dummyScope = Scope()
+        dummyScope = CaScope()
         test.addProperty("dummy", "dummy")
         every { mockContext.serialize(any()) } returns test
     }

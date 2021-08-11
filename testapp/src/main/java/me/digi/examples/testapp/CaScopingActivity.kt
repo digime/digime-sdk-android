@@ -10,7 +10,7 @@ import me.digi.sdk.entities.*
 
 class CaScopingActivity : AppCompatActivity() {
 
-    val test = Scope()
+    val test = CaScope()
     val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
