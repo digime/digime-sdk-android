@@ -10,15 +10,19 @@ import me.digi.saas.usecases.GetRawSessionDataUseCase
 import me.digi.saas.utils.Resource
 import me.digi.sdk.entities.FileListItem
 
-class ReadRawViewModel(private val getData: GetRawSessionDataUseCase) : ViewModel() {
+class ReadRawViewModel(private val getFileList: GetRawSessionDataUseCase) : ViewModel() {
 
     private val _state: MutableStateFlow<Resource<List<FileListItem>>> =
         MutableStateFlow(Resource.Loading())
     val state: StateFlow<Resource<List<FileListItem>>>
         get() = _state
 
+    init {
+        getData()
+    }
+
     fun getData() {
-        getData
+        getFileList
             .invoke()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

@@ -4,5 +4,5 @@ import me.digi.sdk.entities.response.ConsentAuthResponse
 
 data class GetConsentDone(
     val session: Session = Session(),
-    val consentAuthResponse: ConsentAuthResponse = ConsentAuthResponse()
+    val consentResponse: ConsentAuthResponse = ConsentAuthResponse()
 )

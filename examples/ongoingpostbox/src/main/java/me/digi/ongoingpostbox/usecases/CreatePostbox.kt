@@ -32,8 +32,8 @@ class CreatePostboxUseCaseImpl(private val repository: MainRepository) : CreateP
                     it?.session?.key,
                     it?.postboxData?.postboxId,
                     it?.postboxData?.publicKey,
-                    it?.authToken?.accessToken?.value,
-                    it?.authToken?.refreshToken?.value
+                    it?.credentials?.accessToken?.value,
+                    it?.credentials?.refreshToken?.value
                 )
             }
 }

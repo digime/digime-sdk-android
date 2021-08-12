@@ -5,11 +5,11 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val useCasesModule: Module = module {
-    single<AuthenticateUseCase> { AuthenticateUseCaseImpl(get()) }
+    single<AuthorizeAccessUseCase> { AuthorizeAccessUseCaseImpl(get()) }
     single<OnboardServiceUseCase> { OnboardServiceUseCaseImpl(get()) }
-    single<GetSessionDataUseCase> { GetSessionDataUseCaseImpl(get()) }
+    single<GetFileListUseCase> { GetFileListUseCaseImpl(get()) }
     single<GetRawSessionDataUseCase> { GetRawSessionDataUseCaseImpl(get()) }
-    single<PushDataUseCase> { PushDataUseCaseImpl(get()) }
+    single<WriteDataUseCase> { WriteDataUseCaseImpl(get()) }
     single<GetServicesForContractUseCase> { GetServicesForContractUseCaseImpl(get()) }
     single<DeleteLibraryUseCase> { DeleteLibraryUseCaseImpl(get()) }
 }

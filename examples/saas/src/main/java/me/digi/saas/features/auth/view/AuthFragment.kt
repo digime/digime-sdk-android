@@ -15,7 +15,7 @@ import me.digi.saas.features.auth.viewmodel.AuthViewModel
 import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.response.AuthorizeResponse
+import me.digi.sdk.entities.response.AuthorizationResponse
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -38,16 +38,22 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
     private fun setupViews() {
         binding.tvAuthDescription.text = getString(R.string.labelAuthDisclaimer, contractType)
 
-        when(contractType) {
-            ContractType.pull -> binding.ivContractType.load(R.drawable.ic_download) { crossfade(true) }
-            ContractType.push -> binding.ivContractType.load(R.drawable.ic_upload) { crossfade(true) }
-            ContractType.readRaw -> binding.ivContractType.load(R.drawable.ic_rraw) { crossfade(true) }
+        when (contractType) {
+            ContractType.pull -> binding
+                .ivContractType
+                .load(R.drawable.ic_download) { crossfade(true) }
+            ContractType.push -> binding
+                .ivContractType
+                .load(R.drawable.ic_upload) { crossfade(true) }
+            ContractType.readRaw -> binding
+                .ivContractType
+                .load(R.drawable.ic_rraw) { crossfade(true) }
         }
     }
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { resource: Resource<AuthorizeResponse> ->
+            viewModel.state.collectLatest { resource: Resource<AuthorizationResponse> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -72,24 +78,14 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
         }
     }
 
-    private fun handleAuthResponse(response: AuthorizeResponse?) {
+    private fun handleAuthResponse(response: AuthorizationResponse?) {
         Timber.d("Contract type: $contractType - $response")
         when (contractType) {
             ContractType.pull -> findNavController().navigate(R.id.authToOnboard)
-            ContractType.push -> gotToPushScreen(response)
+            ContractType.push -> findNavController().navigate(R.id.authToPush)
             ContractType.readRaw -> findNavController().navigate(R.id.authToReadRaw)
             else -> throw IllegalArgumentException("Unknown or empty contract type")
         }
-    }
-
-    private fun gotToPushScreen(response: AuthorizeResponse?) {
-        val bundle = Bundle()
-        bundle.putString("postboxId", response?.postboxId)
-        bundle.putString("publicKey", response?.publicKey)
-        bundle.putString("sessionKey", response?.sessionKey)
-        bundle.putString("accessToken", response?.accessToken)
-
-        findNavController().navigate(R.id.authToPush, bundle)
     }
 
     private fun setupClickListeners() {
@@ -98,7 +94,14 @@ class AuthFragment : Fragment(R.layout.fragment_auth), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.authenticate -> contractType?.let { viewModel.authenticate(requireActivity(), it) }
+            R.id.authenticate -> contractType?.let { type ->
+                viewModel.authorizeAccess(
+                    requireActivity(),
+                    contractType = type,
+                    scope = null,
+                    serviceId = null
+                )
+            }
         }
     }
 }

@@ -4,10 +4,7 @@ import me.digi.sdk.DMEError
 import me.digi.sdk.entities.DMEAccount
 import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.response.AuthorizeResponse
-import me.digi.sdk.entities.response.ConsentAuthResponse
-import me.digi.sdk.entities.response.DMEFileList
-import me.digi.sdk.entities.response.SessionResponse
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 
 typealias DMEAuthorizationCompletion = (session: SessionResponse?, error: DMEError?) -> Unit
@@ -33,3 +30,5 @@ typealias DMEServicesForContract = (ServicesResponse?, error: DMEError?) -> Unit
 typealias DMEUserLibraryDeletion = (isLibraryDeleted: Boolean?, error: DMEError?) -> Unit
 
 typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: DMEError?) -> Unit
+
+typealias GetAuthorizationDoneCompletion = (response: AuthorizationResponse?, error: DMEError?) -> Unit

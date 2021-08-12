@@ -22,7 +22,7 @@
             tools:visibility="visible" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvPullList"
+            android:id="@+id/rvReadList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"

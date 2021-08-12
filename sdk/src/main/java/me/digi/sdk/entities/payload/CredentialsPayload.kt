@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class AccessToken(
     @SerializedName("expires_on")
     val expiresOn: Int = 0,
-    val value: String = ""
+    val value: String? = null
 )
 
 data class Identifier(val id: String = "")
@@ -13,7 +13,7 @@ data class Identifier(val id: String = "")
 data class RefreshToken(
     @SerializedName("expires_on")
     val expiresOn: Int = 0,
-    val value: String = ""
+    val value: String? = null
 )
 
 data class CredentialsPayload(

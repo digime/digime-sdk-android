@@ -16,5 +16,5 @@ data class OngoingPostboxData(
 data class OngoingPostbox(
     val session: Session? = null,
     val postboxData: OngoingPostboxData? = null,
-    val authToken: CredentialsPayload? = null
+    val credentials: CredentialsPayload? = null
 )

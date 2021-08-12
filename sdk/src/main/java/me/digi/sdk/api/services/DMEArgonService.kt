@@ -22,6 +22,7 @@ internal interface DMEArgonService {
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
+    // TODO: Probably needs to be removed
     @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
@@ -35,6 +36,7 @@ internal interface DMEArgonService {
         @Path("fileName") fileName: String
     ): Single<Response<ResponseBody>>
 
+    // TODO: Remove
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
     @POST("/v1.4/permission-access/postbox/{id}")

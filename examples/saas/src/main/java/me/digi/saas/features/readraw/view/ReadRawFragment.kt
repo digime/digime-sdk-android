@@ -9,7 +9,7 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentReadRawBinding
-import me.digi.saas.features.pull.adapter.PullAdapter
+import me.digi.saas.features.read.adapter.ReadAdapter
 import me.digi.saas.features.readraw.viewmodel.ReadRawViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
@@ -21,12 +21,10 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
 
     private val binding: FragmentReadRawBinding by viewBinding()
     private val viewModel: ReadRawViewModel by viewModel()
-    private val readRawAdapter: PullAdapter by lazy { PullAdapter() }
+    private val readRawAdapter: ReadAdapter by lazy { ReadAdapter() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        viewModel.getData()
 
         setupAdapter()
         subscribeToObservers()

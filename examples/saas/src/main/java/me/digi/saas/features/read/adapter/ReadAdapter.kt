@@ -1,4 +1,4 @@
-package me.digi.saas.features.pull.adapter
+package me.digi.saas.features.read.adapter
 
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import me.digi.saas.R
 import me.digi.sdk.entities.FileListItem
 
-class PullAdapter : ListAdapter<FileListItem, PullAdapter.PullViewHolder>(Companion) {
+class ReadAdapter : ListAdapter<FileListItem, ReadAdapter.ReadViewHolder>(Companion) {
 
     companion object : DiffUtil.ItemCallback<FileListItem>() {
 
@@ -24,16 +24,16 @@ class PullAdapter : ListAdapter<FileListItem, PullAdapter.PullViewHolder>(Compan
         ): Boolean = oldItem.hashCode() == newItem.hashCode()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PullViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReadViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_pull, parent, false)
-        return PullViewHolder(view)
+        return ReadViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: PullViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ReadViewHolder, position: Int) {
         holder.onBind(getItem(position) ?: return)
     }
 
-    inner class PullViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ReadViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun onBind(file: FileListItem) = with(itemView) {
             /**
              * Get views

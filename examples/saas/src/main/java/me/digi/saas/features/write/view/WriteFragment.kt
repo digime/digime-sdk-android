@@ -1,4 +1,4 @@
-package me.digi.saas.features.push.view
+package me.digi.saas.features.write.view
 
 import android.os.Bundle
 import android.view.View
@@ -8,8 +8,9 @@ import androidx.lifecycle.lifecycleScope
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
-import me.digi.saas.databinding.FragmentPushBinding
-import me.digi.saas.features.push.viewmodel.PushViewModel
+import me.digi.saas.data.localaccess.MainLocalDataAccess
+import me.digi.saas.databinding.FragmentWriteBinding
+import me.digi.saas.features.write.viewmodel.WriteViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
@@ -17,36 +18,37 @@ import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.Postbox
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
-class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
+class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
 
-    private val viewModel: PushViewModel by viewModel()
-    private val binding: FragmentPushBinding by viewBinding()
+    private val viewModel: WriteViewModel by viewModel()
+    private val binding: FragmentWriteBinding by viewBinding()
+    private val localAccess: MainLocalDataAccess by inject()
     private var payload: DMEPushPayload? = null
-    private var accessToken: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val postboxId = arguments?.getString("postboxId", null)
-        val publicKey = arguments?.getString("publicKey", null)
-        val sessionKey = arguments?.getString("sessionKey", null)
-        accessToken = arguments?.getString("accessToken", null)
+        handlePayload()
+        subscribeToObservers()
+        setupClickListeners()
+    }
 
-        println("Push data: $postboxId - $publicKey - $sessionKey")
-
-        if (postboxId != null && publicKey != null && sessionKey != null) {
+    private fun handlePayload() {
+        localAccess.getCachedAuthData()?.let { data ->
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
             val postbox: Postbox =
-                Postbox().copy(key = sessionKey, postboxId = postboxId, publicKey = publicKey)
+                Postbox().copy(
+                    key = data.sessionKey,
+                    postboxId = data.postboxId,
+                    publicKey = data.publicKey
+                )
             payload = DMEPushPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
         }
-
-        subscribeToObservers()
-        setupClickListeners()
     }
 
     private fun setupClickListeners() {
@@ -78,7 +80,10 @@ class PushFragment : Fragment(R.layout.fragment_push), View.OnClickListener {
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnPushData -> payload?.let {
-                viewModel.pushDataToPostbox(it, accessToken!!)
+                viewModel.pushDataToPostbox(
+                    it,
+                    localAccess.getCachedCredential()?.accessToken?.value!!
+                )
             } ?: snackBar("Payload must not be empty")
         }
     }

@@ -1,4 +1,4 @@
-package me.digi.saas.features.pull.view
+package me.digi.saas.features.read.view
 
 import android.os.Bundle
 import android.view.View
@@ -9,24 +9,22 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collect
 import me.digi.saas.R
-import me.digi.saas.databinding.FragmentPullBinding
-import me.digi.saas.features.pull.adapter.PullAdapter
-import me.digi.saas.features.pull.viewmodel.PullViewModel
+import me.digi.saas.databinding.FragmentReadBinding
+import me.digi.saas.features.read.adapter.ReadAdapter
+import me.digi.saas.features.read.viewmodel.ReadViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.FileListItem
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
+class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
 
-    private val viewModel: PullViewModel by viewModel()
-    private val pullAdapter: PullAdapter by lazy { PullAdapter() }
-    private val binding: FragmentPullBinding by viewBinding()
+    private val viewModel: ReadViewModel by viewModel()
+    private val readAdapter: ReadAdapter by lazy { ReadAdapter() }
+    private val binding: FragmentReadBinding by viewBinding()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        viewModel.getData()
 
         subscribeToObservers()
         setupAdapter()
@@ -42,7 +40,7 @@ class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
     }
 
     private fun setupAdapter() {
-        binding.rvPullList.adapter = pullAdapter
+        binding.rvReadList.adapter = readAdapter
     }
 
     private fun subscribeToObservers() {
@@ -57,7 +55,7 @@ class PullFragment : Fragment(R.layout.fragment_pull), View.OnClickListener {
                         binding.pbPull.isVisible = false
 
                         val data = result.data as List<FileListItem>
-                        pullAdapter.submitList(data)
+                        readAdapter.submitList(data)
 
                         binding.incEmptyState.root.isVisible = data.isEmpty()
                     }

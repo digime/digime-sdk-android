@@ -199,7 +199,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                                     authSession != null -> {
                                         val consentDone = GetConsentDone().copy(
                                             session = response.session,
-                                            consentAuthResponse = authSession
+                                            consentResponse = authSession
                                         )
                                         emitter.onSuccess(consentDone)
                                     }
@@ -222,7 +222,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.consentAuthResponse.code!!,
+                        response.consentResponse.code!!,
                         codeVerifier
                     )
 
@@ -253,7 +253,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     val jwt = RefreshCredentialsRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.credentials.refreshToken.value
+                        response.credentials.refreshToken.value!!
                     )
 
                     val signingKey: PrivateKey =
@@ -283,7 +283,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     val jwt = DMETriggerDataQueryRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        result.credentials.accessToken.value
+                        result.credentials.accessToken.value!!
                     )
 
                     val signingKey: PrivateKey =
@@ -498,7 +498,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                                     authSession != null -> {
                                         val consentDone = GetConsentDone().copy(
                                             session = response.session,
-                                            consentAuthResponse = authSession
+                                            consentResponse = authSession
                                         )
                                         emitter.onSuccess(consentDone)
                                     }
@@ -521,7 +521,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.consentAuthResponse.code!!,
+                        response.consentResponse.code!!,
                         codeVerifier
                     )
 

@@ -4,7 +4,8 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.OngoingPostbox
+import me.digi.sdk.entities.OngoingPostboxData
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
@@ -20,7 +21,7 @@ fun DMEPushClient.authorizePostbox(
         credentials
     ) { result, error ->
         error?.let { emitter.onError(it) }
-            ?: if (result?.postboxData != null || result?.authToken != null)
+            ?: if (result?.postboxData != null || result?.credentials != null)
                 emitter.onSuccess(result)
             else emitter.onError(DMEAuthError.General())
     }

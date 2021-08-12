@@ -8,10 +8,10 @@ import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_SESSION_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
-import me.digi.sdk.entities.OngoingPostboxData
 import me.digi.sdk.entities.OngoingPostbox
-import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.OngoingPostboxData
 import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.payload.CredentialsPayload
 
 /**
  * Idea behind local main data access is to isolate
@@ -51,7 +51,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                 credential?.apply {
                     context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
                         val encodedPostbox = Gson().toJson(credential.postboxData)
-                        val encodedCredential = Gson().toJson(credential.authToken)
+                        val encodedCredential = Gson().toJson(credential.credentials)
                         val encodedSession = Gson().toJson(credential.session)
                         putString(CACHED_CREDENTIAL_KEY, encodedCredential)
                         putString(CACHED_POSTBOX_KEY, encodedPostbox)

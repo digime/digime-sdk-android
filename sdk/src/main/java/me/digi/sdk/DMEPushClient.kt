@@ -209,7 +209,7 @@ class DMEPushClient(
                                     authSession != null -> {
                                         val consentDone = GetConsentDone().copy(
                                             session = response.session,
-                                            consentAuthResponse = authSession
+                                            consentResponse = authSession
                                         )
                                         emitter.onSuccess(consentDone)
                                     }
@@ -232,7 +232,7 @@ class DMEPushClient(
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.consentAuthResponse.code!!,
+                        response.consentResponse.code!!,
                         codeVerifier
                     )
 
@@ -249,8 +249,8 @@ class DMEPushClient(
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
                             val postboxData = OngoingPostboxData().copy(
-                                postboxId = response.consentAuthResponse.postboxId,
-                                publicKey = response.consentAuthResponse.publicKey
+                                postboxId = response.consentResponse.postboxId,
+                                publicKey = response.consentResponse.publicKey
                             )
 
                             OngoingPostbox(response.session, postboxData, tokenExchange)
@@ -271,7 +271,7 @@ class DMEPushClient(
                         postboxId = result.postboxData?.postboxId,
                         publicKey = result.postboxData?.publicKey,
                         sessionKey = result.session?.key,
-                        accessToken = result.authToken?.accessToken?.value
+                        accessToken = result.credentials?.accessToken?.value
                     )
 
                     completion.invoke(authSession, null)
@@ -363,7 +363,7 @@ class DMEPushClient(
                                     authSession != null -> {
                                         val consentDone = GetConsentDone().copy(
                                             session = response.session,
-                                            consentAuthResponse = authSession
+                                            consentResponse = authSession
                                         )
                                         emitter.onSuccess(consentDone)
                                     }
@@ -386,7 +386,7 @@ class DMEPushClient(
                     val jwt = DMEAuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        response.consentAuthResponse.code!!,
+                        response.consentResponse.code!!,
                         codeVerifier
                     )
 
@@ -403,8 +403,8 @@ class DMEPushClient(
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
                             val postboxData = OngoingPostboxData().copy(
-                                postboxId = response.consentAuthResponse.postboxId,
-                                publicKey = response.consentAuthResponse.publicKey
+                                postboxId = response.consentResponse.postboxId,
+                                publicKey = response.consentResponse.publicKey
                             )
 
                             OngoingPostbox(response.session, postboxData, tokenExchange)
@@ -419,7 +419,7 @@ class DMEPushClient(
                     val jwt = RefreshCredentialsRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        result.authToken?.refreshToken?.value!!
+                        result.credentials?.refreshToken?.value!!
                     )
 
                     val signingKey: PrivateKey =
@@ -437,7 +437,7 @@ class DMEPushClient(
                             OngoingPostbox().copy(
                                 session = result.session,
                                 postboxData = result.postboxData,
-                                authToken = tokenExchange
+                                credentials = tokenExchange
                             )
                         }
                 }
@@ -465,7 +465,7 @@ class DMEPushClient(
                         .compose(exchangeAuthorizationCode())
                         .doOnSuccess {
                             activePostbox = it.postboxData
-                            activeCredentials = it.authToken
+                            activeCredentials = it.credentials
                         }
                 }
             }
@@ -482,7 +482,7 @@ class DMEPushClient(
                             .compose(exchangeAuthorizationCode())
                             .doOnSuccess {
                                 activePostbox = it.postboxData
-                                activeCredentials = it.authToken
+                                activeCredentials = it.credentials
                             }
 
                         // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
@@ -502,7 +502,7 @@ class DMEPushClient(
                                 )
                             }
                             .compose(refreshCredentials())
-                            .doOnSuccess { activeCredentials = it.authToken }
+                            .doOnSuccess { activeCredentials = it.credentials }
                             .onErrorResumeNext { innerError: Throwable ->
 
                                 // If an error is encountered from this call, we inspect it to see if it's an
@@ -518,7 +518,7 @@ class DMEPushClient(
                                             .compose(exchangeAuthorizationCode())
                                             .doOnSuccess {
                                                 activePostbox = it.postboxData
-                                                activeCredentials = it.authToken
+                                                activeCredentials = it.credentials
                                             }
                                     } else Single.error(DMEAuthError.TokenExpired())
                                 } else Single.error(innerError)

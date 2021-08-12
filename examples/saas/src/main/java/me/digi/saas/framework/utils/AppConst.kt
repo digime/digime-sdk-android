@@ -2,10 +2,9 @@ package me.digi.saas.framework.utils
 
 object AppConst {
 
-    const val SHAREDPREFS_KEY = "DigiMeXShareableSharedPreferences"
+    const val SHARED_PREFS_KEY = "DigiMeXShareableSharedPreferences"
     const val CACHED_CREDENTIAL_KEY = "CachedCredential"
-    const val CACHED_POSTBOX_KEY = "CachedPostbox"
-    const val CACHED_SESSION_KEY = "CachedSession"
+    const val CACHED_AUTH_DATA = "CachedAuthData"
 
     const val CONTRACT_PREFS_KEY = "DigiMeXContractSharedPrefs"
     const val CACHED_BASE_URL = "CachedBaseUrl"

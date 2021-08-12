@@ -2,14 +2,14 @@ package me.digi.saas.data.repository
 
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.response.AuthorizeResponse
-import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DMEFileList
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
 
 interface MainRepository {
-    fun authenticate(activity: Activity, contractType: String): Single<AuthorizeResponse>
     fun getFileList(): Single<DMEFileList>
     fun getRawFileList(): Single<DMEFileList>
     fun onboardService(
@@ -25,4 +25,11 @@ interface MainRepository {
     ): Single<SaasOngoingPushResponse>
 
     fun deleteUsersLibrary(): Single<Boolean>
+
+    fun authorizeAccess(
+        activity: Activity,
+        contractType: String,
+        scope: DataRequest?,
+        serviceId: String?
+    ): Single<AuthorizationResponse>
 }
