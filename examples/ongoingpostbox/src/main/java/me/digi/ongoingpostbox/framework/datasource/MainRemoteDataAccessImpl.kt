@@ -6,13 +6,11 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.ongoingpostbox.framework.utils.authorizePostbox
-import me.digi.ongoingpostbox.framework.utils.pushData
-import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.DMEPushPayload
-import me.digi.sdk.entities.OngoingPostbox
+import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.unify.DigiMeClient
+import me.digi.sdk.unify.DigiMeConfiguration
 
 /**
  * Idea behind remote main data access is to isolate
@@ -25,9 +23,9 @@ class MainRemoteDataAccessImpl(
     private val localDataAccess: MainLocalDataAccess
 ) : MainRemoteDataAccess {
 
-    private val client: DMEPushClient by lazy {
+    private val writeClient: DigiMeClient by lazy {
 
-        val configuration = WriteConfiguration(
+        val configuration = DigiMeConfiguration(
             context.getString(R.string.digime_application_id),
             context.getString(R.string.digime_contract_id),
             context.getString(R.string.digime_private_key)
@@ -35,21 +33,31 @@ class MainRemoteDataAccessImpl(
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
 
-        DMEPushClient(context, configuration)
+        DigiMeClient(context, configuration)
     }
 
-    override fun createPostbox(activity: Activity): Single<OngoingPostbox?> =
-        client.authorizePostbox(
-            activity,
-            localDataAccess.getCachedPostbox(),
-            localDataAccess.getCachedCredential()
-        )
-            .map { it }
-            .compose(localDataAccess.cacheCredentials())
-            .map { it }
+    override fun authorizeAccess(activity: Activity): Single<AuthorizationResponse> =
+        Single.create { emitter ->
+            writeClient.authorizeOngoingWriteAccess(
+                activity,
+                postbox = localDataAccess.getCachedPostbox(),
+                credentials = localDataAccess.getCachedCredential()
+            ) { response, error ->
+                error?.let(emitter::onError)
+                    ?: emitter.onSuccess(response as AuthorizationResponse)
+            }
+        }
 
-    override fun pushDataToPostbox(
+    override fun writeData(
         payload: DMEPushPayload,
         accessToken: String
-    ): Single<SaasOngoingPushResponse> = client.pushData(payload, accessToken).map { it }
+    ): Single<SaasOngoingPushResponse> = Single.create { emitter ->
+        writeClient.writeData(
+            payload,
+            accessToken
+        ) { response, error ->
+            error?.let(emitter::onError)
+                ?: emitter.onSuccess(response as SaasOngoingPushResponse)
+        }
+    }
 }

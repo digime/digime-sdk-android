@@ -3,8 +3,6 @@ package me.digi.ongoingpostbox.features.viewmodel
 import android.app.Activity
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -14,14 +12,16 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import me.digi.ongoingpostbox.OngoingPostboxApp
 import me.digi.ongoingpostbox.R
-import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
-import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
-import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
+import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCase
+import me.digi.ongoingpostbox.usecases.WriteDataUseCase
 import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 /**
@@ -36,57 +36,47 @@ import me.digi.sdk.entities.response.SaasOngoingPushResponse
  * @see onCleared
  */
 class MainViewModel(
-    private val createPostbox: CreatePostboxUseCase,
-    private val uploadData: PushDataToOngoingPostboxUseCase,
+    private val createPostbox: AuthorizeAccessUseCase,
+    private val uploadData: WriteDataUseCase,
     private val disposable: CompositeDisposable = CompositeDisposable()
 ) : ViewModel() {
 
     private var job: Job? = null
 
-    private val _createPostboxStatus: MutableLiveData<Resource<OngoingPostboxPayload>> =
-        MutableLiveData()
-    val createPostboxStatus: LiveData<Resource<OngoingPostboxPayload>>
-        get() = _createPostboxStatus
+    private val _authState: MutableStateFlow<Resource<AuthorizationResponse>> =
+        MutableStateFlow(Resource.Idle())
+    val authState: StateFlow<Resource<AuthorizationResponse>>
+        get() = _authState
 
-    private val _uploadDataStatus: MutableLiveData<Resource<SaasOngoingPushResponse>> =
-        MutableLiveData()
-    val uploadDataStatus: LiveData<Resource<SaasOngoingPushResponse>>
-        get() = _uploadDataStatus
+    private val _uploadState: MutableStateFlow<Resource<SaasOngoingPushResponse>> =
+        MutableStateFlow(Resource.Idle())
+    val uploadState: StateFlow<Resource<SaasOngoingPushResponse>>
+        get() = _uploadState
 
     fun createPostbox(activity: Activity) {
-        _createPostboxStatus.postValue(Resource.Loading())
+        _authState.value = Resource.Loading()
 
         createPostbox
             .invoke(activity)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: OngoingPostboxPayload ->
-                    _createPostboxStatus.postValue(Resource.Success(result))
-                },
-                onError = {
-                    _createPostboxStatus.postValue(
-                        Resource.Failure(it.localizedMessage)
-                    )
-                }
+                onSuccess = { result -> _authState.value = Resource.Success(result) },
+                onError = { _authState.value = Resource.Failure(it.localizedMessage) }
             )
             .addTo(disposable)
     }
 
     fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String) {
-        _uploadDataStatus.postValue(Resource.Loading())
+        _uploadState.value = Resource.Loading()
 
         uploadData
             .invoke(payload, accessToken)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result ->
-                    _uploadDataStatus.postValue(Resource.Success(result))
-                },
-                onError = { error ->
-                    _uploadDataStatus.postValue(Resource.Failure(error.localizedMessage))
-                }
+                onSuccess = { result -> _uploadState.value = Resource.Success(result) },
+                onError = { error -> _uploadState.value = Resource.Failure(error.localizedMessage) }
             )
             .addTo(disposable)
     }
