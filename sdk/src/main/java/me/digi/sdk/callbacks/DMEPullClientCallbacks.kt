@@ -1,12 +1,15 @@
 package me.digi.sdk.callbacks
 
 import me.digi.sdk.DMEError
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.DMEAccount
+import me.digi.sdk.entities.response.DMEFile
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 
 typealias DMEAuthorizationCompletion = (session: SessionResponse?, error: DMEError?) -> Unit
 
-typealias AuthorizationCompletion = (authSession: AuthSession?, error: DMEError?) -> Unit
+typealias AuthorizationCompletion = (consentAuthResponse: ConsentAuthResponse?, error: DMEError?) -> Unit
 
 typealias AuthCompletion = (authResponse: AuthorizeResponse?, error: DMEError?) -> Unit
 
@@ -20,10 +23,12 @@ typealias DMEAccountsCompletion = (accounts: List<DMEAccount>?, error: DMEError?
 
 typealias DMEIncrementalFileListUpdate = (fileList: DMEFileList, updatedFileIds: List<String>) -> Unit
 
-typealias DMESaasOngoingAuthorizationCompletion = (exchangeTokens: DMETokenExchange?, error: DMEError?) -> Unit
+typealias DMESaasOngoingAuthorizationCompletion = (credentials: CredentialsPayload?, error: DMEError?) -> Unit
 
 typealias DMEServicesForContract = (ServicesResponse?, error: DMEError?) -> Unit
 
 typealias DMEUserLibraryDeletion = (isLibraryDeleted: Boolean?, error: DMEError?) -> Unit
 
 typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: DMEError?) -> Unit
+
+typealias GetAuthorizationDoneCompletion = (response: AuthorizationResponse?, error: DMEError?) -> Unit

@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // User has all needed information to push their data
-        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null)
+        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null && localAccess.getCachedSession() != null)
             UploadContentFragment.newInstance().replaceFragment(supportFragmentManager)
         else CreatePostboxFragment.newInstance().replaceFragment(supportFragmentManager)
     }

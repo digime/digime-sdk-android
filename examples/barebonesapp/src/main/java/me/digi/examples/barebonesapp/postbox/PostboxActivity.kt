@@ -9,16 +9,16 @@ import kotlinx.android.synthetic.main.postbox_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.DMEPushClient
-import me.digi.sdk.entities.DMEMimeType
-import me.digi.sdk.entities.DMEPushConfiguration
-import me.digi.sdk.entities.DMEPushPayload
+import me.digi.sdk.entities.MimeType
+import me.digi.sdk.entities.configuration.WriteConfiguration
+import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.io.IOException
 
 class PostboxActivity : AppCompatActivity() {
     private lateinit var client: DMEPushClient
-    private lateinit var cfg: DMEPushConfiguration
+    private lateinit var cfg: WriteConfiguration
     private lateinit var pk: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +30,7 @@ class PostboxActivity : AppCompatActivity() {
             applicationContext.getString(R.string.digime_p12_password)
         )
 
-        cfg = DMEPushConfiguration(
+        cfg = WriteConfiguration(
             applicationContext.getString(R.string.digime_application_id),
             applicationContext.getString(R.string.digime_postbox_contract_id),
             pk
@@ -60,7 +60,7 @@ class PostboxActivity : AppCompatActivity() {
                         dmePostbox,
                         metadata,
                         fileContent,
-                        DMEMimeType.IMAGE_PNG
+                        MimeType.IMAGE_PNG
                     )
                 ) {
                     if (error == null) {

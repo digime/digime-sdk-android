@@ -1,10 +1,11 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.*
-import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.entities.request.AuthorizationScopeRequest
+import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.Pull
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
-import me.digi.sdk.utilities.jwt.ExchangeTokenJWT
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -20,6 +21,7 @@ internal interface DMEArgonService {
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
 
+    // TODO: Probably needs to be removed
     @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
@@ -33,6 +35,7 @@ internal interface DMEArgonService {
         @Path("fileName") fileName: String
     ): Single<Response<ResponseBody>>
 
+    // TODO: Remove
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
     @POST("/v1.4/permission-access/postbox/{id}")
@@ -61,10 +64,10 @@ internal interface DMEArgonService {
     ): Single<SaasOngoingPushResponse>
 
     @POST("v1.6/oauth/token")
-    fun refreshCredentials(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+    fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>
 
     @POST("v1.6/oauth/token")
-    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<ExchangeTokenJWT>
+    fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<TokenResponse>
 
     @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(

@@ -9,11 +9,11 @@ import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.databinding.FragmentReadRawBinding
-import me.digi.saas.features.pull.adapter.PullAdapter
+import me.digi.saas.features.read.adapter.ReadAdapter
 import me.digi.saas.features.readraw.viewmodel.ReadRawViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -21,12 +21,10 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
 
     private val binding: FragmentReadRawBinding by viewBinding()
     private val viewModel: ReadRawViewModel by viewModel()
-    private val readRawAdapter: PullAdapter by lazy { PullAdapter() }
+    private val readRawAdapter: ReadAdapter by lazy { ReadAdapter() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        viewModel.getData()
 
         setupAdapter()
         subscribeToObservers()
@@ -46,7 +44,7 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { result: Resource<List<DMEFileListItem>> ->
+            viewModel.state.collectLatest { result: Resource<List<FileListItem>> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -55,7 +53,7 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
                     is Resource.Success -> {
                         binding.pbReadRaw.isVisible = false
 
-                        val data = result.data as List<DMEFileListItem>
+                        val data = result.data as List<FileListItem>
                         readRawAdapter.submitList(data)
 
                         binding.incEmptyState.root.isVisible = data.isEmpty()

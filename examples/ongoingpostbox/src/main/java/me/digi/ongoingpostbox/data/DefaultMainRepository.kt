@@ -2,10 +2,11 @@ package me.digi.ongoingpostbox.data
 
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
+import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.entities.DMEPushPayload
-import me.digi.sdk.entities.DMESaasOngoingPostbox
-import me.digi.sdk.entities.SaasOngoingPushResponse
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 
 /**
  * This is our main repository (only one too!)
@@ -16,14 +17,18 @@ import me.digi.sdk.entities.SaasOngoingPushResponse
  * we're only using remote access here, and at later point in the flow we save
  * data locally
  */
-class DefaultMainRepository(private val remoteAccess: MainRemoteDataAccess) : MainRepository {
+class DefaultMainRepository(
+    private val remoteAccess: MainRemoteDataAccess,
+    private val localAccess: MainLocalDataAccess
+) : MainRepository {
 
-    override fun createPostbox(activity: Activity): Single<DMESaasOngoingPostbox?> =
-        remoteAccess.createPostbox(activity)
+    override fun authorizeAccess(activity: Activity): Single<AuthorizationResponse> =
+        remoteAccess
+            .authorizeAccess(activity)
+            .compose(localAccess.cacheAuthorizationData())
 
-    override fun pushDataToPostbox(
+    override fun writeData(
         payload: DMEPushPayload,
         accessToken: String
-    ): Single<SaasOngoingPushResponse> =
-        remoteAccess.pushDataToPostbox(payload, accessToken)
+    ): Single<SaasOngoingPushResponse> = remoteAccess.writeData(payload, accessToken)
 }

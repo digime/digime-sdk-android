@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/read"
-        android:name="me.digi.saas.features.pull.view.PullFragment"
+        android:name="me.digi.saas.features.read.view.ReadFragment"
         android:label="PullFragment"
-        tools:layout="@layout/fragment_pull">
+        tools:layout="@layout/fragment_read">
         <action
             android:id="@+id/readToOnboard"
             app:destination="@id/onboardFragment"
@@ -19,13 +19,20 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             app:popUpTo="@id/read"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/readToDetails"
+            app:destination="@id/detailsFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
         android:id="@+id/push"
-        android:name="me.digi.saas.features.push.view.PushFragment"
+        android:name="me.digi.saas.features.write.view.WriteFragment"
         android:label="PushFragment"
-        tools:layout="@layout/fragment_push" />
+        tools:layout="@layout/fragment_write" />
 
     <fragment
         android:id="@+id/read_raw"
@@ -109,4 +116,10 @@
         android:name="me.digi.saas.features.settings.view.SettingsFragment"
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/detailsFragment"
+        android:name="me.digi.saas.features.details.view.DetailsFragment"
+        android:label="DetailsFragment"
+        tools:layout="@layout/fragment_details" />
 </navigation>

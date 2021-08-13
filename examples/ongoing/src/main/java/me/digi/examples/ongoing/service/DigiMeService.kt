@@ -14,8 +14,13 @@ import me.digi.examples.ongoing.utils.FileUtils
 import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.ongoing.R
-import me.digi.sdk.DMEPullClient
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.payload.AccessToken
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.RefreshToken
+import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.unify.DigiMeClient
+import me.digi.sdk.unify.DigiMeConfiguration
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -24,13 +29,13 @@ import kotlin.math.abs
 class DigiMeService(private val context: Application) {
 
     companion object {
-        private const val SHAREDPREFS_KEY = "DigiMeXGenrefySharedPreferences"
+        private const val SHARED_PREFS_KEY = "DigiMeXGenrefySharedPreferences"
         private const val CACHED_CREDENTIAL_KEY = "CachedCredential"
     }
 
-    private val client: DMEPullClient by lazy {
+    private val client: DigiMeClient by lazy {
 
-        val configuration = DMEPullConfiguration(
+        val configuration = DigiMeConfiguration(
             context.getString(R.string.staging_app_id),
             context.getString(R.string.staging_contract_id),
             context.getString(R.string.staging_private_key)
@@ -38,19 +43,19 @@ class DigiMeService(private val context: Application) {
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
 
-        DMEPullClient(context, configuration)
+        DigiMeClient(context, configuration)
     }
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
     fun obtainAccessRights(activity: Activity): Completable = client.authorizeOngoingAccess(
         activity,
-        createScopeForDailyPlayHistory(),
-        getCachedCredential(),
-        "16"
+        scope = createScopeForDailyPlayHistory(),
+        credentials = getCachedCredential(),
+        serviceId = "16" // Spotify
     )
         .map { it }
-        .compose(cacheCredential())
+        .compose(cacheCredentials())
         .flatMapCompletable { Completable.complete() }
 
     fun fetchData(): Observable<Song> = client.getSessionData()
@@ -68,34 +73,42 @@ class DigiMeService(private val context: Application) {
             ) <= 24
         }
 
-    private fun createScopeForDailyPlayHistory(): DMEScope {
-        val objects = listOf(DMEServiceObjectType(406))
-        val services = listOf(DMEServiceType(19, objects))
-        val groups = listOf(DMEServiceGroup(5, services))
-        return DMEScope().apply {
-            serviceGroups = groups
-            timeRanges = listOf(DMETimeRange(to = null, from = null, last = "1d", type = null))
-        }
+    private fun createScopeForDailyPlayHistory(): CaScope {
+        val objects: List<ServiceObjectType> = listOf(ServiceObjectType(id = 406))
+        val services: List<ServiceType> = listOf(ServiceType(id = 19, serviceObjectTypes = objects))
+        val groups: List<ServiceGroup> = listOf(ServiceGroup(id = 5, serviceTypes = services))
+        val timeRanges: List<TimeRange> =
+            listOf(TimeRange(to = null, from = null, last = "1d", type = null))
+        return CaScope(serviceGroups = groups, timeRanges = timeRanges)
     }
 
-    fun getCachedCredential() =
-        context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
+    fun getCachedCredential(): CredentialsPayload? =
+        context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMETokenExchange::class.java)
+                Gson().fromJson(it, CredentialsPayload::class.java)
             }
         }
 
-    private fun cacheCredential() = SingleTransformer<DMETokenExchange, DMETokenExchange> {
-        it.map { credential ->
-            credential.apply {
-                context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                    val encodedCredential = Gson().toJson(credential)
-                    putString(CACHED_CREDENTIAL_KEY, encodedCredential)
-                    apply()
+    private fun cacheCredentials(): SingleTransformer<in AuthorizationResponse, out AuthorizationResponse> =
+        SingleTransformer<AuthorizationResponse, AuthorizationResponse> {
+            it.map { response ->
+                response.apply {
+                    context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).edit()
+                        .run {
+
+                            val credentials = CredentialsPayload().copy(
+                                accessToken = AccessToken(value = response.credentials?.accessToken),
+                                refreshToken = RefreshToken(value = response.credentials?.refreshToken)
+                            )
+
+                            val encodedCredential = Gson().toJson(credentials)
+                            putString(CACHED_CREDENTIAL_KEY, encodedCredential)
+
+                            apply()
+                        }
                 }
             }
         }
-    }
 
     fun getCachedSongs() = FileUtils(context).listFilesInCache()
         .map { it.readBytes() }

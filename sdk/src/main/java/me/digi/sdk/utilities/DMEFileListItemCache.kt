@@ -1,12 +1,12 @@
 package me.digi.sdk.utilities
 
-import me.digi.sdk.entities.DMEFileListItem
+import me.digi.sdk.entities.FileListItem
 
 internal class DMEFileListItemCache {
 
-    private var cachedFileListItems = emptyList<DMEFileListItem>()
+    private var cachedFileListItems = emptyList<FileListItem>()
 
-    fun updateCacheWithItemsAndDeduceChanges(items: List<DMEFileListItem>): List<String> {
+    fun updateCacheWithItemsAndDeduceChanges(items: List<FileListItem>): List<String> {
         val cachedItemsMappedByID = cachedFileListItems.map { it.fileId to it.updatedDate }.toMap()
         val newItemsMappedByID = items.map { it.fileId to it.updatedDate }.toMap()
 
@@ -19,9 +19,9 @@ internal class DMEFileListItemCache {
 
         cachedFileListItems = mergedItemsMappedByID
             .map { it }
-            .fold(listOf<DMEFileListItem>()) { cumulative, mapItem ->
+            .fold(listOf<FileListItem>()) { cumulative, mapItem ->
                 val new = cumulative.toMutableList()
-                new.add(DMEFileListItem(mapItem.key, mapItem.value))
+                new.add(FileListItem(mapItem.key, mapItem.value))
                 new
             }
 

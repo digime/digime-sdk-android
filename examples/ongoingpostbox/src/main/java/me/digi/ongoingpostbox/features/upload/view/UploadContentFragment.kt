@@ -15,12 +15,20 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import kotlinx.android.synthetic.main.fragment_upload_content.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.domain.OngoingPostboxPayload
+import me.digi.ongoingpostbox.domain.LocalSession
 import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
-import me.digi.sdk.entities.*
+import me.digi.sdk.entities.MimeType
+import me.digi.sdk.entities.OngoingPostboxData
+import me.digi.sdk.entities.Postbox
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -51,49 +59,63 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
     }
 
     private fun subscribeToObservers() {
-        viewModel.createPostboxStatus.observe(viewLifecycleOwner) { result: Resource<OngoingPostboxPayload> ->
-            when (result) {
-                is Resource.Loading -> {
-                    pbUploadContent?.isVisible = true
-                    ivImageToUpload?.isClickable = false
-                    snackBarLong(getString(R.string.label_postbox_creation_started))
-                }
-                is Resource.Success -> {
-                    pbUploadContent?.isVisible = false
-                    ivImageToUpload?.isClickable = true
-                    snackBarLong(getString(R.string.label_postbox_created))
-                }
-                is Resource.Failure -> {
-                    pbUploadContent?.isVisible = false
-                    ivImageToUpload?.isClickable = true
-                    snackBarLong(result.message ?: getString(R.string.label_unknown_error))
+        lifecycleScope.launchWhenResumed {
+            viewModel.authState.collect { resource: Resource<AuthorizationResponse> ->
+                when (resource) {
+                    is Resource.Idle -> {
+                        /**
+                         * Do nothing
+                         */
+                    }
+                    is Resource.Loading -> {
+                        pbUploadContent?.isVisible = true
+                        ivImageToUpload?.isClickable = false
+                        snackBarLong(getString(R.string.label_postbox_creation_started))
+                    }
+                    is Resource.Success -> {
+                        pbUploadContent?.isVisible = false
+                        ivImageToUpload?.isClickable = true
+
+                        val data = resource.data as AuthorizationResponse
+                        Timber.d("Data: $data")
+
+                        snackBarLong(getString(R.string.label_postbox_created))
+                    }
+                    is Resource.Failure -> {
+                        pbUploadContent?.isVisible = false
+                        ivImageToUpload?.isClickable = true
+                        snackBarLong(resource.message ?: getString(R.string.label_unknown_error))
+                    }
                 }
             }
         }
 
-        viewModel.uploadDataStatus.observe(viewLifecycleOwner) { result: Resource<SaasOngoingPushResponse> ->
-            when (result) {
-                is Resource.Loading -> {
-                    pbUploadContent?.isVisible = true
-                    btnUploadImage?.isEnabled = false
-                    ivImageToUpload?.isClickable = false
-                    snackBarLong(getString(R.string.label_update_ongoing))
-                }
-                is Resource.Success -> {
-                    pbUploadContent?.isVisible = false
-                    btnUploadImage?.isEnabled = true
-                    ivImageToUpload?.isClickable = true
-                    snackBarLong(getString(R.string.label_update_successful))
+        lifecycleScope.launchWhenResumed {
+            viewModel.uploadState.collectLatest { result: Resource<SaasOngoingPushResponse> ->
+                when (result) {
+                    is Resource.Idle -> {
+                        /** Do nothing */
+                    }
+                    is Resource.Loading -> {
+                        pbUploadContent?.isVisible = true
+                        btnUploadImage?.isEnabled = false
+                        ivImageToUpload?.isClickable = false
+                        snackBarLong(getString(R.string.label_update_ongoing))
+                    }
+                    is Resource.Success -> {
+                        pbUploadContent?.isVisible = false
+                        btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
+                        snackBarLong(getString(R.string.label_update_successful))
 
-                    Timber.d("Result: ${result.data}")
-                }
-                is Resource.Failure -> {
-                    pbUploadContent?.isVisible = false
-                    btnUploadImage?.isEnabled = true
-                    ivImageToUpload?.isClickable = true
-                    snackBarIndefiniteWithAction(
-                        result.message ?: getString(R.string.label_unknown_error)
-                    )
+                        Timber.d("Result: ${result.data}")
+                    }
+                    is Resource.Failure -> {
+                        pbUploadContent?.isVisible = false
+                        btnUploadImage?.isEnabled = true
+                        ivImageToUpload?.isClickable = true
+                        result.message?.let { snackBarIndefiniteWithAction(it) }
+                    }
                 }
             }
         }
@@ -153,33 +175,23 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             tvMimeType?.text = getMimeType(requireContext(), data).toString()
             btnUploadImage?.isEnabled = true
 
-            /**
-             * At this point we have
-             * @see [localAccess.getCachedPostbox]
-             * @see [localAccess.getCachedCredential]
-             * @see [localAccess.getCachedSession]
-             * so we can say they're not null
-             */
+            val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
+            val session: LocalSession = localAccess.getCachedSession()!!
+            val postboxData: OngoingPostboxData = localAccess.getCachedPostbox()!!
+
+            val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
-            val postbox: DMEOngoingPostboxData = localAccess.getCachedPostbox()!!
-            val credentials: DMETokenExchange = localAccess.getCachedCredential()!!
-            val session: Session = localAccess.getCachedSession()!!
 
-            val saasPostbox = DMEPostbox().copy(
-                key = session.key,
-                postboxId = postbox.postboxId,
-                publicKey = postbox.publicKey
-            )
-
-            val postboxPayload = DMEPushPayload(
-                saasPostbox,
-                metadata,
-                readBytes(requireContext(), data)!!,
-                DMEMimeType.IMAGE_PNG
-            )
+            val postbox: Postbox =
+                Postbox().copy(
+                    key = session.sessionKey,
+                    postboxId = postboxData.postboxId,
+                    publicKey = postboxData.publicKey
+                )
+            val payload = DMEPushPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
 
             btnUploadImage?.setOnClickListener {
-                viewModel.pushDataToPostbox(postboxPayload, credentials.accessToken.value)
+                viewModel.pushDataToPostbox(payload, credentials.accessToken.value!!)
             }
         } ?: snackBarLong(getString(R.string.label_image_picker_cancelled))
     }

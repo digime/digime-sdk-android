@@ -9,7 +9,7 @@
     <string name="label_postbox_created">Workspace ready</string>
     <string name="label_update_ongoing">Uploading</string>
     <string name="label_update_successful">Image uploaded successfully</string>
-    <string name="label_unknown_error">Unkown</string>
+    <string name="label_unknown_error">Unknown error occurred</string>
     <string name="label_image_picker_cancelled">Task Cancelled</string>
 
     <string name="label_request_session_dialog_title">Request new session</string>

@@ -1,9 +1,9 @@
 package me.digi.sdk.api.adapters
 
 import com.google.gson.*
-import me.digi.sdk.entities.DMEDataAcceptCondition
-import me.digi.sdk.entities.DMEDataRequest
-import me.digi.sdk.entities.api.DMESessionRequest
+import me.digi.sdk.entities.DataAcceptCondition
+import me.digi.sdk.entities.DataRequest
+import me.digi.sdk.entities.request.DMESessionRequest
 import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
 
@@ -21,7 +21,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
 
             json.addProperty("appId", src.appId)
             json.addProperty("contractId", src.contractId)
-            json.add("accept", context.serialize(DMEDataAcceptCondition(src.compression)))
+            json.add("accept", context.serialize(DataAcceptCondition(src.compression)))
             json.add("sdkAgent", context.serialize(src.sdkAgent))
 
             if (src.scope != null) {
@@ -35,7 +35,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
         return json
     }
 
-    private fun serializeTimeRanges(src: DMEDataRequest): JsonArray {
+    private fun serializeTimeRanges(src: DataRequest): JsonArray {
         val timeRangesJSON = JsonArray()
 
         if (src.timeRangesInitialized()) {
@@ -71,7 +71,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
             return JsonArray()
     }
 
-    private fun serializeServiceGroups(src: DMEDataRequest): JsonArray {
+    private fun serializeServiceGroups(src: DataRequest): JsonArray {
         val serviceGroupsJSON = JsonArray()
 
         if (src.serviceGroupsInitialized()) {
@@ -115,7 +115,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
             return JsonArray()
     }
 
-    private fun serializeDataRequest(src: DMEDataRequest): JsonObject {
+    private fun serializeDataRequest(src: DataRequest): JsonObject {
 
         val json = JsonObject()
 
