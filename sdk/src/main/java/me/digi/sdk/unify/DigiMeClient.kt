@@ -484,6 +484,48 @@ class DigiMeClient(
     /**
      *
      */
+    fun getFileByName(fileId: String, sessionKey: String, completion: DMEFileContentCompletion) {
+
+        apiClient.argonService.getFileBytes(sessionKey, fileId)
+            .map { response ->
+                val headers = response.headers()["X-Metadata"]
+                val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                val payloadHeader =
+                    Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                val contentBytes: ByteArray =
+                    DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                val compression: String = try {
+                    payloadHeader.compression
+                } catch (e: Throwable) {
+                    DMECompressor.COMPRESSION_NONE
+                }
+                val decompressedContentBytes: ByteArray =
+                    DMECompressor.decompressData(contentBytes, compression)
+
+                DMEFile().copy(fileContent = String(decompressedContentBytes))
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { completion.invoke(it, null) },
+                onError = {
+                    completion.invoke(
+                        null,
+                        DMEAuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+    }
+
+    /**
+     *
+     */
     private fun getSessionFileList(
         updateHandler: DMEIncrementalFileListUpdate,
         completion: DMEFileListCompletion
@@ -953,18 +995,23 @@ class DigiMeClient(
                                 credentials = activeCredentials!!
                             )
                     }
-                else {
-                    preAuthorizationCodeResponse
-                        .compose(requestConsentAccess(fromActivity, serviceId))
-                        .compose(requestTokenExchange())
-                        .doOnSuccess { tokenExchangeResponse ->
-                            activeCredentials = tokenExchangeResponse.credentials
-                        }
-                }
+                else preAuthorizationCodeResponse
+                    .compose(requestConsentAccess(fromActivity, serviceId))
+                    .compose(requestTokenExchange())
+                    .doOnSuccess { tokenExchangeResponse ->
+                        activeCredentials = tokenExchangeResponse.credentials
+                    }
             }
             .compose(requestDataQuery(scope))
             .onErrorResumeNext { error ->
-                errorHandler(error, credentials, scope, fromActivity, serviceId, activeCredentials)
+                errorHandler(
+                    error,
+                    credentials,
+                    scope,
+                    fromActivity,
+                    serviceId,
+                    activeCredentials
+                )
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -992,7 +1039,6 @@ class DigiMeClient(
                     )
                 }
             )
-
     }
 
     private fun errorHandler(

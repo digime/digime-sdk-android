@@ -48,6 +48,19 @@ class ReadAdapter : ListAdapter<FileListItem, ReadAdapter.ReadViewHolder>(Compan
             title.text = file.fileId
             date.text = DateUtils.getRelativeTimeSpanString(file.updatedDate)
             version.text = file.objectVersion
+
+            setOnClickListener {
+                onFileItemClickListener?.let { click -> click(file) }
+            }
         }
+    }
+
+    /**
+     * Click listeners
+     */
+    private var onFileItemClickListener: ((FileListItem) -> Unit)? = null
+
+    fun setOnFileItemClickListener(listener: (FileListItem) -> Unit) {
+        onFileItemClickListener = listener
     }
 }

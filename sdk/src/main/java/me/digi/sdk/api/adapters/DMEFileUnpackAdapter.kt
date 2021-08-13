@@ -7,9 +7,9 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.DMESDKError
-import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.FileMetadata
-import me.digi.sdk.entities.Status
+import me.digi.sdk.entities.response.Status
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import java.lang.reflect.Type

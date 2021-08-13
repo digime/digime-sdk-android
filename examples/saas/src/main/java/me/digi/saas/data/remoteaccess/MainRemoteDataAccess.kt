@@ -6,6 +6,7 @@ import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.response.DMEFileList
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
@@ -35,4 +36,6 @@ interface MainRemoteDataAccess {
         credentials: CredentialsPayload?,
         serviceId: String?,
     ): Single<AuthorizationResponse>
+
+    fun getFile(fileName: String): Single<DMEFile>
 }

@@ -65,8 +65,8 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
 
                         val data = AuthData().copy(
                             sessionKey = response.sessionKey,
-                            postboxId = response.postboxId,
-                            publicKey = response.publicKey
+                            postboxId = response.postboxData?.postboxId,
+                            publicKey = response.postboxData?.publicKey
                         )
                         val encodedData = Gson().toJson(data)
                         putString(CACHED_AUTH_DATA, encodedData)

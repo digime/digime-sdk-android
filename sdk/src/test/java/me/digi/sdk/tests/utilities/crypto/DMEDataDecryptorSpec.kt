@@ -3,7 +3,7 @@ package me.digi.sdk.tests.utilities.crypto
 import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import org.junit.Assert.assertTrue

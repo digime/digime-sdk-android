@@ -1,4 +1,4 @@
-package me.digi.sdk.entities
+package me.digi.sdk.entities.response
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement

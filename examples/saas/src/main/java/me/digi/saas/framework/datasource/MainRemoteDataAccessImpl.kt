@@ -13,6 +13,7 @@ import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.response.DMEFileList
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
@@ -157,4 +158,12 @@ class MainRemoteDataAccessImpl(
     ) = (error?.let(emitter::onError)
         ?: (if (response != null) emitter.onSuccess(response)
         else emitter.onError(DMEAuthError.General())))
+
+    override fun getFile(fileName: String): Single<DMEFile> =
+        Single.create { emitter ->
+            readClient.getFileByName(fileId = fileName, sessionKey = localAccess.getCachedAuthData()?.sessionKey!!) { file, error ->
+                error?.let(emitter::onError)
+                    ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(DMEAuthError.General()))
+            }
+        }
 }

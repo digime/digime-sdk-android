@@ -5,7 +5,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.DMEAuthError
 import me.digi.sdk.DMEPullClient
-import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 

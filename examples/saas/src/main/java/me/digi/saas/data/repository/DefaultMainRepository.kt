@@ -7,6 +7,7 @@ import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.DMEPushPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.response.DMEFileList
 import me.digi.sdk.entities.response.SaasOngoingPushResponse
 import me.digi.sdk.entities.service.Service
@@ -53,4 +54,7 @@ class DefaultMainRepository(
                 serviceId
             )
             .compose(localAccess.cacheAuthorizationData())
+
+    override fun getFile(fileName: String): Single<DMEFile> =
+        remoteAccess.getFile(fileName)
 }

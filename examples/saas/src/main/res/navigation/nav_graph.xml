@@ -19,6 +19,13 @@
             app:popExitAnim="@anim/nav_default_pop_exit_anim"
             app:popUpTo="@id/read"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/readToDetails"
+            app:destination="@id/detailsFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment
@@ -109,4 +116,10 @@
         android:name="me.digi.saas.features.settings.view.SettingsFragment"
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/detailsFragment"
+        android:name="me.digi.saas.features.details.view.DetailsFragment"
+        android:label="DetailsFragment"
+        tools:layout="@layout/fragment_details" />
 </navigation>

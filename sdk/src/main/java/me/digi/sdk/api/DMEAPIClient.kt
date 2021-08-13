@@ -16,7 +16,7 @@ import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.interceptors.DMERetryInterceptor
 import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
-import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.entities.request.DMESessionRequest
 import okhttp3.Dispatcher

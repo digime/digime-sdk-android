@@ -1,6 +1,7 @@
 package me.digi.saas.framework.di
 
 import me.digi.saas.features.auth.viewmodel.AuthViewModel
+import me.digi.saas.features.details.viewmodel.DetailsViewModel
 import me.digi.saas.features.home.viewmodel.HomeViewModel
 import me.digi.saas.features.onboard.viewmodel.OnboardViewModel
 import me.digi.saas.features.read.viewmodel.ReadViewModel
@@ -17,4 +18,5 @@ val viewModelsModule: Module = module {
     viewModel { WriteViewModel(get()) }
     viewModel { ReadRawViewModel(get()) }
     viewModel { HomeViewModel(get()) }
+    viewModel { DetailsViewModel(get()) }
 }

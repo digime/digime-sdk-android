@@ -1,7 +1,6 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
-import me.digi.sdk.entities.DMEFile
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.DMESessionRequest
 import me.digi.sdk.entities.request.Pull

@@ -2,7 +2,7 @@ package me.digi.sdk.callbacks
 
 import me.digi.sdk.DMEError
 import me.digi.sdk.entities.DMEAccount
-import me.digi.sdk.entities.DMEFile
+import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse

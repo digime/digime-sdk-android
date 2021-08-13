@@ -2,6 +2,7 @@ package me.digi.saas.features.read.view
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -41,6 +42,11 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
 
     private fun setupAdapter() {
         binding.rvReadList.adapter = readAdapter
+
+        readAdapter.setOnFileItemClickListener { fileListItem ->
+            val data: Bundle = bundleOf("fileName" to fileListItem.fileId)
+            findNavController().navigate(R.id.readToDetails, data)
+        }
     }
 
     private fun subscribeToObservers() {
