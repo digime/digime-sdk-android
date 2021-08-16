@@ -2,7 +2,7 @@ package me.digi.sdk.entities.response
 
 import me.digi.sdk.entities.Session
 
-data class DMEPreAuthResponse(
+data class PreAuthorizationResponse(
     val session: Session,
     val token: String
 )

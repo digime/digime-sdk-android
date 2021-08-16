@@ -79,7 +79,7 @@ internal interface DMEArgonService {
     fun getPreAuthorizationCode(
         @Header("Authorization") jwt: String,
         @Body scopeRequest: AuthorizationScopeRequest
-    ): Call<DMEPreAuthResponse>
+    ): Call<PreAuthorizationResponse>
 
     @GET("v1.5/discovery/services")
     fun getServicesForContract(@Header("contractId") contractId: String): Single<ServicesResponse>

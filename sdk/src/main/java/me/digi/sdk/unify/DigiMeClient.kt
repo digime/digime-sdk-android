@@ -87,6 +87,260 @@ class DigiMeClient(
     /**
      *
      */
+    fun authorizeAccess(
+        fromActivity: Activity,
+        scope: DataRequest? = null,
+        credentials: CredentialsPayload? = null,
+        serviceId: String? = null,
+        completion: GetAuthorizationDoneCompletion
+    ) {
+        requestPreAuthorizationCode(credentials, scope)
+            .compose(requestConsentAccess(fromActivity, serviceId))
+            .compose(requestTokenExchange())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: GetTokenExchangeDone ->
+                    sessionManager.updatedSession = result.consentData.session
+
+                    val response = AuthorizationResponse(
+                        sessionKey = result.consentData.session.key,
+                        postboxData = OngoingPostboxData(
+                            postboxId = result.consentData.consentResponse.postboxId,
+                            publicKey = result.consentData.consentResponse.publicKey
+                        ),
+                        credentials = EssentialCredentials(
+                            result.credentials.accessToken.value,
+                            result.credentials.refreshToken.value
+                        )
+                    )
+
+                    completion.invoke(response, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? DMEError }
+                            ?: DMEAPIError.ErrorWithMessage(
+                                error.localizedMessage ?: "Unknown error occurred"
+                            ))
+                }
+            )
+    }
+
+    /**
+     *
+     */
+    fun authorizeOngoingWriteAccess(
+        fromActivity: Activity,
+        postbox: OngoingPostboxData? = null,
+        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
+        completion: GetAuthorizationDoneCompletion
+    ) {
+
+        var activeCredentials: CredentialsPayload? = credentials
+        var activePostbox: OngoingPostboxData? = postbox
+
+        // First, we request pre-auth code needed for authorization consent manager.
+        // In this instance, we don't need scope, hence it's defaulted to null.
+        requestPreAuthorizationCode(credentials, scope = null)
+            // Next, we check if any credentials were supplied (for access restoration).
+            // If not, we kick the user out of the flow and authorize normally.
+            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
+                if (activeCredentials != null && activePostbox != null)
+                    preAuthorizationCodeResponse.map {
+                        GetTokenExchangeDone()
+                            .copy(
+                                consentData = GetConsentDone(
+                                    session = it.session,
+                                    consentResponse = ConsentAuthResponse(
+                                        postboxId = activePostbox?.postboxId,
+                                        publicKey = activePostbox?.publicKey
+                                    )
+                                ),
+                                credentials = activeCredentials!!
+                            )
+                    } else preAuthorizationCodeResponse
+                    .compose(requestConsentAccess(fromActivity, serviceId = null))
+                    .compose(requestTokenExchange())
+                    .doOnSuccess { tokenExchangeResponse ->
+                        activeCredentials = tokenExchangeResponse.credentials
+                        activePostbox = OngoingPostboxData(
+                            postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
+                            publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
+                        )
+                    }
+            }
+            .onErrorResumeNext { error ->
+                errorHandler(
+                    error,
+                    credentials,
+                    scope = null,
+                    fromActivity,
+                    serviceId = null,
+                    activeCredentials
+                )
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+
+                    sessionManager.updatedSession = it.consentData.session
+
+                    val response = AuthorizationResponse(
+                        sessionKey = it.consentData.session.key,
+                        postboxData = OngoingPostboxData(
+                            postboxId = it.consentData.consentResponse.postboxId,
+                            publicKey = it.consentData.consentResponse.publicKey
+                        ),
+                        credentials = EssentialCredentials(
+                            accessToken = it.credentials.accessToken.value,
+                            refreshToken = it.credentials.refreshToken.value
+                        )
+                    )
+
+                    completion.invoke(response, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? DMEError }
+                            ?: DMEAPIError.ErrorWithMessage(error.localizedMessage)
+                    )
+                }
+            )
+    }
+
+    fun authorizeOngoingReadAccess(
+        fromActivity: Activity,
+        scope: DataRequest? = null,
+        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
+        serviceId: String? = null,
+        completion: GetAuthorizationDoneCompletion
+    ) {
+
+        var activeCredentials: CredentialsPayload? = credentials
+
+        // First, we request pre-auth code needed for authorization consent manager.
+        requestPreAuthorizationCode(credentials, scope)
+            // Next, we check if any credentials were supplied (for access restoration).
+            // If not, we kick the user out of the flow to authorise normally.
+            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
+                if (activeCredentials != null)
+                    preAuthorizationCodeResponse.map {
+                        GetTokenExchangeDone()
+                            .copy(
+                                consentData = GetConsentDone(session = it.session),
+                                credentials = activeCredentials!!
+                            )
+                    }
+                else preAuthorizationCodeResponse
+                    .compose(requestConsentAccess(fromActivity, serviceId))
+                    .compose(requestTokenExchange())
+                    .doOnSuccess { tokenExchangeResponse ->
+                        activeCredentials = tokenExchangeResponse.credentials
+                    }
+            }
+            // At this point, we have a session and a set of credentials, so we can trigger
+            // the data query to 'prepare' data to be synced'.
+            .compose(requestDataQuery(scope))
+            .onErrorResumeNext { error ->
+                errorHandler(
+                    error,
+                    credentials,
+                    scope,
+                    fromActivity,
+                    serviceId,
+                    activeCredentials
+                )
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+
+                    sessionManager.updatedSession = it.consentData.session
+
+                    val response = AuthorizationResponse(
+                        sessionKey = it.consentData.session.key,
+                        credentials = EssentialCredentials(
+                            it.credentials.accessToken.value,
+                            it.credentials.refreshToken.value
+                        )
+                    )
+
+                    completion.invoke(response, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? DMEError }
+                            ?: DMEAPIError.ErrorWithMessage(error.localizedMessage)
+                    )
+                }
+            )
+    }
+
+    private fun errorHandler(
+        error: Throwable?,
+        credentials: CredentialsPayload?,
+        scope: DataRequest?,
+        fromActivity: Activity,
+        serviceId: String?,
+        activeCredentials: CredentialsPayload?
+    ): SingleSource<out GetTokenExchangeDone>? {
+        var activeCredentials1 = activeCredentials
+        return if (error is DMEAPIError && error.code == "InternalServerError") {
+
+            requestPreAuthorizationCode(credentials, scope)
+                .compose(requestConsentAccess(fromActivity, serviceId))
+                .compose(requestTokenExchange())
+                .doOnSuccess { activeCredentials1 = it.credentials }
+
+            // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
+            // has expired.
+        } else if (error is DMEAPIError && error.code == "InvalidToken") {
+            // If so, we take the active session and expired credentials and try to refresh them.
+
+            requestPreAuthorizationCode(credentials, scope)
+                .map { response: GetPreAuthCodeDone ->
+                    GetTokenExchangeDone()
+                        .copy(
+                            consentData = GetConsentDone(session = response.session),
+                            credentials = activeCredentials1!!
+                        )
+                }
+                .compose(requestCredentialsRefresh())
+                .doOnSuccess { activeCredentials1 = it.credentials }
+                .onErrorResumeNext { error ->
+
+                    // If an error is encountered from this call, we inspect it to see if it's an
+                    // 'InvalidToken' error, meaning that the REFRESH token has expired.
+                    if (error is DMEAPIError && error.code == "InvalidToken") {
+                        // If so, we need to obtain a new set of credentials from the digi.me
+                        // application. Process the flow as before, for ongoing access, provided
+                        // that auto-recover is enabled. If not, we throw a specific error and
+                        // exit the flow.
+                        if (configuration.autoRecoverExpiredCredentials) {
+                            requestPreAuthorizationCode(credentials, scope)
+                                .compose(requestConsentAccess(fromActivity, serviceId))
+                                .compose(requestTokenExchange())
+                                .doOnSuccess { activeCredentials1 = it.credentials }
+
+                                // Once new credentials are obtained, re-trigger the data query.
+                                // If it fails here, credentials are not the issue. The error
+                                // will be propagated down to the callback as normal.
+                                .compose(requestDataQuery(scope))
+                        } else Single.error(DMEAuthError.TokenExpired())
+                    } else Single.error(error)
+                }
+        } else Single.error(error)
+    }
+
+    /**
+     *
+     */
     fun updateSession(
         sessionRequest: DMESessionRequest,
         completion: GetSessionCompletion
@@ -257,6 +511,46 @@ class DigiMeClient(
     /**
      *
      */
+    fun readData(
+        downloadHandler: DMEFileContentCompletion,
+        completion: DMEFileListCompletion
+    ) {
+
+        DMELog.i("Starting fetch of session data.")
+
+        activeFileDownloadHandler = downloadHandler
+        activeSessionDataFetchCompletionHandler = completion
+
+        getSessionFileList({ _, updatedFileIds ->
+
+            updatedFileIds.forEach {
+
+                activeDownloadCount++
+                DMELog.d("Downloading file with ID: $it.")
+
+                getSessionData(it) { file, error ->
+
+                    when {
+                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                    }
+
+                    downloadHandler.invoke(file, error)
+                    activeDownloadCount--
+                }
+            }
+
+        }) { fileList, error ->
+            if (error != null) {
+                completion(fileList, error) // We only want to push this if the error exists, else
+                // it'll cause a premature loop exit.
+            }
+        }
+    }
+
+    /**
+     *
+     */
     fun onboardService(
         fromActivity: Activity,
         serviceId: String,
@@ -389,46 +683,6 @@ class DigiMeClient(
                     )
                 }
             )
-    }
-
-    /**
-     *
-     */
-    fun readData(
-        downloadHandler: DMEFileContentCompletion,
-        completion: DMEFileListCompletion
-    ) {
-
-        DMELog.i("Starting fetch of session data.")
-
-        activeFileDownloadHandler = downloadHandler
-        activeSessionDataFetchCompletionHandler = completion
-
-        getSessionFileList({ _, updatedFileIds ->
-
-            updatedFileIds.forEach {
-
-                activeDownloadCount++
-                DMELog.d("Downloading file with ID: $it.")
-
-                getSessionData(it) { file, error ->
-
-                    when {
-                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
-                    }
-
-                    downloadHandler.invoke(file, error)
-                    activeDownloadCount--
-                }
-            }
-
-        }) { fileList, error ->
-            if (error != null) {
-                completion(fileList, error) // We only want to push this if the error exists, else
-                // it'll cause a premature loop exit.
-            }
-        }
     }
 
     /**
@@ -654,6 +908,17 @@ class DigiMeClient(
      * See the flow below for details.
      */
 
+    /**
+     * Gets code needed to trigger consent access.
+     *
+     * In case we don't have credentials, it'll create fresh library; however in case we do, it'll
+     * reference the same library.
+     *
+     * In case we don't provide scope, it'll prepare all data, otherwise, it'll only prepare
+     * scoped dataset.
+     *
+     * @see PreAuthorizationResponse
+     */
     private fun requestPreAuthorizationCode(
         credentials: CredentialsPayload?,
         scope: DataRequest?
@@ -690,7 +955,7 @@ class DigiMeClient(
                 apiClient
                     .argonService
                     .getPreAuthorizationCode(authHeader, authScope)
-            ) { response, error ->
+            ) { response: PreAuthorizationResponse?, error: DMEError? ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -715,19 +980,26 @@ class DigiMeClient(
             }
         }
 
+    /**
+     * It will trigger consent access.
+     * In case we provide the service id, it will also trigger onboarding with authorization.
+     *
+     * @see GetPreAuthCodeDone
+     * @see ConsentAuthResponse
+     */
     private fun requestConsentAccess(
         fromActivity: Activity,
         serviceId: String?
     ): SingleTransformer<in GetPreAuthCodeDone, out GetConsentDone> =
         SingleTransformer<GetPreAuthCodeDone, GetConsentDone> {
-            it.flatMap { input ->
+            it.flatMap { input: GetPreAuthCodeDone ->
                 Single.create { emitter ->
                     input.payload.preAuthorizationCode?.let { code ->
                         authorizeConsentManager.beginConsentAction(
                             fromActivity,
                             code,
                             serviceId
-                        ) { consentResponse, error ->
+                        ) { consentResponse: ConsentAuthResponse?, error: DMEError? ->
                             when {
                                 consentResponse != null -> {
                                     val consentDone = GetConsentDone()
@@ -748,6 +1020,10 @@ class DigiMeClient(
             }
         }
 
+    /**
+     * Once consent is completed, we triger this method to get fresh set of credentials.
+     * @see CredentialsPayload
+     */
     private fun requestTokenExchange(): SingleTransformer<in GetConsentDone, out GetTokenExchangeDone> =
         SingleTransformer<GetConsentDone, GetTokenExchangeDone> {
             it.flatMap { input: GetConsentDone ->
@@ -783,9 +1059,16 @@ class DigiMeClient(
             }
         }
 
+    /**
+     * In case our credentials have expired, we'll trigger this method.
+     * We extract token from response in form of payload.
+     *
+     * @see CredentialsPayload
+     * @see GetTokenExchangeDone
+     */
     private fun requestCredentialsRefresh(): SingleTransformer<in GetTokenExchangeDone, out GetTokenExchangeDone> =
         SingleTransformer<GetTokenExchangeDone, GetTokenExchangeDone> {
-            it.flatMap { input ->
+            it.flatMap { input: GetTokenExchangeDone ->
 
                 val jwt = RefreshCredentialsRequestJWT(
                     configuration.appId,
@@ -798,7 +1081,7 @@ class DigiMeClient(
                 val authHeader: String = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
-                    .map { response ->
+                    .map { response: TokenResponse ->
 
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
@@ -814,9 +1097,15 @@ class DigiMeClient(
             }
         }
 
+    /**
+     * It will 'prepare' data in the library to be synced.
+     * Upon successful response, it'll return new session.
+     *
+     * @see Session
+     */
     private fun requestDataQuery(scope: DataRequest?): SingleTransformer<in GetTokenExchangeDone, out GetTokenExchangeDone> =
         SingleTransformer<GetTokenExchangeDone, GetTokenExchangeDone> {
-            it.flatMap { input ->
+            it.flatMap { input: GetTokenExchangeDone ->
 
                 val jwt = DMETriggerDataQueryRequestJWT(
                     configuration.appId,
@@ -837,7 +1126,7 @@ class DigiMeClient(
                             authHeader,
                             dataQueryScope
                         )
-                ).map { response ->
+                ).map { response: DataQueryResponse ->
 
                     sessionManager.updatedSession = response.session
 
@@ -849,251 +1138,4 @@ class DigiMeClient(
                 }
             }
         }
-
-    /**
-     *
-     */
-    fun authorizeAccess(
-        fromActivity: Activity,
-        scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null,
-        serviceId: String? = null,
-        completion: GetAuthorizationDoneCompletion
-    ) {
-        requestPreAuthorizationCode(credentials, scope)
-            .compose(requestConsentAccess(fromActivity, serviceId))
-            .compose(requestTokenExchange())
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { result: GetTokenExchangeDone ->
-                    sessionManager.updatedSession = result.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = result.consentData.session.key,
-                        postboxData = OngoingPostboxData(
-                            postboxId = result.consentData.consentResponse.postboxId,
-                            publicKey = result.consentData.consentResponse.publicKey
-                        ),
-                        credentials = EssentialCredentials(
-                            result.credentials.accessToken.value,
-                            result.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage(
-                                error.localizedMessage ?: "Unknown error occurred"
-                            ))
-                }
-            )
-    }
-
-    /**
-     *
-     */
-    fun authorizeOngoingWriteAccess(
-        fromActivity: Activity,
-        postbox: OngoingPostboxData? = null,
-        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
-        completion: GetAuthorizationDoneCompletion
-    ) {
-
-        var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: OngoingPostboxData? = postbox
-
-        requestPreAuthorizationCode(credentials, scope = null)
-            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (activeCredentials != null && activePostbox != null)
-                    preAuthorizationCodeResponse.map {
-                        GetTokenExchangeDone()
-                            .copy(
-                                consentData = GetConsentDone(
-                                    session = it.session,
-                                    consentResponse = ConsentAuthResponse(
-                                        postboxId = activePostbox?.postboxId,
-                                        publicKey = activePostbox?.publicKey
-                                    )
-                                ),
-                                credentials = activeCredentials!!
-                            )
-                    } else preAuthorizationCodeResponse
-                    .compose(requestConsentAccess(fromActivity, serviceId = null))
-                    .compose(requestTokenExchange())
-                    .doOnSuccess { tokenExchangeResponse ->
-                        activeCredentials = tokenExchangeResponse.credentials
-                        activePostbox = OngoingPostboxData(
-                            postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
-                            publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
-                        )
-                    }
-            }
-            .onErrorResumeNext { error ->
-                errorHandler(
-                    error,
-                    credentials,
-                    scope = null,
-                    fromActivity,
-                    serviceId = null,
-                    activeCredentials
-                )
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-
-                    sessionManager.updatedSession = it.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = it.consentData.session.key,
-                        postboxData = OngoingPostboxData(
-                            postboxId = it.consentData.consentResponse.postboxId,
-                            publicKey = it.consentData.consentResponse.publicKey
-                        ),
-                        credentials = EssentialCredentials(
-                            accessToken = it.credentials.accessToken.value,
-                            refreshToken = it.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? DMEError } ?: DMEAPIError.ErrorWithMessage(
-                            error.localizedMessage ?: "Unknown error occurred"
-                        )
-                    )
-                }
-            )
-    }
-
-    fun authorizeOngoingReadAccess(
-        fromActivity: Activity,
-        scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
-        serviceId: String? = null,
-        completion: GetAuthorizationDoneCompletion
-    ) {
-
-        var activeCredentials: CredentialsPayload? = credentials
-
-        requestPreAuthorizationCode(credentials, scope)
-            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (activeCredentials != null)
-                    preAuthorizationCodeResponse.map {
-                        GetTokenExchangeDone()
-                            .copy(
-                                consentData = GetConsentDone(session = it.session),
-                                credentials = activeCredentials!!
-                            )
-                    }
-                else preAuthorizationCodeResponse
-                    .compose(requestConsentAccess(fromActivity, serviceId))
-                    .compose(requestTokenExchange())
-                    .doOnSuccess { tokenExchangeResponse ->
-                        activeCredentials = tokenExchangeResponse.credentials
-                    }
-            }
-            .compose(requestDataQuery(scope))
-            .onErrorResumeNext { error ->
-                errorHandler(
-                    error,
-                    credentials,
-                    scope,
-                    fromActivity,
-                    serviceId,
-                    activeCredentials
-                )
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-
-                    sessionManager.updatedSession = it.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = it.consentData.session.key,
-                        credentials = EssentialCredentials(
-                            it.credentials.accessToken.value,
-                            it.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? DMEError } ?: DMEAPIError.ErrorWithMessage(
-                            error.localizedMessage ?: "Unknown error occurred"
-                        )
-                    )
-                }
-            )
-    }
-
-    private fun errorHandler(
-        error: Throwable?,
-        credentials: CredentialsPayload?,
-        scope: DataRequest?,
-        fromActivity: Activity,
-        serviceId: String?,
-        activeCredentials: CredentialsPayload?
-    ): SingleSource<out GetTokenExchangeDone>? {
-        var activeCredentials1 = activeCredentials
-        return if (error is DMEAPIError && error.code == "InternalServerError") {
-
-            requestPreAuthorizationCode(credentials, scope)
-                .compose(requestConsentAccess(fromActivity, serviceId))
-                .compose(requestTokenExchange())
-                .doOnSuccess { activeCredentials1 = it.credentials }
-
-            // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
-            // has expired.
-        } else if (error is DMEAPIError && error.code == "InvalidToken") {
-            // If so, we take the active session and expired credentials and try to refresh them.
-
-            requestPreAuthorizationCode(credentials, scope)
-                .map { response: GetPreAuthCodeDone ->
-                    GetTokenExchangeDone()
-                        .copy(
-                            consentData = GetConsentDone(session = response.session),
-                            credentials = activeCredentials1!!
-                        )
-                }
-                .compose(requestCredentialsRefresh())
-                .doOnSuccess { activeCredentials1 = it.credentials }
-                .onErrorResumeNext { error ->
-
-                    // If an error is encountered from this call, we inspect it to see if it's an
-                    // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                    if (error is DMEAPIError && error.code == "InvalidToken") {
-                        // If so, we need to obtain a new set of credentials from the digi.me
-                        // application. Process the flow as before, for ongoing access, provided
-                        // that auto-recover is enabled. If not, we throw a specific error and
-                        // exit the flow.
-                        if (configuration.autoRecoverExpiredCredentials) {
-                            requestPreAuthorizationCode(credentials, scope)
-                                .compose(requestConsentAccess(fromActivity, serviceId))
-                                .compose(requestTokenExchange())
-                                .doOnSuccess { activeCredentials1 = it.credentials }
-
-                                // Once new credentials are obtained, re-trigger the data query.
-                                // If it fails here, credentials are not the issue. The error
-                                // will be propagated down to the callback as normal.
-                                .compose(requestDataQuery(scope))
-                        } else Single.error(DMEAuthError.TokenExpired())
-                    } else Single.error(error)
-                }
-        } else Single.error(error)
-    }
 }
