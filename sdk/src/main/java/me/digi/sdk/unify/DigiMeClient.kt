@@ -109,7 +109,7 @@ class DigiMeClient(
                             postboxId = result.consentData.consentResponse.postboxId,
                             publicKey = result.consentData.consentResponse.publicKey
                         ),
-                        credentials = EssentialCredentials(
+                        credentials = Credentials(
                             result.credentials.accessToken.value,
                             result.credentials.refreshToken.value
                         )
@@ -173,12 +173,11 @@ class DigiMeClient(
             }
             .onErrorResumeNext { error ->
                 errorHandler(
-                    error,
-                    credentials,
+                    fromActivity = fromActivity,
+                    error = error,
+                    credentials = credentials,
                     scope = null,
-                    fromActivity,
-                    serviceId = null,
-                    activeCredentials
+                    serviceId = null
                 )
             }
             .subscribeOn(Schedulers.io())
@@ -194,7 +193,7 @@ class DigiMeClient(
                             postboxId = it.consentData.consentResponse.postboxId,
                             publicKey = it.consentData.consentResponse.publicKey
                         ),
-                        credentials = EssentialCredentials(
+                        credentials = Credentials(
                             accessToken = it.credentials.accessToken.value,
                             refreshToken = it.credentials.refreshToken.value
                         )
@@ -247,12 +246,11 @@ class DigiMeClient(
             .compose(requestDataQuery(scope))
             .onErrorResumeNext { error ->
                 errorHandler(
-                    error,
-                    credentials,
-                    scope,
-                    fromActivity,
-                    serviceId,
-                    activeCredentials
+                    fromActivity = fromActivity,
+                    error = error,
+                    credentials = credentials,
+                    scope = scope,
+                    serviceId = serviceId
                 )
             }
             .subscribeOn(Schedulers.io())
@@ -264,7 +262,7 @@ class DigiMeClient(
 
                     val response = AuthorizationResponse(
                         sessionKey = it.consentData.session.key,
-                        credentials = EssentialCredentials(
+                        credentials = Credentials(
                             it.credentials.accessToken.value,
                             it.credentials.refreshToken.value
                         )
@@ -283,36 +281,35 @@ class DigiMeClient(
     }
 
     private fun errorHandler(
+        fromActivity: Activity,
         error: Throwable?,
         credentials: CredentialsPayload?,
         scope: DataRequest?,
-        fromActivity: Activity,
-        serviceId: String?,
-        activeCredentials: CredentialsPayload?
+        serviceId: String?
     ): SingleSource<out GetTokenExchangeDone>? {
-        var activeCredentials1 = activeCredentials
-        return if (error is DMEAPIError && error.code == "InternalServerError") {
 
+        var activeCredentials: CredentialsPayload? = credentials
+
+        return if (error is DMEAPIError && error.code == "InternalServerError") {
             requestPreAuthorizationCode(credentials, scope)
                 .compose(requestConsentAccess(fromActivity, serviceId))
                 .compose(requestTokenExchange())
-                .doOnSuccess { activeCredentials1 = it.credentials }
+                .doOnSuccess { activeCredentials = it.credentials }
 
             // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
             // has expired.
         } else if (error is DMEAPIError && error.code == "InvalidToken") {
             // If so, we take the active session and expired credentials and try to refresh them.
-
             requestPreAuthorizationCode(credentials, scope)
                 .map { response: GetPreAuthCodeDone ->
                     GetTokenExchangeDone()
                         .copy(
                             consentData = GetConsentDone(session = response.session),
-                            credentials = activeCredentials1!!
+                            credentials = activeCredentials!!
                         )
                 }
                 .compose(requestCredentialsRefresh())
-                .doOnSuccess { activeCredentials1 = it.credentials }
+                .doOnSuccess { activeCredentials = it.credentials }
                 .onErrorResumeNext { error ->
 
                     // If an error is encountered from this call, we inspect it to see if it's an
@@ -326,7 +323,7 @@ class DigiMeClient(
                             requestPreAuthorizationCode(credentials, scope)
                                 .compose(requestConsentAccess(fromActivity, serviceId))
                                 .compose(requestTokenExchange())
-                                .doOnSuccess { activeCredentials1 = it.credentials }
+                                .doOnSuccess { activeCredentials = it.credentials }
 
                                 // Once new credentials are obtained, re-trigger the data query.
                                 // If it fails here, credentials are not the issue. The error
