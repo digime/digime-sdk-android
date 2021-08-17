@@ -38,13 +38,15 @@ class GuestConsentBrowserActivity : Activity() {
         val success: String? = intentUri.getQueryParameter(getString(R.string.key_success))
         val error = intentUri.getQueryParameter(getString(R.string.key_error))
 
-        if(success.toBoolean()) {
+        if (success.toBoolean()) {
+            intent?.putExtra(getString(R.string.key_success), success)
             intent?.putExtra(getString(R.string.key_code), code)
             intent?.putExtra(getString(R.string.key_state), state)
             intent?.putExtra(getString(R.string.key_s_postbox_id), postboxId)
             intent?.putExtra(getString(R.string.key_s_public_key), publicKey)
             setResult(RESULT_OK, intent)
         } else {
+            intent?.putExtra(getString(R.string.key_success), success)
             intent?.putExtra(getString(R.string.key_error), error)
             setResult(RESULT_CANCELED, intent)
         }

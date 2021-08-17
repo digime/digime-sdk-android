@@ -92,7 +92,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menuDeleteLibrayr -> viewModel.showDeleteDataAndStartOverDialog(requireContext())
+            R.id.menuDeleteLibrary -> viewModel.showDeleteDataAndStartOverDialog(requireContext())
         }
 
         return super.onOptionsItemSelected(item)

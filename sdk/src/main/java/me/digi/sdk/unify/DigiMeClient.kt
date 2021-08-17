@@ -134,7 +134,7 @@ class DigiMeClient(
     fun authorizeOngoingWriteAccess(
         fromActivity: Activity,
         postbox: OngoingPostboxData? = null,
-        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
+        credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
@@ -211,10 +211,13 @@ class DigiMeClient(
             )
     }
 
+    /**
+     *
+     */
     fun authorizeOngoingReadAccess(
         fromActivity: Activity,
         scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null, // Change to only have access/refresh token values
+        credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
@@ -280,6 +283,9 @@ class DigiMeClient(
             )
     }
 
+    /**
+     *
+     */
     private fun errorHandler(
         fromActivity: Activity,
         error: Throwable?,
@@ -336,12 +342,17 @@ class DigiMeClient(
     }
 
     /**
-     *
+     * Probably to remove
      */
-    fun updateSession(
-        sessionRequest: DMESessionRequest,
-        completion: GetSessionCompletion
-    ) {
+    fun updateSession(completion: GetSessionCompletion) {
+
+        val sessionRequest = DMESessionRequest(
+            configuration.appId,
+            configuration.contractId,
+            SdkAgent(),
+            compression = "gzip",
+            scope = null
+        )
 
         fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
             Single.create { emitter ->
@@ -733,45 +744,52 @@ class DigiMeClient(
     }
 
     /**
-     *
+     * Probably to remove
      */
-    fun getFileByName(fileId: String, sessionKey: String, completion: DMEFileContentCompletion) {
+    fun getFileByName(fileId: String, completion: DMEFileContentCompletion) {
 
-        apiClient.argonService.getFileBytes(sessionKey, fileId)
-            .map { response ->
-                val headers = response.headers()["X-Metadata"]
-                val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                val payloadHeader =
-                    Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+        val currentSession = sessionManager.updatedSession
 
-                val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+        if (currentSession != null && sessionManager.isSessionValid()) {
+            apiClient.argonService.getFileBytes(currentSession.key, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader =
+                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
 
-                val contentBytes: ByteArray =
-                    DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
 
-                val compression: String = try {
-                    payloadHeader.compression
-                } catch (e: Throwable) {
-                    DMECompressor.COMPRESSION_NONE
+                    val contentBytes: ByteArray =
+                        DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try {
+                        payloadHeader.compression
+                    } catch (e: Throwable) {
+                        DMECompressor.COMPRESSION_NONE
+                    }
+                    val decompressedContentBytes: ByteArray =
+                        DMECompressor.decompressData(contentBytes, compression)
+
+                    DMEFile().copy(fileContent = String(decompressedContentBytes))
                 }
-                val decompressedContentBytes: ByteArray =
-                    DMECompressor.decompressData(contentBytes, compression)
-
-                DMEFile().copy(fileContent = String(decompressedContentBytes))
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { completion.invoke(it, null) },
-                onError = {
-                    completion.invoke(
-                        null,
-                        DMEAuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            DMEAuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
                         )
-                    )
-                }
-            )
+                    }
+                )
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, DMEAuthError.InvalidSession())
+        }
     }
 
     /**
@@ -998,7 +1016,7 @@ class DigiMeClient(
                             serviceId
                         ) { consentResponse: ConsentAuthResponse?, error: DMEError? ->
                             when {
-                                consentResponse != null -> {
+                                consentResponse?.success == true -> {
                                     val consentDone = GetConsentDone()
                                         .copy(
                                             session = input.session,
@@ -1018,7 +1036,7 @@ class DigiMeClient(
         }
 
     /**
-     * Once consent is completed, we triger this method to get fresh set of credentials.
+     * Once consent is completed, we trigger this method to get fresh set of credentials.
      * @see CredentialsPayload
      */
     private fun requestTokenExchange(): SingleTransformer<in GetConsentDone, out GetTokenExchangeDone> =

@@ -16,9 +16,9 @@ import me.digi.sdk.api.interceptors.DMEDefaultHeaderAppender
 import me.digi.sdk.api.interceptors.DMERetryInterceptor
 import me.digi.sdk.api.services.DMEArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
-import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.response.DMEFile
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -142,7 +142,6 @@ class DMEAPIClient(private val context: Context, private val clientConfig: Clien
             }
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
-                println("Error: ${error.localizedMessage}")
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
                 val genericAPIError = DMEAPIError.UNREACHABLE()
                 completion(null, genericAPIError)

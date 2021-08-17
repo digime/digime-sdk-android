@@ -161,7 +161,7 @@ class MainRemoteDataAccessImpl(
 
     override fun getFile(fileName: String): Single<DMEFile> =
         Single.create { emitter ->
-            readClient.getFileByName(fileId = fileName, sessionKey = localAccess.getCachedAuthData()?.sessionKey!!) { file, error ->
+            readClient.getFileByName(fileId = fileName) { file, error ->
                 error?.let(emitter::onError)
                     ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(DMEAuthError.General()))
             }

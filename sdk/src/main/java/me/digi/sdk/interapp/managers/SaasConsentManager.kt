@@ -90,6 +90,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
 
         val params = intent.extras?.toMap() ?: emptyMap()
 
+        val success = params[ctx.getString(R.string.key_success)] as? String
         val code = params[ctx.getString(R.string.key_code)] as? String
         val state = params[ctx.getString(R.string.key_state)] as? String
         val postboxId = params[ctx.getString(R.string.key_s_postbox_id)] as? String
@@ -124,7 +125,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
             }
         }
 
-        authorizationCallbackHandler?.invoke(ConsentAuthResponse(code, state, postboxId, publicKey), error)
+        authorizationCallbackHandler?.invoke(ConsentAuthResponse(success.toBoolean(), code, state, postboxId, publicKey), error)
         onboardingCallbackHandler?.invoke(error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null

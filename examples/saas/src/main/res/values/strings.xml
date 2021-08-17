@@ -5,11 +5,13 @@
     <string name="labelProductionUrl">https://api.digi.me/</string>
     <string name="labelStagingUrl">https://api.stagingdigi.me/</string>
     <string name="labelDevelopmentUrl">https://api.development.devdigi.me/</string>
+    <string name="labelIntegrationUrl">https://api.integration.devdigi.me/</string>
 
     <string-array name="endpoints">
         <item>@string/labelProductionUrl</item>
         <item>@string/labelStagingUrl</item>
         <item>@string/labelDevelopmentUrl</item>
+        <item>@string/labelIntegrationUrl</item>
     </string-array>
 
     <!-- Menu -->
