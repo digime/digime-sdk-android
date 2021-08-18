@@ -48,7 +48,7 @@ class DMEAppCommunicator(val context: Context) {
 
     fun requestInstallOfDMEApp(from: Activity, installCallback: () -> Unit) {
 
-        DMEInstallHandler.registerNewInstallHandler(installCallback)
+        InstallHandler.registerNewInstallHandler(installCallback)
 
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 

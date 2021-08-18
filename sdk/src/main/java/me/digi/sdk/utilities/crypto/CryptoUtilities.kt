@@ -15,7 +15,7 @@ import java.security.*
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.crypto.Cipher
 
-class DMECryptoUtilities(val context: Context) {
+class CryptoUtilities(val context: Context) {
 
     private val keyStore by lazy {
         Security.addProvider(BouncyCastleProvider())
@@ -24,21 +24,18 @@ class DMECryptoUtilities(val context: Context) {
 
     fun privateKeyHexFrom(public: String): String {
 
-
-            val publicKeyContent =
-                public.replace("\n", "").replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                    .replace("-----END RSA PRIVATE KEY-----", "")
+        val publicKeyContent =
+            public
+                .replace("\n", "")
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
 
         val pkcs8EncodedBytes: ByteArray = Base64.decode(publicKeyContent, Base64.DEFAULT)
-
-        // extract the private key
-
 
         // extract the private key
         val keySpec = PKCS8EncodedKeySpec(pkcs8EncodedBytes)
         val kf = KeyFactory.getInstance("RSA")
         return DMEKeyTransformer.hexFromJavaPrivateKey(kf.generatePrivate(keySpec))
-
     }
 
     fun privateKeyHexFrom(p12File: String, password: String): String {
@@ -64,8 +61,7 @@ class DMECryptoUtilities(val context: Context) {
                 cipher.init(Cipher.DECRYPT_MODE, key)
                 return cipher.doFinal(encryptedBytes)
 
-            }
-            catch (error: Throwable) {
+            } catch (error: Throwable) {
                 throw SDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }
@@ -82,7 +78,11 @@ class DMECryptoUtilities(val context: Context) {
             }
         }
 
-        internal fun decryptAES(encryptedBytes: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): ByteArray {
+        internal fun decryptAES(
+            encryptedBytes: ByteArray,
+            keyBytes: ByteArray,
+            ivBytes: ByteArray
+        ): ByteArray {
             try {
 
                 val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
@@ -105,13 +105,16 @@ class DMECryptoUtilities(val context: Context) {
                 System.arraycopy(outputBuffer, 0, result, 0, result.count())
 
                 return result
-            }
-            catch (error: Throwable) {
+            } catch (error: Throwable) {
                 throw SDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }
 
-        internal fun encryptAES(data: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): ByteArray {
+        internal fun encryptAES(
+            data: ByteArray,
+            keyBytes: ByteArray,
+            ivBytes: ByteArray
+        ): ByteArray {
             try {
                 val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
 

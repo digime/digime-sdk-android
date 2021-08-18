@@ -1,15 +1,13 @@
 package me.digi.sdk.utilities.jwt
 
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.util.*
 
 internal class RefreshCredentialsRequestJWT(
-
     appId: String,
     contractId: String,
     @JwtClaim val refreshToken: String
-
 ) : JsonWebToken() {
 
     @JwtClaim
@@ -28,8 +26,8 @@ internal class RefreshCredentialsRequestJWT(
     val nonce: String
 
     init {
-        val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)
-        nonce = DMEByteTransformer.hexStringFromBytes(nonceBytes)
+        val nonceBytes = CryptoUtilities.generateSecureRandom(16)
+        nonce = ByteTransformer.hexStringFromBytes(nonceBytes)
     }
 
     override fun tokenize(): String {

@@ -12,7 +12,7 @@ import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.io.IOException
 
 class Postbox : AppCompatActivity() {
@@ -45,7 +45,7 @@ class Postbox : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.postbox)
 
-        val privateKey = DMECryptoUtilities(this).privateKeyHexFrom(
+        val privateKey = CryptoUtilities(this).privateKeyHexFrom(
             this.getString(R.string.digime_p12_filename)
         )
 

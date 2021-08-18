@@ -6,14 +6,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import me.digi.sdk.R
 
-class DMEInstallHandler: BroadcastReceiver() {
+class InstallHandler : BroadcastReceiver() {
 
     private var installCallback: (() -> Unit)? = null
 
     companion object {
 
-        fun registerNewInstallHandler(installCallback: () -> Unit): DMEInstallHandler {
-            val receiver = DMEInstallHandler()
+        fun registerNewInstallHandler(installCallback: () -> Unit): InstallHandler {
+            val receiver = InstallHandler()
             val applicationContext = DMEAppCommunicator.getSharedInstance().context
 
             val filter = IntentFilter(Intent.ACTION_PACKAGE_ADDED)

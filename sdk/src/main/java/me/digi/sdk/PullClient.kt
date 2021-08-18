@@ -23,10 +23,10 @@ import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMECompressor
-import me.digi.sdk.utilities.DMEFileListItemCache
+import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.DMELog
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
@@ -54,7 +54,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
     private var activeSessionDataFetchCompletionHandler: FileListCompletion? = null
     private var fileListUpdateHandler: IncrementalFileListUpdate? = null
     private var fileListCompletionHandler: FileListCompletion? = null
-    private var fileListItemCache: DMEFileListItemCache? = null
+    private var fileListItemCache: FileListItemCache? = null
     private var latestFileList: FileList? = null
     private var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
@@ -133,7 +133,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
         fun requestPreAuthCode(): Single<GetPreAuthCodeDone> = Single.create { emitter ->
 
             val codeVerifier =
-                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
                 PreAuthorizationRequestJWT(
@@ -436,7 +436,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
             Single.create { emitter ->
 
                 val codeVerifier =
-                    DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                    ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
                 val jwt = if (accessToken != null)
                     PreAuthorizationRequestJWT(
@@ -828,7 +828,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
 
         if (activeSyncStatus == null) {
             // Init syncStatus.
-            fileListItemCache = DMEFileListItemCache()
+            fileListItemCache = FileListItemCache()
             scheduleNextPoll(true)
         }
     }

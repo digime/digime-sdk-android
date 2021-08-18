@@ -2,15 +2,12 @@ package me.digi.sdk.utilities.crypto
 
 import android.util.Base64
 import org.spongycastle.asn1.ASN1InputStream
-import org.spongycastle.asn1.pkcs.RSAPrivateKey
 import org.spongycastle.asn1.pkcs.RSAPublicKey
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.RSAPrivateKeySpec
 import java.security.spec.RSAPublicKeySpec
-import java.util.Base64.getDecoder
 
 object DMEKeyTransformer {
 
@@ -26,7 +23,7 @@ object DMEKeyTransformer {
     }
 
     fun javaPrivateKeyFromHex(hex: String): PrivateKey {
-        val keyBytes = DMEByteTransformer.bytesFromHexString(hex)
+        val keyBytes = ByteTransformer.bytesFromHexString(hex)
         return javaPrivateKeyFromBytes(keyBytes)
     }
 
@@ -37,7 +34,7 @@ object DMEKeyTransformer {
     }
 
     fun hexFromJavaPrivateKey(pk: PrivateKey): String {
-        return DMEByteTransformer.hexStringFromBytes(pk.encoded)
+        return ByteTransformer.hexStringFromBytes(pk.encoded)
     }
 
     fun publicKeyFromString(public: String): PublicKey {

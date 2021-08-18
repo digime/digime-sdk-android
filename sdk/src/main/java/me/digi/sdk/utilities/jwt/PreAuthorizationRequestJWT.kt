@@ -1,8 +1,8 @@
 package me.digi.sdk.utilities.jwt
 
 import android.util.Base64
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.security.MessageDigest
 import java.util.*
 
@@ -45,11 +45,11 @@ internal class PreAuthorizationRequestJWT(
     var accessToken: String? = null
 
     init {
-        val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)
-        nonce = DMEByteTransformer.hexStringFromBytes(nonceBytes)
+        val nonceBytes = CryptoUtilities.generateSecureRandom(16)
+        nonce = ByteTransformer.hexStringFromBytes(nonceBytes)
 
-        val stateBytes = DMECryptoUtilities.generateSecureRandom(32)
-        state = DMEByteTransformer.hexStringFromBytes(stateBytes)
+        val stateBytes = CryptoUtilities.generateSecureRandom(32)
+        state = ByteTransformer.hexStringFromBytes(stateBytes)
 
         credential?.let { accessToken = it }
 

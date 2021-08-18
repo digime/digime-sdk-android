@@ -2,7 +2,7 @@ package me.digi.sdk.utilities
 
 import me.digi.sdk.entities.FileListItem
 
-internal class DMEFileListItemCache {
+internal class FileListItemCache {
 
     private var cachedFileListItems = emptyList<FileListItem>()
 
@@ -29,7 +29,10 @@ internal class DMEFileListItemCache {
     }
 }
 
-private fun <K, V> Map<K, V>.merged(other: Map<K, V>, conflictResolver: (left: V, right: V) -> V): Pair<Map<K, V>, List<K>> {
+private fun <K, V> Map<K, V>.merged(
+    other: Map<K, V>,
+    conflictResolver: (left: V, right: V) -> V
+): Pair<Map<K, V>, List<K>> {
 
     val merged = this.toMutableMap()
     val changedKeys = mutableListOf<K>()
@@ -38,8 +41,7 @@ private fun <K, V> Map<K, V>.merged(other: Map<K, V>, conflictResolver: (left: V
         if (!merged.containsKey(entry.key)) {
             merged[entry.key] = entry.value
             changedKeys.add(entry.key)
-        }
-        else {
+        } else {
             val resolvedValue = conflictResolver.invoke(merged[entry.key]!!, other[entry.key]!!)
             if (resolvedValue == other[entry.key]!! && resolvedValue != merged[entry.key]!!)
                 changedKeys.add(entry.key)

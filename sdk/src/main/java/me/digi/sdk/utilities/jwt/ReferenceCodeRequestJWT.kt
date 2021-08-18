@@ -1,7 +1,7 @@
 package me.digi.sdk.utilities.jwt
 
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.util.*
 
 @Suppress("UNUSED")
@@ -24,8 +24,8 @@ internal class ReferenceCodeRequestJWT(
     val nonce: String
 
     init {
-        val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)
-        nonce = DMEByteTransformer.hexStringFromBytes(nonceBytes)
+        val nonceBytes = CryptoUtilities.generateSecureRandom(16)
+        nonce = ByteTransformer.hexStringFromBytes(nonceBytes)
     }
 
     override fun tokenize(): String = "Bearer " + super.tokenize()

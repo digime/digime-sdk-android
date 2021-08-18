@@ -14,7 +14,7 @@ object DMEDataDecryptor {
         val dataIV = encryptedBytes.copyOfRange(dskLength, dskLength + ivLength)
 
         val privateKey = DMEKeyTransformer.privateKeyFromString(privateKeyHex)
-        val dsk = DMECryptoUtilities.decryptRSA(encryptedDSK, privateKey)
+        val dsk = CryptoUtilities.decryptRSA(encryptedDSK, privateKey)
 
         val encryptedContent = encryptedBytes.copyOfRange(dskLength + ivLength, encryptedBytes.count())
 
@@ -22,7 +22,7 @@ object DMEDataDecryptor {
             throw SDKError.DecryptionFailed()
         }
 
-        val jfsDataAndHash = DMECryptoUtilities.decryptAES(encryptedContent, dsk, dataIV)
+        val jfsDataAndHash = CryptoUtilities.decryptAES(encryptedContent, dsk, dataIV)
         val jfsHash = jfsDataAndHash.copyOfRange(0, hashLength)
         val jfsData = jfsDataAndHash.copyOfRange(hashLength, jfsDataAndHash.count())
 
@@ -34,8 +34,8 @@ object DMEDataDecryptor {
     }
 
     private fun verifyHash(data: ByteArray, hash: ByteArray): Boolean {
-        val computedHash = DMECryptoUtilities.hashData(data)
-        val bundledHash = DMEByteTransformer.hexStringFromBytes(hash)
+        val computedHash = CryptoUtilities.hashData(data)
+        val bundledHash = ByteTransformer.hexStringFromBytes(hash)
         return computedHash.toUpperCase() == bundledHash.toUpperCase()
     }
 }

@@ -25,8 +25,8 @@ import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMECompressor
-import me.digi.sdk.utilities.DMEFileListItemCache
 import me.digi.sdk.utilities.DMELog
+import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.crypto.*
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
@@ -49,7 +49,7 @@ class DigiMe(
     private var activeSessionDataFetchCompletionHandler: FileListCompletion? = null
     private var fileListUpdateHandler: IncrementalFileListUpdate? = null
     private var fileListCompletionHandler: FileListCompletion? = null
-    private var fileListItemCache: DMEFileListItemCache? = null
+    private var fileListItemCache: FileListItemCache? = null
     private var latestFileList: FileList? = null
     private var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
@@ -104,7 +104,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = result.consentData.session.key,
-                        postboxData = OngoingWriteData(
+                        postboxData = WriteDataPayload(
                             postboxId = result.consentData.consentResponse.postboxId,
                             publicKey = result.consentData.consentResponse.publicKey
                         ),
@@ -141,13 +141,13 @@ class DigiMe(
      */
     fun authorizeWriteAccess(
         fromActivity: Activity,
-        data: OngoingWriteData? = null,
+        writeDataPayload: WriteDataPayload? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activeData: OngoingWriteData? = data
+        var activeData: WriteDataPayload? = writeDataPayload
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -173,7 +173,7 @@ class DigiMe(
                     .compose(requestTokenExchange())
                     .doOnSuccess { tokenExchangeResponse ->
                         activeCredentials = tokenExchangeResponse.credentials
-                        activeData = OngoingWriteData(
+                        activeData = WriteDataPayload(
                             postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
                             publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
                         )
@@ -197,7 +197,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = it.consentData.session.key,
-                        postboxData = OngoingWriteData(
+                        postboxData = WriteDataPayload(
                             postboxId = it.consentData.consentResponse.postboxId,
                             publicKey = it.consentData.consentResponse.publicKey
                         ),
@@ -390,7 +390,7 @@ class DigiMe(
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                activeData.postbox.publicKey!!,
+                activeData.data.publicKey!!,
                 activeData.content,
                 activeData.metadata
             )
@@ -415,11 +415,11 @@ class DigiMe(
 
             apiClient.argonService.pushOngoingData(
                 authHeader,
-                activeData.postbox.key!!,
+                activeData.data.key!!,
                 encryptedData.symmetricalKey,
                 encryptedData.iv,
                 encryptedData.metadata,
-                activeData.postbox.postboxId!!,
+                activeData.data.postboxId!!,
                 multipartBody.requestBody,
                 multipartBody.description
             )
@@ -443,7 +443,10 @@ class DigiMe(
                                 DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
                                 completion(
                                     null,
-                                    AuthError.ErrorWithMessage(error.localizedMessage ?: context.getString(R.string.labelUnknownError))
+                                    AuthError.ErrorWithMessage(
+                                        error.localizedMessage
+                                            ?: context.getString(R.string.labelUnknownError)
+                                    )
                                 )
                             }
                         }
@@ -780,7 +783,7 @@ class DigiMe(
 
         if (activeSyncStatus == null) {
             // Init syncStatus.
-            fileListItemCache = DMEFileListItemCache()
+            fileListItemCache = FileListItemCache()
             scheduleNextPoll(true)
         }
     }
@@ -943,7 +946,7 @@ class DigiMe(
         Single.create { emitter ->
 
             val codeVerifier =
-                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
                 PreAuthorizationRequestJWT(

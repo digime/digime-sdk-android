@@ -3,8 +3,8 @@ package me.digi.sdk.crypto
 import android.content.Context
 import android.util.Base64
 import androidx.test.core.app.ApplicationProvider
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -16,13 +16,13 @@ import java.nio.charset.StandardCharsets
 import java.security.Security
 
 @RunWith(RobolectricTestRunner::class)
-class DMECryptoUtilitiesSpec {
+class CryptoUtilitiesSpec {
 
     @Test
     fun `given valid p12 file and pass, key is parsed`() {
 
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val key = DMECryptoUtilities(ctx).privateKeyHexFrom("CA_RSA_PRIVATE_KEY.p12", "monkey periscope")
+        val key = CryptoUtilities(ctx).privateKeyHexFrom("CA_RSA_PRIVATE_KEY.p12", "monkey periscope")
 
         // An exception will be thrown by DMECryptoUtilities if errors are encountered.
         assertNotEquals("", key)
@@ -33,7 +33,7 @@ class DMECryptoUtilitiesSpec {
 
         val input = "The quick brown fox jumps over the lazy dog."
         val preHashedInput = "91ea1245f20d46ae9a037a989f54f1f790f0a47607eeb8a14d12890cea77a1bbc6c7ed9cf205e67b7f2b8fd4c7dfd3a7a8617e45f3c463d481c7e586c39ac1ed"
-        val output = DMECryptoUtilities.hashData(input.toByteArray(StandardCharsets.UTF_8))
+        val output = CryptoUtilities.hashData(input.toByteArray(StandardCharsets.UTF_8))
         assertEquals(preHashedInput.toUpperCase(), output.toUpperCase())
     }
 
@@ -86,7 +86,7 @@ class DMECryptoUtilitiesSpec {
         val privateKeyBytes = Base64.decode(privateKeyBase64, Base64.DEFAULT)
         val privateKey = DMEKeyTransformer.javaPrivateKeyFromBytes(privateKeyBytes)
 
-        val decryptedBytes = DMECryptoUtilities.decryptRSA(encryptedData, privateKey)
+        val decryptedBytes = CryptoUtilities.decryptRSA(encryptedData, privateKey)
         val decryptedString = String(decryptedBytes, StandardCharsets.UTF_8)
 
         Security.removeProvider("SC")
@@ -104,10 +104,10 @@ class DMECryptoUtilitiesSpec {
         val ivHex = "CAA6DA6EFFC5EC24B49162A04E50F01E"
 
         val inputBytes = Base64.decode(inputBase64, Base64.DEFAULT)
-        val keyBytes = DMEByteTransformer.bytesFromHexString(keyHex)
-        val ivBytes = DMEByteTransformer.bytesFromHexString(ivHex)
+        val keyBytes = ByteTransformer.bytesFromHexString(keyHex)
+        val ivBytes = ByteTransformer.bytesFromHexString(ivHex)
 
-        val decryptedBytes = DMECryptoUtilities.decryptAES(inputBytes, keyBytes, ivBytes)
+        val decryptedBytes = CryptoUtilities.decryptAES(inputBytes, keyBytes, ivBytes)
 
         val expectedOutput = "The quick brown fox jumps over the lazy dog."
         val actualOutput = String(decryptedBytes, StandardCharsets.UTF_8)

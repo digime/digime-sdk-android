@@ -1,6 +1,6 @@
 package me.digi.sdk.utilities.crypto
 
-object DMEByteTransformer {
+object ByteTransformer {
 
     fun hexStringFromBytes(bytes: ByteArray): String {
         return bytes.fold("") { cum, inc ->

@@ -2,8 +2,8 @@ package me.digi.sdk.api.interceptors
 
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.JsonWebToken
 import okhttp3.Interceptor
@@ -69,7 +69,7 @@ class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
         val jwt = JsonWebToken(tokenisedJwt)
 
         val newNonce =
-            DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(16))
+            ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(16))
         val newPayload = jwt.payload.toMutableMap().apply { this["nonce"] = newNonce }
         jwt.payload = newPayload
 

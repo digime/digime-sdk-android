@@ -10,7 +10,7 @@ import me.digi.sdk.PullClient
 import me.digi.sdk.entities.CaScope
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 
 class CaFlow : AppCompatActivity() {
     private lateinit var client: PullClient
@@ -27,7 +27,7 @@ class CaFlow : AppCompatActivity() {
             test = gson.fromJson<CaScope>(intent.getStringExtra("DMEScope"), CaScope::class.java)
         }
 
-        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+        pk = CryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename)
         )
 

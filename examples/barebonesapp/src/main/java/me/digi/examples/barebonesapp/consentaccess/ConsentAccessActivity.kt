@@ -11,7 +11,7 @@ import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
 import me.digi.sdk.PullClient
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 
 class ConsentAccessActivity : AppCompatActivity() {
     private lateinit var client: PullClient
@@ -22,7 +22,7 @@ class ConsentAccessActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.consent_access_activity_layout)
 
-        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+        pk = CryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename),
             applicationContext.getString(R.string.digime_p12_password)
         )

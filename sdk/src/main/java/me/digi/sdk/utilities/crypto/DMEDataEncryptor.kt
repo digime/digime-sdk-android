@@ -24,17 +24,17 @@ object DMEDataEncryptor {
 
     fun encryptedDataFromBytes(publicKey: String, fileContent: ByteArray, metadata: ByteArray): DMEEncryptedData {
 
-        val key = DMECryptoUtilities.generateSecureRandom(symKeyLength)
+        val key = CryptoUtilities.generateSecureRandom(symKeyLength)
         val rsa = DMEKeyTransformer.publicKeyFromString(publicKey)
 
-        val encryptedKey = DMECryptoUtilities.encryptRSA(key, rsa)
+        val encryptedKey = CryptoUtilities.encryptRSA(key, rsa)
         val base64EncryptedKey = org.spongycastle.util.encoders.Base64.toBase64String(encryptedKey)
 
-        val iv = DMECryptoUtilities.generateSecureRandom(ivLength)
+        val iv = CryptoUtilities.generateSecureRandom(ivLength)
 
-        val encryptedData = DMECryptoUtilities.encryptAES(fileContent, key, iv)
+        val encryptedData = CryptoUtilities.encryptAES(fileContent, key, iv)
 
-        val encryptedMetaData = DMECryptoUtilities.encryptAES(metadata, key, iv)
+        val encryptedMetaData = CryptoUtilities.encryptAES(metadata, key, iv)
         val base64encodedMetadata =
             org.spongycastle.util.encoders.Base64.toBase64String(encryptedMetaData)
 
@@ -42,7 +42,7 @@ object DMEDataEncryptor {
             encryptedData,
             base64encodedMetadata,
             base64EncryptedKey,
-            DMEByteTransformer.hexStringFromBytes(iv)
+            ByteTransformer.hexStringFromBytes(iv)
         )
     }
 }

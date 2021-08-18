@@ -26,8 +26,8 @@ import me.digi.sdk.entities.response.TokenResponse
 import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMELog
-import me.digi.sdk.utilities.crypto.DMEByteTransformer
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.utilities.crypto.ByteTransformer
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import me.digi.sdk.utilities.crypto.DMEDataEncryptor
 import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
@@ -151,7 +151,7 @@ class PushClient(
         fun requestPreAuthCode(): Single<GetPreAuthCodeDone> = Single.create { emitter ->
 
             val codeVerifier =
-                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (accessToken != null)
                 PreAuthorizationRequestJWT(
@@ -248,7 +248,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = OngoingWriteData().copy(
+                            val postboxData = WriteDataPayload().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -291,7 +291,7 @@ class PushClient(
 
     fun authorizeOngoingPostbox(
         fromActivity: Activity,
-        existingPostbox: OngoingWriteData? = null,
+        existingPostbox: WriteDataPayload? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         completion: DMESaasPostboxOngoingCreationCompletion
@@ -304,7 +304,7 @@ class PushClient(
         fun requestPreAuthCode(): Single<GetPreAuthCodeDone> = Single.create { emitter ->
 
             val codeVerifier =
-                DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
+                ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
                 PreAuthorizationRequestJWT(
@@ -402,7 +402,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = OngoingWriteData().copy(
+                            val postboxData = WriteDataPayload().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -444,7 +444,7 @@ class PushClient(
             }
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: OngoingWriteData? = existingPostbox
+        var activePostbox: WriteDataPayload? = existingPostbox
 
         // First, we request pre-auth code needed for auth consent manager
         requestPreAuthCode()

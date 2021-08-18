@@ -42,13 +42,14 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
 
     companion object {
 
-        fun parseDMEError(
+        fun parseError(
             argonErrorCode: String?,
             argonErrorMessage: String?,
             argonErrorReference: String?
         ) =
             APIError::class.sealedSubclasses.fold<KClass<out APIError>, APIError?>(null) { _, err ->
-                val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
+                val argonCode =
+                    (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
                 if (argonCode == argonErrorCode) run {
                     val instance = err.createInstance()
                     instance.apply {
@@ -60,13 +61,19 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
                     return@fold instance
 
                 } else null
-            } ?: argonErrorMessage?.let { APIError.UNMAPPED(argonErrorCode, it, argonErrorReference) } ?: APIError.GENERIC(argonErrorCode?.toInt(), argonErrorMessage)
+            } ?: argonErrorMessage?.let {
+                APIError.UNMAPPED(
+                    argonErrorCode,
+                    it,
+                    argonErrorReference
+                )
+            } ?: APIError.GENERIC(argonErrorCode?.toInt(), argonErrorMessage)
     }
 
     init {
         val gsonBuilder = GsonBuilder()
             .registerTypeAdapter(DMESessionRequest::class.java, SessionRequestAdapter)
-            .registerTypeAdapter(Date::class.java, object: JsonDeserializer<Date> {
+            .registerTypeAdapter(Date::class.java, object : JsonDeserializer<Date> {
                 override fun deserialize(
                     json: JsonElement?,
                     typeOfT: Type?,
@@ -76,7 +83,10 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
                 }
             })
         if (clientConfig is ReadConfiguration) {
-            gsonBuilder.registerTypeAdapter(File::class.java, FileUnpackAdapter(clientConfig.privateKeyHex))
+            gsonBuilder.registerTypeAdapter(
+                File::class.java,
+                FileUnpackAdapter(clientConfig.privateKeyHex)
+            )
         }
 
         val requestDispatcher = Dispatcher()
@@ -115,18 +125,27 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
     private fun domainForBaseUrl() = URL(clientConfig.baseUrl).host
 
     // Rx Overload
-    fun <ResponseType> makeCall(call: Call<ResponseType>): Single<ResponseType> = Single.create { emitter ->
-        makeCall(call) { value, error ->
-            when {
-                error != null -> emitter.onError(error)
-                value != null -> emitter.onSuccess(value)
-                else -> emitter.onError(APIError.GENERIC(400, "Something went wrong with your request"))
+    fun <ResponseType> makeCall(call: Call<ResponseType>): Single<ResponseType> =
+        Single.create { emitter ->
+            makeCall(call) { value, error ->
+                when {
+                    error != null -> emitter.onError(error)
+                    value != null -> emitter.onSuccess(value)
+                    else -> emitter.onError(
+                        APIError.GENERIC(
+                            400,
+                            "Something went wrong with your request"
+                        )
+                    )
+                }
             }
         }
-    }
 
-    fun <ResponseType> makeCall(call: Call<ResponseType>, completion: (ResponseType?, Error?) -> Unit) {
-        call.enqueue(object: Callback<ResponseType> {
+    fun <ResponseType> makeCall(
+        call: Call<ResponseType>,
+        completion: (ResponseType?, Error?) -> Unit
+    ) {
+        call.enqueue(object : Callback<ResponseType> {
             override fun onResponse(call: Call<ResponseType>, response: Response<ResponseType>) {
 
                 val resultObject = response.body()
@@ -134,8 +153,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
                 if (resultObject != null) {
                     // Successful request - return result and no error.
                     completion(resultObject, null)
-                }
-                else {
+                } else {
                     val deducedError = deduceErrorFromResponse(response)
                     completion(null, deducedError)
                 }
@@ -153,10 +171,15 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
 
         val headers = response.headers()
 
-        val argonErrorCode = headers["X-Error-Code"] ?: run { return APIError.GENERIC(response.code(), response.message()) }
+        val argonErrorCode = headers["X-Error-Code"] ?: run {
+            return APIError.GENERIC(
+                response.code(),
+                response.message()
+            )
+        }
         val argonErrorMessage = headers["X-Error-Message"]
         val argonErrorReference = headers["X-Error-Reference"]
 
-        return parseDMEError(argonErrorCode, argonErrorMessage, argonErrorReference)
+        return parseError(argonErrorCode, argonErrorMessage, argonErrorReference)
     }
 }
