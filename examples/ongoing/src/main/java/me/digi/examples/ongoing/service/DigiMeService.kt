@@ -14,13 +14,13 @@ import me.digi.examples.ongoing.utils.FileUtils
 import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.ongoing.R
+import me.digi.sdk.DigiMe
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.RefreshToken
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.unify.DigiMe
-import me.digi.sdk.unify.DigiMeConfiguration
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit

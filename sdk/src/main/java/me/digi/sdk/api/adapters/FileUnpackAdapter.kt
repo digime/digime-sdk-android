@@ -8,19 +8,19 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.SDKError
 import me.digi.sdk.entities.FileMetadata
-import me.digi.sdk.entities.response.DMEFile
+import me.digi.sdk.entities.response.File
 import me.digi.sdk.entities.response.Status
 import me.digi.sdk.utilities.DMECompressor
 import me.digi.sdk.utilities.crypto.DMEDataDecryptor
 import java.lang.reflect.Type
 
-class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<DMEFile> {
+class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<File> {
 
     override fun deserialize(
         json: JsonElement?,
         typeOfT: Type?,
         context: JsonDeserializationContext?
-    ): DMEFile {
+    ): File {
 
         if (json !is JsonObject || context == null) {
             throw SDKError.InvalidData()
@@ -42,7 +42,7 @@ class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<DM
         val decompressedContentBytes: ByteArray =
             DMECompressor.decompressData(contentBytes, compression)
 
-        return DMEFile(String(decompressedContentBytes), status = Status())
+        return File(String(decompressedContentBytes), status = Status())
     }
 
     private fun extractMetadata(

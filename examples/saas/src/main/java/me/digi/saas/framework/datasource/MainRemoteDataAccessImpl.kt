@@ -13,12 +13,12 @@ import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileList
 import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
-import me.digi.sdk.unify.DigiMe
-import me.digi.sdk.unify.DigiMeConfiguration
+import me.digi.sdk.DigiMe
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 
 class MainRemoteDataAccessImpl(
     private val context: Context,
@@ -75,16 +75,16 @@ class MainRemoteDataAccessImpl(
             }
         }
 
-    override fun getFileList(): Single<DMEFileList> = Single.create { emitter ->
-        readClient.getFileList { fileList: DMEFileList?, error ->
+    override fun getFileList(): Single<FileList> = Single.create { emitter ->
+        readClient.getFileList { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
                 else emitter.onError(AuthError.General()))
         }
     }
 
-    override fun getRawFileList(): Single<DMEFileList> = Single.create { emitter ->
-        readRawClient.getFileList { fileList: DMEFileList?, error ->
+    override fun getRawFileList(): Single<FileList> = Single.create { emitter ->
+        readRawClient.getFileList { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
                 else emitter.onError(AuthError.General()))
@@ -159,7 +159,7 @@ class MainRemoteDataAccessImpl(
         ?: (if (response != null) emitter.onSuccess(response)
         else emitter.onError(AuthError.General())))
 
-    override fun getFile(fileName: String): Single<DMEFile> =
+    override fun getFile(fileName: String): Single<File> =
         Single.create { emitter ->
             readClient.getFileByName(fileId = fileName) { file, error ->
                 error?.let(emitter::onError)

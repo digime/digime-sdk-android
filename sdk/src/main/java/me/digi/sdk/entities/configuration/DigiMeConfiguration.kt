@@ -1,6 +1,4 @@
-package me.digi.sdk.unify
-
-import me.digi.sdk.entities.configuration.ClientConfiguration
+package me.digi.sdk.entities.configuration
 
 class DigiMeConfiguration(appId: String, contractId: String, privateKeyHex: String) :
     ClientConfiguration(appId, contractId, privateKeyHex) {

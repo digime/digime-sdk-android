@@ -9,8 +9,8 @@ import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.OngoingWriteResponse
-import me.digi.sdk.unify.DigiMe
-import me.digi.sdk.unify.DigiMeConfiguration
+import me.digi.sdk.DigiMe
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 
 /**
  * Idea behind remote main data access is to isolate

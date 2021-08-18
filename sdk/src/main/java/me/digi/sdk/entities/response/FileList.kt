@@ -10,8 +10,8 @@ import me.digi.sdk.entities.FileListAccount
 import me.digi.sdk.entities.FileListItem
 import java.lang.reflect.Type
 
-@JsonAdapter(DMEFileListDeserializer::class)
-class DMEFileList(
+@JsonAdapter(FileListDeserializer::class)
+class FileList(
     val fileList: List<FileListItem>,
     val syncStatus: SyncStatus,
     val accounts: List<FileListAccount>?
@@ -31,12 +31,12 @@ class DMEFileList(
     }
 }
 
-private class DMEFileListDeserializer : JsonDeserializer<DMEFileList> {
+private class FileListDeserializer : JsonDeserializer<FileList> {
     override fun deserialize(
         json: JsonElement?,
         typeOfT: Type?,
         context: JsonDeserializationContext?
-    ): DMEFileList {
+    ): FileList {
 
         (json as? JsonObject)?.let {
 
@@ -50,14 +50,14 @@ private class DMEFileListDeserializer : JsonDeserializer<DMEFileList> {
 
             val status = it.getAsJsonObject("status")
             val syncStateRaw = status.getAsJsonPrimitive("state").asString
-            val syncState = DMEFileList.SyncStatus(syncStateRaw)
+            val syncState = FileList.SyncStatus(syncStateRaw)
 
             val accountsRaw = status.getAsJsonObject("details")
             val accountIds = accountsRaw?.keySet()
             val accounts = accountIds?.map { accountId ->
                 val accountRaw = accountsRaw.getAsJsonObject(accountId)
                 val accSyncStateRaw = accountRaw.getAsJsonPrimitive("state").asString
-                val accSyncState = DMEFileList.SyncStatus(accSyncStateRaw)
+                val accSyncState = FileList.SyncStatus(accSyncStateRaw)
                 val accError = context?.deserialize<Map<String, Any>?>(
                     accountRaw.getAsJsonObject("error"),
                     Map::class.java
@@ -65,7 +65,7 @@ private class DMEFileListDeserializer : JsonDeserializer<DMEFileList> {
                 FileListAccount(accountId, accSyncState, accError)
             }
 
-            return DMEFileList(fileListItems, syncState, accounts)
+            return FileList(fileListItems, syncState, accounts)
 
         } ?: run { throw IllegalArgumentException() }
     }

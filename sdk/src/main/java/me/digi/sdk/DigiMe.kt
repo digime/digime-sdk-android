@@ -1,4 +1,4 @@
-package me.digi.sdk.unify
+package me.digi.sdk
 
 import android.app.Activity
 import android.content.Context
@@ -16,6 +16,7 @@ import me.digi.sdk.*
 import me.digi.sdk.api.helpers.MultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
@@ -49,8 +50,8 @@ class DigiMe(
     private var fileListUpdateHandler: IncrementalFileListUpdate? = null
     private var fileListCompletionHandler: FileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var latestFileList: DMEFileList? = null
-    private var activeSyncStatus: DMEFileList.SyncStatus? = null
+    private var latestFileList: FileList? = null
+    private var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -58,8 +59,8 @@ class DigiMe(
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -70,8 +71,8 @@ class DigiMe(
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -212,7 +213,10 @@ class DigiMe(
                     completion.invoke(
                         null,
                         error.let { it as? Error }
-                            ?: APIError.ErrorWithMessage(error.localizedMessage)
+                            ?: APIError.ErrorWithMessage(
+                                error.localizedMessage
+                                    ?: context.getString(R.string.labelUnknownError)
+                            )
                     )
                 }
             )
@@ -306,7 +310,10 @@ class DigiMe(
                     completion.invoke(
                         null,
                         error.let { it as? Error }
-                            ?: APIError.ErrorWithMessage(error.localizedMessage)
+                            ?: APIError.ErrorWithMessage(
+                                error.localizedMessage
+                                    ?: context.getString(R.string.labelUnknownError)
+                            )
                     )
                 }
             )
@@ -436,7 +443,7 @@ class DigiMe(
                                 DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
                                 completion(
                                     null,
-                                    AuthError.ErrorWithMessage(error.localizedMessage)
+                                    AuthError.ErrorWithMessage(error.localizedMessage ?: context.getString(R.string.labelUnknownError))
                                 )
                             }
                         }
@@ -673,7 +680,7 @@ class DigiMe(
                     val decompressedContentBytes: ByteArray =
                         DMECompressor.decompressData(contentBytes, compression)
 
-                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                    File().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -694,7 +701,7 @@ class DigiMe(
         }
     }
 
-    // TODO: Maybe to remove?
+    // TODO: Maybe to make private?
     /**
      *
      */
@@ -736,7 +743,7 @@ class DigiMe(
                     val decompressedContentBytes: ByteArray =
                         DMECompressor.decompressData(contentBytes, compression)
 
-                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                    File().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -793,7 +800,7 @@ class DigiMe(
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
 
                 latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
@@ -818,13 +825,13 @@ class DigiMe(
                 }
 
                 when (syncStatus) {
-                    DMEFileList.SyncStatus.PENDING(),
-                    DMEFileList.SyncStatus.RUNNING() -> {
+                    FileList.SyncStatus.PENDING(),
+                    FileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
                         fileList,
                         null
                     )
@@ -840,10 +847,7 @@ class DigiMe(
     private fun completeDeliveryOfSessionData(error: Error?) {
 
         when {
-            error != null -> DMELog.e(
-                "" +
-                        "An error occurred whilst fetching session data. Error: ${error.message}"
-            )
+            error != null -> DMELog.e("An error occurred whilst fetching session data. Error: ${error.message}")
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 
@@ -858,9 +862,6 @@ class DigiMe(
         activeDownloadCount = 0
     }
 
-    /**
-     *
-     */
     private fun errorHandler(
         fromActivity: Activity,
         error: Throwable?,

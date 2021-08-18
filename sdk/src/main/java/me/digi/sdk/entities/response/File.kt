@@ -5,7 +5,7 @@ import com.google.gson.JsonElement
 
 data class Status(val state: String = "")
 
-data class DMEFile(
+data class File(
     val fileContent: String? = "",
     val status: Status = Status()
 ) {

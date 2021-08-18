@@ -55,8 +55,8 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
     private var fileListUpdateHandler: IncrementalFileListUpdate? = null
     private var fileListCompletionHandler: FileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
-    private var latestFileList: DMEFileList? = null
-    private var activeSyncStatus: DMEFileList.SyncStatus? = null
+    private var latestFileList: FileList? = null
+    private var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -64,8 +64,8 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
 
             if (activeDownloadCount == 0) {
                 when (value) {
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -76,8 +76,8 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
                     else -> Unit
                 }
             }
@@ -791,7 +791,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     val decompressedContentBytes: ByteArray =
                         DMECompressor.decompressData(contentBytes, compression)
 
-                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                    File().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -894,7 +894,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncStatus = fileList?.syncStatus ?: DMEFileList.SyncStatus.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
 
                 latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
@@ -919,13 +919,13 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                 }
 
                 when (syncStatus) {
-                    DMEFileList.SyncStatus.PENDING(),
-                    DMEFileList.SyncStatus.RUNNING() -> {
+                    FileList.SyncStatus.PENDING(),
+                    FileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
                         scheduleNextPoll()
                     }
-                    DMEFileList.SyncStatus.COMPLETED(),
-                    DMEFileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
                         fileList,
                         null
                     )

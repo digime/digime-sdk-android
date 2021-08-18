@@ -18,7 +18,7 @@ import me.digi.sdk.api.services.ArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.entities.request.DMESessionRequest
-import me.digi.sdk.entities.response.DMEFile
+import me.digi.sdk.entities.response.File
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -76,7 +76,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
                 }
             })
         if (clientConfig is ReadConfiguration) {
-            gsonBuilder.registerTypeAdapter(DMEFile::class.java, FileUnpackAdapter(clientConfig.privateKeyHex))
+            gsonBuilder.registerTypeAdapter(File::class.java, FileUnpackAdapter(clientConfig.privateKeyHex))
         }
 
         val requestDispatcher = Dispatcher()

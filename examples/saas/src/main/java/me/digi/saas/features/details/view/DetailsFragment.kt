@@ -12,7 +12,7 @@ import me.digi.saas.databinding.FragmentDetailsBinding
 import me.digi.saas.features.details.viewmodel.DetailsViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.response.DMEFile
+import me.digi.sdk.entities.response.File
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -34,7 +34,7 @@ class DetailsFragment : Fragment(R.layout.fragment_details) {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collect { resource: Resource<DMEFile> ->
+            viewModel.state.collect { resource: Resource<File> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /**

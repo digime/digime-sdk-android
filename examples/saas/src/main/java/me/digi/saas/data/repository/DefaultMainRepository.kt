@@ -7,8 +7,8 @@ import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileList
 import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
 
@@ -17,9 +17,9 @@ class DefaultMainRepository(
     private val localAccess: MainLocalDataAccess
 ) : MainRepository {
 
-    override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
+    override fun getFileList(): Single<FileList> = remoteAccess.getFileList()
 
-    override fun getRawFileList(): Single<DMEFileList> = remoteAccess.getRawFileList()
+    override fun getRawFileList(): Single<FileList> = remoteAccess.getRawFileList()
 
     override fun onboardService(
         activity: Activity,
@@ -55,6 +55,6 @@ class DefaultMainRepository(
             )
             .compose(localAccess.cacheAuthorizationData())
 
-    override fun getFile(fileName: String): Single<DMEFile> =
+    override fun getFile(fileName: String): Single<File> =
         remoteAccess.getFile(fileName)
 }

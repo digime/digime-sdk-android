@@ -19,14 +19,14 @@ internal interface ArgonService {
     fun getSession(@Body sessionRequest: DMESessionRequest): Call<SessionResponse>
 
     @GET("/v1.6/permission-access/query/{sessionKey}")
-    fun getFileList(@Path("sessionKey") sessionKey: String): Call<DMEFileList>
+    fun getFileList(@Path("sessionKey") sessionKey: String): Call<FileList>
 
     // TODO: Probably needs to be removed
     @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
     fun getFile(
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
-    ): Call<DMEFile>
+    ): Call<File>
 
     @Headers("Accept: application/octet-stream")
     @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")

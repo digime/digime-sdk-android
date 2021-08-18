@@ -6,8 +6,8 @@ import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
+import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileList
 import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
 
@@ -19,8 +19,8 @@ interface MainRemoteDataAccess {
         accessToken: String
     ): Single<Boolean>
 
-    fun getFileList(): Single<DMEFileList>
-    fun getRawFileList(): Single<DMEFileList>
+    fun getFileList(): Single<FileList>
+    fun getRawFileList(): Single<FileList>
     fun getServicesForContract(contractId: String): Single<List<Service>>
     fun pushDataToPostbox(
         payload: DataPayload,
@@ -37,5 +37,5 @@ interface MainRemoteDataAccess {
         serviceId: String?,
     ): Single<AuthorizationResponse>
 
-    fun getFile(fileName: String): Single<DMEFile>
+    fun getFile(fileName: String): Single<File>
 }
