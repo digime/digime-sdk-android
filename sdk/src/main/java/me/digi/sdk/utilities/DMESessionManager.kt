@@ -1,15 +1,15 @@
 package me.digi.sdk.utilities
 
-import me.digi.sdk.api.DMEAPIClient
+import me.digi.sdk.api.APIClient
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
-import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.Session
-import me.digi.sdk.entities.response.SessionResponse
+import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.response.SessionResponse
 import java.util.*
 
 class DMESessionManager(
-    private val apiClient: DMEAPIClient,
+    private val apiClient: APIClient,
     private val clientConfig: ClientConfiguration
 ) {
 

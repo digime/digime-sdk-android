@@ -7,15 +7,14 @@ data class Data (
     val postboxId: String? = null,
     val publicKey: String? = null
 )
-// TODO: Rename
-data class OngoingPostboxData(
+
+data class OngoingWriteData(
     val postboxId: String? = null,
     val publicKey: String? = null
 )
 
-// TODO: Rename
-data class OngoingPostbox(
+data class OngoingData(
     val session: Session? = null,
-    val data: OngoingPostboxData? = null,
+    val data: OngoingWriteData? = null,
     val credentials: CredentialsPayload? = null
 )

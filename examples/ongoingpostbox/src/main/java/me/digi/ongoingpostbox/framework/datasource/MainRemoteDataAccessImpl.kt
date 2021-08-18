@@ -40,7 +40,7 @@ class MainRemoteDataAccessImpl(
         Single.create { emitter ->
             writeClient.authorizeWriteAccess(
                 activity,
-                postbox = localDataAccess.getCachedPostbox(),
+                data = localDataAccess.getCachedPostbox(),
                 credentials = localDataAccess.getCachedCredential()
             ) { response, error ->
                 error?.let(emitter::onError)

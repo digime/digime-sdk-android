@@ -2,7 +2,7 @@ package me.digi.sdk.interapp
 
 import android.content.Intent
 
-abstract class DMEAppCallbackHandler {
+abstract class AppCallbackHandler {
 
     abstract fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean
 

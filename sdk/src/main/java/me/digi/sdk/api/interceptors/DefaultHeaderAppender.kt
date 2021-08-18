@@ -3,7 +3,7 @@ package me.digi.sdk.api.interceptors
 import okhttp3.Interceptor
 import okhttp3.Response
 
-internal class DMEDefaultHeaderAppender: Interceptor {
+internal class DefaultHeaderAppender : Interceptor {
 
     companion object {
         val defaultHeaders = mapOf(

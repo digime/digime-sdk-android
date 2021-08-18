@@ -13,7 +13,7 @@ import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.*
-import me.digi.sdk.api.helpers.DMEMultipartBody
+import me.digi.sdk.api.helpers.MultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.payload.CredentialsPayload
@@ -103,7 +103,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = result.consentData.session.key,
-                        postboxData = OngoingPostboxData(
+                        postboxData = OngoingWriteData(
                             postboxId = result.consentData.consentResponse.postboxId,
                             publicKey = result.consentData.consentResponse.publicKey
                         ),
@@ -140,13 +140,13 @@ class DigiMe(
      */
     fun authorizeWriteAccess(
         fromActivity: Activity,
-        data: OngoingPostboxData? = null,
+        data: OngoingWriteData? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activeData: OngoingPostboxData? = data
+        var activeData: OngoingWriteData? = data
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -172,7 +172,7 @@ class DigiMe(
                     .compose(requestTokenExchange())
                     .doOnSuccess { tokenExchangeResponse ->
                         activeCredentials = tokenExchangeResponse.credentials
-                        activeData = OngoingPostboxData(
+                        activeData = OngoingWriteData(
                             postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
                             publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
                         )
@@ -196,7 +196,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = it.consentData.session.key,
-                        postboxData = OngoingPostboxData(
+                        postboxData = OngoingWriteData(
                             postboxId = it.consentData.consentResponse.postboxId,
                             publicKey = it.consentData.consentResponse.publicKey
                         ),
@@ -330,7 +330,7 @@ class DigiMe(
         fun deleteLibrary() = Single.create<Boolean> { emitter ->
             accessToken?.let {
 
-                val jwt = DMEUserDeletionRequestJWT(
+                val jwt = UserDeletionRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     accessToken
@@ -388,12 +388,12 @@ class DigiMe(
                 activeData.metadata
             )
 
-            val multipartBody: DMEMultipartBody = DMEMultipartBody.Builder()
+            val multipartBody: MultipartBody = MultipartBody.Builder()
                 .postboxPushPayload(activeData)
                 .dataContent(encryptedData.fileContent, activeData.mimeType)
                 .build()
 
-            val jwt = DMEAuthTokenRequestJWT(
+            val jwt = AuthTokenRequestJWT(
                 accessToken,
                 encryptedData.iv,
                 encryptedData.metadata,
@@ -522,7 +522,7 @@ class DigiMe(
         fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
             DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
 
-            val jwt = DMEReferenceCodeRequestJWT(
+            val jwt = ReferenceCodeRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 accessToken
@@ -575,7 +575,7 @@ class DigiMe(
                 Single.create { emitter ->
                     DMELog.i(context.getString(R.string.labelTriggeringDataQuery))
 
-                    val jwt = DMETriggerDataQueryRequestJWT(
+                    val jwt = TriggerDataQueryRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         accessToken
@@ -945,13 +945,13 @@ class DigiMe(
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
-                DMEPreauthorizationRequestJWT(
+                PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
                     credentials.accessToken.value
                 )
-            else DMEPreauthorizationRequestJWT(
+            else PreAuthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -1046,7 +1046,7 @@ class DigiMe(
                 val codeVerifier =
                     input.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
-                val jwt = DMEAuthCodeExchangeRequestJWT(
+                val jwt = AuthCodeExchangeRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     input.consentResponse.code!!,
@@ -1123,7 +1123,7 @@ class DigiMe(
         SingleTransformer<GetTokenExchangeDone, GetTokenExchangeDone> {
             it.flatMap { input: GetTokenExchangeDone ->
 
-                val jwt = DMETriggerDataQueryRequestJWT(
+                val jwt = TriggerDataQueryRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     input.credentials.accessToken.value!!

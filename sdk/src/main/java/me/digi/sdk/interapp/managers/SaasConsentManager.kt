@@ -8,14 +8,14 @@ import me.digi.sdk.R
 import me.digi.sdk.callbacks.AuthorizationCompletion
 import me.digi.sdk.callbacks.ServiceOnboardingCompletion
 import me.digi.sdk.entities.response.ConsentAuthResponse
-import me.digi.sdk.interapp.DMEAppCallbackHandler
+import me.digi.sdk.interapp.AppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
 
 class SaasConsentManager(private val baseURL: String, private val type: String) :
-    DMEAppCallbackHandler() {
+    AppCallbackHandler() {
 
     private var authorizationCallbackHandler: AuthorizationCompletion? = null
         set(value) {
@@ -95,11 +95,11 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
 
         var error: AuthError? = null
 
-        when(errorCode) {
-           ctx.getString(R.string.error_check_fail) -> {
-               DMELog.e("Parameters passed in didn't pass initial checks.")
-               error = AuthError.InitCheck
-           }
+        when (errorCode) {
+            ctx.getString(R.string.error_check_fail) -> {
+                DMELog.e("Parameters passed in didn't pass initial checks.")
+                error = AuthError.InitCheck
+            }
             ctx.getString(R.string.error_invalid_code) -> {
                 DMELog.e("Code passed in was not valid.")
                 error = AuthError.InvalidCode
@@ -121,7 +121,15 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
             }
         }
 
-        authorizationCallbackHandler?.invoke(ConsentAuthResponse(success.toBoolean(), code, state, postboxId, publicKey), error)
+        authorizationCallbackHandler?.invoke(
+            ConsentAuthResponse(
+                success.toBoolean(),
+                code,
+                state,
+                postboxId,
+                publicKey
+            ), error
+        )
         onboardingCallbackHandler?.invoke(error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null

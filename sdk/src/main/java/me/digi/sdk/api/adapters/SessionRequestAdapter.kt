@@ -7,7 +7,7 @@ import me.digi.sdk.entities.request.DMESessionRequest
 import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
 
-object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
+object SessionRequestAdapter : JsonSerializer<DMESessionRequest> {
 
     override fun serialize(
         src: DMESessionRequest?,
@@ -63,7 +63,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
                 }
             }
 
-            if(timeRangesJSON.count() == 0)
+            if (timeRangesJSON.count() == 0)
                 DMELog.e("Invalid scope time ranges format.")
 
             return timeRangesJSON
@@ -107,7 +107,7 @@ object DMESessionRequestAdapter : JsonSerializer<DMESessionRequest> {
                 }
             }
 
-            if(serviceGroupsJSON.count() == 0)
+            if (serviceGroupsJSON.count() == 0)
                 DMELog.e("Invalid scope service groups format.")
 
             return serviceGroupsJSON

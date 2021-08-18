@@ -54,19 +54,22 @@ internal open class JsonWebToken(tokenised: String? = null) {
             val encodedSignature = jwtComponents[2]
 
             signature = Base64.decode(encodedSignature, BASE64_FLAGS)
-            header = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(encodedHeader, BASE64_FLAGS)
-                .toString(
-                    Charsets.UTF_8
-                ), object : TypeToken<Map<String, Any>>() {}.type
+            header = gsonAgent.fromJson<Map<String, Any>>(
+                Base64.decode(encodedHeader, BASE64_FLAGS)
+                    .toString(
+                        Charsets.UTF_8
+                    ), object : TypeToken<Map<String, Any>>() {}.type
             )
-            payload = gsonAgent.fromJson<Map<String, Any>>(Base64.decode(
-                encodedPayload,
-                BASE64_FLAGS
-            ).toString(Charsets.UTF_8), object : TypeToken<Map<String, Any>>() {}.type
+            payload = gsonAgent.fromJson<Map<String, Any>>(
+                Base64.decode(
+                    encodedPayload,
+                    BASE64_FLAGS
+                ).toString(Charsets.UTF_8), object : TypeToken<Map<String, Any>>() {}.type
             )
 
             // Parse claims for body.
-            val claimFields = this::class.members.mapNotNull { it as? KMutableProperty }.filter { it.annotations.any { it is JwtClaim }}
+            val claimFields = this::class.members.mapNotNull { it as? KMutableProperty }
+                .filter { it.annotations.any { it is JwtClaim } }
             claimFields.forEach { field ->
                 val key = field.name.replace("(.)([A-Z]+)".toRegex(), "$1_$2").toLowerCase()
                 val value = payload[key]
@@ -95,7 +98,8 @@ internal open class JsonWebToken(tokenised: String? = null) {
 
         if (!::payload.isInitialized) {
             // Parse claims for body.
-            val claimFields = this::class.members.mapNotNull { it as? KProperty }.filter { it.annotations.any { it is JwtClaim }}
+            val claimFields = this::class.members.mapNotNull { it as? KProperty }
+                .filter { it.annotations.any { it is JwtClaim } }
             payload = claimFields.mapNotNull {
                 val key = it.name.replace("(.)([A-Z]+)".toRegex(), "$1_$2").toLowerCase()
                 val value = it.getter.call(this)
@@ -130,12 +134,17 @@ internal open class JsonWebToken(tokenised: String? = null) {
         return this
     }
 
-    open fun tokenize() = listOf(encodedHeader(), encodedPayload(), encodedSignature()).joinToString(
-        "."
-    )
+    open fun tokenize() =
+        listOf(encodedHeader(), encodedPayload(), encodedSignature()).joinToString(
+            "."
+        )
 
-    open inner class Adapter<T : JsonWebToken>: JsonSerializer<T>, JsonDeserializer<T> {
-        override fun serialize(src: T, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+    open inner class Adapter<T : JsonWebToken> : JsonSerializer<T>, JsonDeserializer<T> {
+        override fun serialize(
+            src: T,
+            typeOfSrc: Type?,
+            context: JsonSerializationContext?
+        ): JsonElement {
             return JsonPrimitive(src.tokenize())
         }
 

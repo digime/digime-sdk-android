@@ -4,21 +4,28 @@ import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.util.*
 
-internal typealias RefreshCredentialsResponseJWT = DMEAuthCodeExchangeResponseJWT
-
-internal class RefreshCredentialsRequestJWT (
+internal class RefreshCredentialsRequestJWT(
 
     appId: String,
     contractId: String,
     @JwtClaim val refreshToken: String
 
-): JsonWebToken() {
+) : JsonWebToken() {
 
-    @JwtClaim val clientId = "${appId}_${contractId}"
-    @JwtClaim val timestamp = Date().time
-    @JwtClaim val grantType = "refresh_token"
-    @JwtClaim val redirectUri = "digime-ca://callback"
-    @JwtClaim val nonce: String
+    @JwtClaim
+    val clientId = "${appId}_${contractId}"
+
+    @JwtClaim
+    val timestamp = Date().time
+
+    @JwtClaim
+    val grantType = "refresh_token"
+
+    @JwtClaim
+    val redirectUri = "digime-ca://callback"
+
+    @JwtClaim
+    val nonce: String
 
     init {
         val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)

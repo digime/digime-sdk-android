@@ -23,7 +23,7 @@ import me.digi.ongoingpostbox.domain.LocalSession
 import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.OngoingPostboxData
+import me.digi.sdk.entities.OngoingWriteData
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
@@ -177,7 +177,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
 
             val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
             val session: LocalSession = localAccess.getCachedSession()!!
-            val postboxData: OngoingPostboxData = localAccess.getCachedPostbox()!!
+            val postboxData: OngoingWriteData = localAccess.getCachedPostbox()!!
 
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")

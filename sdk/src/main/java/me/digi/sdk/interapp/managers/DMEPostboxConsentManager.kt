@@ -6,13 +6,13 @@ import me.digi.sdk.AuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
 import me.digi.sdk.entities.Data
-import me.digi.sdk.interapp.DMEAppCallbackHandler
+import me.digi.sdk.interapp.AppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.DMESessionManager
 import me.digi.sdk.utilities.toMap
 
-class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId: String): DMEAppCallbackHandler() {
+class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId: String): AppCallbackHandler() {
 
     private var pendingPostboxCallbackHandler: DMEPostboxCreationCompletion? = null
         set(value) {

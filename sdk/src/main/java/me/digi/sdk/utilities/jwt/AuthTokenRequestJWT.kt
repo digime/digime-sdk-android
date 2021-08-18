@@ -4,29 +4,31 @@ import me.digi.sdk.utilities.crypto.DMEByteTransformer
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.util.*
 
-@Suppress("UNUSED")
-internal class DMEReferenceCodeRequestJWT(
+internal class AuthTokenRequestJWT(
+    @JwtClaim val accessToken: String,
+    @JwtClaim val iv: String,
+    @JwtClaim val metadata: String,
+    @JwtClaim val symmetricalKey: String,
     appId: String,
-    contractId: String,
-    @JwtClaim val accessToken: String
+    contractId: String
 ) : JsonWebToken() {
-
-    @JwtClaim
-    val redirectUri = "digime-ca://callback"
 
     @JwtClaim
     val clientId = "${appId}_${contractId}"
 
     @JwtClaim
-    val timestamp = Date().time
+    val nonce: String
 
     @JwtClaim
-    val nonce: String
+    val redirectUri = "digime-ca://callback"
+
+    @JwtClaim
+    val timestamp = Date().time
 
     init {
         val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)
         nonce = DMEByteTransformer.hexStringFromBytes(nonceBytes)
     }
 
-    override fun tokenize(): String = "Bearer " + super.tokenize()
+    override fun tokenize(): String = "Bearer ${super.tokenize()}"
 }

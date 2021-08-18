@@ -4,7 +4,7 @@ import android.content.Context
 import okhttp3.CertificatePinner
 import java.security.cert.CertificateFactory
 
-internal class DMECertificatePinnerBuilder(private val context: Context, private val domain: String) {
+internal class CertificatePinnerBuilder(private val context: Context, private val domain: String) {
 
     fun buildCertificatePinner(): CertificatePinner {
 

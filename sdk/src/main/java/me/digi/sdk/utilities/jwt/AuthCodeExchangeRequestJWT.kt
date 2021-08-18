@@ -5,20 +5,29 @@ import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.util.*
 
 @Suppress("UNUSED")
-internal class DMEAuthCodeExchangeRequestJWT (
+internal class AuthCodeExchangeRequestJWT(
 
     appId: String,
     contractId: String,
     @JwtClaim val code: String,
     @JwtClaim val codeVerifier: String
 
-): JsonWebToken() {
+) : JsonWebToken() {
 
-    @JwtClaim val clientId = "${appId}_${contractId}"
-    @JwtClaim val grantType = "authorization_code"
-    @JwtClaim val redirectUri = "digime-ca://callback"
-    @JwtClaim val timestamp = Date().time
-    @JwtClaim val nonce: String
+    @JwtClaim
+    val clientId = "${appId}_${contractId}"
+
+    @JwtClaim
+    val grantType = "authorization_code"
+
+    @JwtClaim
+    val redirectUri = "digime-ca://callback"
+
+    @JwtClaim
+    val timestamp = Date().time
+
+    @JwtClaim
+    val nonce: String
 
     init {
         val nonceBytes = DMECryptoUtilities.generateSecureRandom(16)

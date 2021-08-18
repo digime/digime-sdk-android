@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.StringRes
-import me.digi.sdk.SDKError
 import me.digi.sdk.R
+import me.digi.sdk.SDKError
 import me.digi.sdk.entities.SdkAgent
 
 
@@ -32,7 +32,7 @@ class DMEAppCommunicator(val context: Context) {
         }
     }
 
-    private var callbackHandlers = emptyList<DMEAppCallbackHandler>().toMutableList()
+    private var callbackHandlers = emptyList<AppCallbackHandler>().toMutableList()
 
     fun canOpenDMEApp(): Boolean {
         val packageManager = context.packageManager
@@ -96,13 +96,13 @@ class DMEAppCommunicator(val context: Context) {
         }
     }
 
-    fun addCallbackHandler(handler: DMEAppCallbackHandler) {
+    fun addCallbackHandler(handler: AppCallbackHandler) {
         if (!callbackHandlers.contains(handler)) {
             callbackHandlers.add(handler)
         }
     }
 
-    fun removeCallbackHandler(handler: DMEAppCallbackHandler) {
+    fun removeCallbackHandler(handler: AppCallbackHandler) {
         if (callbackHandlers.contains(handler)) {
             callbackHandlers.remove(handler)
         }

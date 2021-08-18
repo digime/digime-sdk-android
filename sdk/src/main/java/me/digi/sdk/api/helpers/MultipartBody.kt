@@ -11,8 +11,8 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
-internal class DMEMultipartBody(description : RequestBody, requestBody: MultipartBody.Part) {
-    var description : RequestBody
+internal class MultipartBody(description: RequestBody, requestBody: MultipartBody.Part) {
+    var description: RequestBody
     var requestBody: MultipartBody.Part
 
     init {
@@ -29,7 +29,8 @@ internal class DMEMultipartBody(description : RequestBody, requestBody: Multipar
         private var requestBody: MultipartBody.Part? = null
 
         fun postboxPushPayload(postboxPushPayload: DataPayload): Builder {
-            description = REQUEST_BODY_NAME.toRequestBody(postboxPushPayload.mimeType.stringValue.toMediaTypeOrNull())
+            description =
+                REQUEST_BODY_NAME.toRequestBody(postboxPushPayload.mimeType.stringValue.toMediaTypeOrNull())
             return this
         }
 
@@ -41,12 +42,13 @@ internal class DMEMultipartBody(description : RequestBody, requestBody: Multipar
             bos.close()
 
             val fileReqBody = file.asRequestBody(mimetype.stringValue.toMediaTypeOrNull())
-            this.requestBody = MultipartBody.Part.createFormData(REQUEST_BODY_NAME, REQUEST_BODY_NAME, fileReqBody)
+            this.requestBody =
+                MultipartBody.Part.createFormData(REQUEST_BODY_NAME, REQUEST_BODY_NAME, fileReqBody)
             return this
         }
 
-        fun build(): DMEMultipartBody {
-            return description?.let { requestBody?.let { it1 -> DMEMultipartBody(it, it1) } }!!
+        fun build(): me.digi.sdk.api.helpers.MultipartBody {
+            return description?.let { requestBody?.let { it1 -> MultipartBody(it, it1) } }!!
         }
     }
 }

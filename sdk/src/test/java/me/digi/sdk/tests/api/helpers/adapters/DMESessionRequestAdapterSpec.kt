@@ -6,7 +6,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import io.mockk.every
 import io.mockk.mockk
-import me.digi.sdk.api.adapters.DMESessionRequestAdapter
+import me.digi.sdk.api.adapters.SessionRequestAdapter
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.request.DMESessionRequest
 import org.junit.Assert.assertEquals
@@ -41,7 +41,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.serviceGroups = serviceGroups
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
-        val actualResult = DMESessionRequestAdapter.serialize(
+        val actualResult = SessionRequestAdapter.serialize(
             DMESessionRequest(
                 "dummyAppId",
                 "dummyContractId",
@@ -67,7 +67,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.serviceGroups = serviceGroups
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
-        val actualResult = DMESessionRequestAdapter.serialize(
+        val actualResult = SessionRequestAdapter.serialize(
             DMESessionRequest(
                 "dummyAppId",
                 "dummyContractId",
@@ -94,7 +94,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.serviceGroups = serviceGroups
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
-        val actualResult = DMESessionRequestAdapter.serialize(
+        val actualResult = SessionRequestAdapter.serialize(
             DMESessionRequest(
                 "dummyAppId",
                 "dummyContractId",
@@ -120,7 +120,7 @@ class DMESessionRequestAdapterSpec {
 
         dummyScope.serviceGroups = serviceGroups
 
-        val actualResult = DMESessionRequestAdapter.serialize(
+        val actualResult = SessionRequestAdapter.serialize(
             DMESessionRequest(
                 "dummyAppId",
                 "dummyContractId",
@@ -142,7 +142,7 @@ class DMESessionRequestAdapterSpec {
     fun `given an empty scope format for service groups, time ranges are serialized`() {
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
-        val actualResult = DMESessionRequestAdapter.serialize(
+        val actualResult = SessionRequestAdapter.serialize(
             DMESessionRequest(
                 "dummyAppId",
                 "dummyContractId",

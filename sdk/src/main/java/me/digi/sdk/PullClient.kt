@@ -136,13 +136,13 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
-                DMEPreauthorizationRequestJWT(
+                PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
                     credentials.accessToken.value
                 )
-            else DMEPreauthorizationRequestJWT(
+            else PreAuthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -219,7 +219,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     val codeVerifier =
                         response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
-                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                    val jwt = AuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         response.consentResponse.code!!,
@@ -280,7 +280,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
             SingleTransformer<GetCredentialsDone, GetCredentialsDone> {
                 it.flatMap { result: GetCredentialsDone ->
 
-                    val jwt = DMETriggerDataQueryRequestJWT(
+                    val jwt = TriggerDataQueryRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         result.credentials.accessToken.value!!
@@ -439,12 +439,12 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
                 val jwt = if (accessToken != null)
-                    DMEPreauthorizationRequestJWT(
+                    PreAuthorizationRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         codeVerifier,
                         accessToken
-                    ) else DMEPreauthorizationRequestJWT(
+                    ) else PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier
@@ -518,7 +518,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     val codeVerifier =
                         response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
-                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                    val jwt = AuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         response.consentResponse.code!!,
@@ -578,7 +578,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
         fun deleteLibrary() = Single.create<Boolean> { emitter ->
             accessToken?.let {
 
-                val jwt = DMEUserDeletionRequestJWT(
+                val jwt = UserDeletionRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     accessToken
@@ -628,7 +628,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
         fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
             DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
 
-            val jwt = DMEReferenceCodeRequestJWT(
+            val jwt = ReferenceCodeRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 accessToken
@@ -681,7 +681,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                 Single.create { emitter ->
                     DMELog.i(context.getString(R.string.labelTriggeringDataQuery))
 
-                    val jwt = DMETriggerDataQueryRequestJWT(
+                    val jwt = TriggerDataQueryRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         accessToken

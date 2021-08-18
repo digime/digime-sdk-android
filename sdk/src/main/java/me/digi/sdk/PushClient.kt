@@ -11,7 +11,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
-import me.digi.sdk.api.helpers.DMEMultipartBody
+import me.digi.sdk.api.helpers.MultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.WriteConfiguration
@@ -113,7 +113,7 @@ class PushClient(
                 postboxFile.metadata
             )
 
-            val multipartBody = DMEMultipartBody.Builder()
+            val multipartBody = MultipartBody.Builder()
                 .postboxPushPayload(postboxFile)
                 .dataContent(encryptedData.fileContent, postboxFile.mimeType)
                 .build()
@@ -154,12 +154,12 @@ class PushClient(
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (accessToken != null)
-                DMEPreauthorizationRequestJWT(
+                PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
                     accessToken
-                ) else DMEPreauthorizationRequestJWT(
+                ) else PreAuthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -222,14 +222,14 @@ class PushClient(
                 }
             }
 
-        fun exchangeAuthorizationCode(): SingleTransformer<GetConsentDone, OngoingPostbox> =
-            SingleTransformer<GetConsentDone, OngoingPostbox> {
+        fun exchangeAuthorizationCode(): SingleTransformer<GetConsentDone, OngoingData> =
+            SingleTransformer<GetConsentDone, OngoingData> {
                 it.flatMap { response: GetConsentDone ->
 
                     val codeVerifier =
                         response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
-                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                    val jwt = AuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         response.consentResponse.code!!,
@@ -248,12 +248,12 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = OngoingPostboxData().copy(
+                            val postboxData = OngoingWriteData().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
 
-                            OngoingPostbox(response.session, postboxData, tokenExchange)
+                            OngoingData(response.session, postboxData, tokenExchange)
                         }
                 }
             }
@@ -264,7 +264,7 @@ class PushClient(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: OngoingPostbox ->
+                onSuccess = { result: OngoingData ->
                     sessionManager.updatedSession = result.session
 
                     val authSession = AuthorizeResponse().copy(
@@ -291,7 +291,7 @@ class PushClient(
 
     fun authorizeOngoingPostbox(
         fromActivity: Activity,
-        existingPostbox: OngoingPostboxData? = null,
+        existingPostbox: OngoingWriteData? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         completion: DMESaasPostboxOngoingCreationCompletion
@@ -307,13 +307,13 @@ class PushClient(
                 DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(64))
 
             val jwt = if (credentials != null)
-                DMEPreauthorizationRequestJWT(
+                PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
                     credentials.accessToken.value
                 )
-            else DMEPreauthorizationRequestJWT(
+            else PreAuthorizationRequestJWT(
                 configuration.appId,
                 configuration.contractId,
                 codeVerifier
@@ -376,14 +376,14 @@ class PushClient(
                 }
             }
 
-        fun exchangeAuthorizationCode(): SingleTransformer<GetConsentDone, OngoingPostbox> =
-            SingleTransformer<GetConsentDone, OngoingPostbox> {
+        fun exchangeAuthorizationCode(): SingleTransformer<GetConsentDone, OngoingData> =
+            SingleTransformer<GetConsentDone, OngoingData> {
                 it.flatMap { response: GetConsentDone ->
 
                     val codeVerifier =
                         response.session.metadata[context.getString(R.string.key_code_verifier)].toString()
 
-                    val jwt = DMEAuthCodeExchangeRequestJWT(
+                    val jwt = AuthCodeExchangeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
                         response.consentResponse.code!!,
@@ -402,18 +402,18 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = OngoingPostboxData().copy(
+                            val postboxData = OngoingWriteData().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
 
-                            OngoingPostbox(response.session, postboxData, tokenExchange)
+                            OngoingData(response.session, postboxData, tokenExchange)
                         }
                 }
             }
 
-        fun refreshCredentials(): SingleTransformer<OngoingPostbox, OngoingPostbox> =
-            SingleTransformer<OngoingPostbox, OngoingPostbox> {
+        fun refreshCredentials(): SingleTransformer<OngoingData, OngoingData> =
+            SingleTransformer<OngoingData, OngoingData> {
                 it.flatMap { result ->
 
                     val jwt = RefreshCredentialsRequestJWT(
@@ -434,7 +434,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            OngoingPostbox().copy(
+                            OngoingData().copy(
                                 session = result.session,
                                 data = result.data,
                                 credentials = tokenExchange
@@ -444,7 +444,7 @@ class PushClient(
             }
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: OngoingPostboxData? = existingPostbox
+        var activePostbox: OngoingWriteData? = existingPostbox
 
         // First, we request pre-auth code needed for auth consent manager
         requestPreAuthCode()
@@ -453,7 +453,7 @@ class PushClient(
             .let { preAuthResponse ->
                 if (activeCredentials != null && activePostbox != null) {
                     preAuthResponse.map {
-                        OngoingPostbox(
+                        OngoingData(
                             it.session,
                             activePostbox,
                             activeCredentials
@@ -495,7 +495,7 @@ class PushClient(
 
                         requestPreAuthCode()
                             .map {
-                                OngoingPostbox(
+                                OngoingData(
                                     it.session,
                                     activePostbox,
                                     activeCredentials
@@ -562,12 +562,12 @@ class PushClient(
                 postbox.metadata
             )
 
-            val multipartBody: DMEMultipartBody = DMEMultipartBody.Builder()
+            val multipartBody: MultipartBody = MultipartBody.Builder()
                 .postboxPushPayload(postbox)
                 .dataContent(encryptedData.fileContent, postbox.mimeType)
                 .build()
 
-            val jwt = DMEAuthTokenRequestJWT(
+            val jwt = AuthTokenRequestJWT(
                 accessToken,
                 encryptedData.iv,
                 encryptedData.metadata,
@@ -628,7 +628,7 @@ class PushClient(
         fun deleteLibrary() = Single.create<Boolean> { emitter ->
             accessToken?.let {
 
-                val jwt = DMEUserDeletionRequestJWT(
+                val jwt = UserDeletionRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     accessToken

@@ -11,7 +11,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.waitMillis
 
-class DMERetryInterceptor(private val config: ClientConfiguration) : Interceptor {
+class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
 
         // Run request.
@@ -62,11 +62,14 @@ class DMERetryInterceptor(private val config: ClientConfiguration) : Interceptor
 
     private fun Request.withRegeneratedJwtNonce(): Request {
         val authHeader = header("Authorization") ?: return this
-        val signingKey = (config as? ReadConfiguration)?.privateKeyHex?.let { DMEKeyTransformer.javaPrivateKeyFromHex(it) } ?: return this
+        val signingKey = (config as? ReadConfiguration)?.privateKeyHex?.let {
+            DMEKeyTransformer.javaPrivateKeyFromHex(it)
+        } ?: return this
         val tokenisedJwt = authHeader.split(" ").last()
         val jwt = JsonWebToken(tokenisedJwt)
 
-        val newNonce = DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(16))
+        val newNonce =
+            DMEByteTransformer.hexStringFromBytes(DMECryptoUtilities.generateSecureRandom(16))
         val newPayload = jwt.payload.toMutableMap().apply { this["nonce"] = newNonce }
         jwt.payload = newPayload
 

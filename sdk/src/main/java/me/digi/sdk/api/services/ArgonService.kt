@@ -13,7 +13,7 @@ import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
 
-internal interface DMEArgonService {
+internal interface ArgonService {
 
     @POST("v1.6/permission-access/session")
     fun getSession(@Body sessionRequest: DMESessionRequest): Call<SessionResponse>
