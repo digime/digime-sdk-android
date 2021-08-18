@@ -8,16 +8,16 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
-import me.digi.sdk.DMEPushClient
+import me.digi.sdk.PushClient
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.io.IOException
 
 class PostboxActivity : AppCompatActivity() {
-    private lateinit var client: DMEPushClient
+    private lateinit var client: PushClient
     private lateinit var cfg: WriteConfiguration
     private lateinit var pk: String
 
@@ -36,7 +36,7 @@ class PostboxActivity : AppCompatActivity() {
             pk
         )
 
-        client = DMEPushClient(applicationContext, cfg)
+        client = PushClient(applicationContext, cfg)
 
         item_postbox_button.setOnClickListener {
             if(DMEAppCommunicator.getSharedInstance().canOpenDMEApp())
@@ -56,7 +56,7 @@ class PostboxActivity : AppCompatActivity() {
                 val metadata = getFileContent("metadatapng.json")
 
                 client.pushDataToPostbox(
-                    DMEPushPayload(
+                    DataPayload(
                         dmePostbox,
                         metadata,
                         fileContent,

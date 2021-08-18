@@ -1,5 +1,5 @@
 package me.digi.sdk.callbacks
 
-import me.digi.sdk.DMEError
+import me.digi.sdk.Error
 
-typealias DMEEmptyCompletion = (error: DMEError?) -> Unit
+typealias DMEEmptyCompletion = (error: Error?) -> Unit

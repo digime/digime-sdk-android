@@ -1,6 +1,6 @@
 package me.digi.sdk.utilities
 
-import me.digi.sdk.DMESDKError
+import me.digi.sdk.SDKError
 import java.util.zip.GZIPInputStream
 
 object DMECompressor {
@@ -36,6 +36,6 @@ object DMECompressor {
             gzipInputStream.readBytes()
         }
 
-        else -> throw DMESDKError.InvalidData()
+        else -> throw SDKError.InvalidData()
     }
 }

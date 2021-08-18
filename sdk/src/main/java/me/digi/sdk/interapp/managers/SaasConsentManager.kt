@@ -3,10 +3,10 @@ package me.digi.sdk.interapp.managers
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import me.digi.sdk.DMEAuthError
+import me.digi.sdk.AuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.AuthorizationCompletion
-import me.digi.sdk.callbacks.OnboardingCompletion
+import me.digi.sdk.callbacks.ServiceOnboardingCompletion
 import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
@@ -14,25 +14,21 @@ import me.digi.sdk.ui.GuestConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
 
-/**
- * Update to reflect entire Saas handler
- * Return different callback handlers
- */
 class SaasConsentManager(private val baseURL: String, private val type: String) :
     DMEAppCallbackHandler() {
 
     private var authorizationCallbackHandler: AuthorizationCompletion? = null
         set(value) {
             if (field != null && value != null)
-                field?.invoke(null, DMEAuthError.Cancelled)
+                field?.invoke(null, AuthError.Cancelled)
 
             field = value
         }
 
-    private var onboardingCallbackHandler: OnboardingCompletion? = null
+    private var onboardingCallbackHandler: ServiceOnboardingCompletion? = null
         set(value) {
             if (field != null && value != null)
-                field?.invoke(DMEAuthError.Cancelled)
+                field?.invoke(AuthError.Cancelled)
 
             field = value
         }
@@ -52,7 +48,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        completion: OnboardingCompletion
+        completion: ServiceOnboardingCompletion
     ) {
         DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
         onboardingCallbackHandler = completion
@@ -97,28 +93,28 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         val publicKey = params[ctx.getString(R.string.key_s_public_key)] as? String
         val errorCode = params[ctx.getString(R.string.key_error)] as? String
 
-        var error: DMEAuthError? = null
+        var error: AuthError? = null
 
         when(errorCode) {
            ctx.getString(R.string.error_check_fail) -> {
                DMELog.e("Parameters passed in didn't pass initial checks.")
-               error = DMEAuthError.InitCheck
+               error = AuthError.InitCheck
            }
             ctx.getString(R.string.error_invalid_code) -> {
                 DMELog.e("Code passed in was not valid.")
-                error = DMEAuthError.InvalidCode
+                error = AuthError.InvalidCode
             }
             ctx.getString(R.string.error_onboard) -> {
                 DMELog.e("There was an error when trying to onboard the given service.")
-                error = DMEAuthError.Onboard
+                error = AuthError.Onboard
             }
             ctx.getString(R.string.error_user_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                error = DMEAuthError.Cancelled
+                error = AuthError.Cancelled
             }
             ctx.getString(R.string.error_server) -> {
                 DMELog.e("An error is received from a server call.")
-                error = DMEAuthError.Server
+                error = AuthError.Server
             }
             else -> {
                 DMELog.i("User accepted consent request.")

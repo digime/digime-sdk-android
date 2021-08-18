@@ -7,8 +7,8 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.ArgonCode
-import me.digi.sdk.DMEAPIError
-import me.digi.sdk.DMEError
+import me.digi.sdk.APIError
+import me.digi.sdk.Error
 import me.digi.sdk.api.adapters.DMEFileUnpackAdapter
 import me.digi.sdk.api.adapters.DMESessionRequestAdapter
 import me.digi.sdk.api.helpers.DMECertificatePinnerBuilder
@@ -47,7 +47,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: Clien
             argonErrorMessage: String?,
             argonErrorReference: String?
         ) =
-            DMEAPIError::class.sealedSubclasses.fold<KClass<out DMEAPIError>, DMEAPIError?>(null) { _, err ->
+            APIError::class.sealedSubclasses.fold<KClass<out APIError>, APIError?>(null) { _, err ->
                 val argonCode = (err.annotations.firstOrNull { it is ArgonCode } as? ArgonCode)?.value
                 if (argonCode == argonErrorCode) run {
                     val instance = err.createInstance()
@@ -60,7 +60,7 @@ class DMEAPIClient(private val context: Context, private val clientConfig: Clien
                     return@fold instance
 
                 } else null
-            } ?: argonErrorMessage?.let { DMEAPIError.UNMAPPED(argonErrorCode, it, argonErrorReference) } ?: DMEAPIError.GENERIC(argonErrorCode?.toInt(), argonErrorMessage)
+            } ?: argonErrorMessage?.let { APIError.UNMAPPED(argonErrorCode, it, argonErrorReference) } ?: APIError.GENERIC(argonErrorCode?.toInt(), argonErrorMessage)
     }
 
     init {
@@ -120,12 +120,12 @@ class DMEAPIClient(private val context: Context, private val clientConfig: Clien
             when {
                 error != null -> emitter.onError(error)
                 value != null -> emitter.onSuccess(value)
-                else -> emitter.onError(DMEAPIError.GENERIC(400, "Something went wrong with your request"))
+                else -> emitter.onError(APIError.GENERIC(400, "Something went wrong with your request"))
             }
         }
     }
 
-    fun <ResponseType> makeCall(call: Call<ResponseType>, completion: (ResponseType?, DMEError?) -> Unit) {
+    fun <ResponseType> makeCall(call: Call<ResponseType>, completion: (ResponseType?, Error?) -> Unit) {
         call.enqueue(object: Callback<ResponseType> {
             override fun onResponse(call: Call<ResponseType>, response: Response<ResponseType>) {
 
@@ -143,17 +143,17 @@ class DMEAPIClient(private val context: Context, private val clientConfig: Clien
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
-                val genericAPIError = DMEAPIError.UNREACHABLE()
+                val genericAPIError = APIError.UNREACHABLE()
                 completion(null, genericAPIError)
             }
         })
     }
 
-    private fun <ResponseType> deduceErrorFromResponse(response: Response<ResponseType>): DMEError {
+    private fun <ResponseType> deduceErrorFromResponse(response: Response<ResponseType>): Error {
 
         val headers = response.headers()
 
-        val argonErrorCode = headers["X-Error-Code"]?.let { it } ?: run { return DMEAPIError.GENERIC(response.code(), response.message()) }
+        val argonErrorCode = headers["X-Error-Code"]?.let { it } ?: run { return APIError.GENERIC(response.code(), response.message()) }
         val argonErrorMessage = headers["X-Error-Message"]
         val argonErrorReference = headers["X-Error-Reference"]
 

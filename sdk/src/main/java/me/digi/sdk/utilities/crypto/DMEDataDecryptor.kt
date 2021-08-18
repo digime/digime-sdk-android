@@ -1,6 +1,6 @@
 package me.digi.sdk.utilities.crypto
 
-import me.digi.sdk.DMESDKError
+import me.digi.sdk.SDKError
 
 object DMEDataDecryptor {
 
@@ -19,7 +19,7 @@ object DMEDataDecryptor {
         val encryptedContent = encryptedBytes.copyOfRange(dskLength + ivLength, encryptedBytes.count())
 
         if (encryptedBytes.count() < 352 || encryptedBytes.count() % 16 != 0) {
-            throw DMESDKError.DecryptionFailed()
+            throw SDKError.DecryptionFailed()
         }
 
         val jfsDataAndHash = DMECryptoUtilities.decryptAES(encryptedContent, dsk, dataIV)
@@ -27,7 +27,7 @@ object DMEDataDecryptor {
         val jfsData = jfsDataAndHash.copyOfRange(hashLength, jfsDataAndHash.count())
 
         if (!verifyHash(jfsData, jfsHash)) {
-            throw DMESDKError.InvalidData()
+            throw SDKError.InvalidData()
         }
 
         return jfsData

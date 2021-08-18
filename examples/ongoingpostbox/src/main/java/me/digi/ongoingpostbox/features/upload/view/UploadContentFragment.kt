@@ -24,11 +24,11 @@ import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.OngoingPostboxData
-import me.digi.sdk.entities.Postbox
+import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.OngoingWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -91,7 +91,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
         }
 
         lifecycleScope.launchWhenResumed {
-            viewModel.uploadState.collectLatest { result: Resource<SaasOngoingPushResponse> ->
+            viewModel.uploadState.collectLatest { result: Resource<OngoingWriteResponse> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -182,13 +182,13 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
 
-            val postbox: Postbox =
-                Postbox().copy(
+            val postbox: Data =
+                Data().copy(
                     key = session.sessionKey,
                     postboxId = postboxData.postboxId,
                     publicKey = postboxData.publicKey
                 )
-            val payload = DMEPushPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
+            val payload = DataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
 
             btnUploadImage?.setOnClickListener {
                 viewModel.pushDataToPostbox(payload, credentials.accessToken.value!!)

@@ -1,7 +1,7 @@
 package me.digi.sdk.api.helpers
 
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -28,7 +28,7 @@ internal class DMEMultipartBody(description : RequestBody, requestBody: Multipar
         private var description: RequestBody? = null
         private var requestBody: MultipartBody.Part? = null
 
-        fun postboxPushPayload(postboxPushPayload: DMEPushPayload): Builder {
+        fun postboxPushPayload(postboxPushPayload: DataPayload): Builder {
             description = REQUEST_BODY_NAME.toRequestBody(postboxPushPayload.mimeType.stringValue.toMediaTypeOrNull())
             return this
         }

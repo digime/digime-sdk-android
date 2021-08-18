@@ -2,10 +2,10 @@ package me.digi.sdk.interapp.managers
 
 import android.app.Activity
 import android.content.Intent
-import me.digi.sdk.DMEAuthError
+import me.digi.sdk.AuthError
 import me.digi.sdk.R
 import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
-import me.digi.sdk.entities.Postbox
+import me.digi.sdk.entities.Data
 import me.digi.sdk.interapp.DMEAppCallbackHandler
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMELog
@@ -17,7 +17,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
     private var pendingPostboxCallbackHandler: DMEPostboxCreationCompletion? = null
         set(value) {
             if (field != null && value != null) {
-                field?.invoke(null, DMEAuthError.Cancelled)
+                field?.invoke(null, AuthError.Cancelled)
             }
             field = value
         }
@@ -41,7 +41,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
 
         } ?: run {
             DMELog.e("Your session is invalid, please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
@@ -54,7 +54,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
         if (intent == null) {
             // Received no data, Android system failed to start activity.
             DMELog.e("There was a problem launching the consent request activity.")
-            pendingPostboxCallbackHandler?.invoke(null, DMEAuthError.General())
+            pendingPostboxCallbackHandler?.invoke(null, AuthError.General())
             DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
             pendingPostboxCallbackHandler = null
             return
@@ -72,19 +72,19 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
         extractAndAppendMetadata(params as Map<String, Any>)
 
         val error = if (!sessionManager.isSessionValid()) {
-            DMEAuthError.InvalidSession()
+            AuthError.InvalidSession()
         }
         else if (postboxId == null || postboxPublicKey == null || sessionKey == null) {
-            DMEAuthError.General()
+            AuthError.General()
         }
         else when (result) {
             ctx.getString(R.string.const_result_error) -> {
                 DMELog.e("There was a problem requesting consent.")
-                DMEAuthError.General()
+                AuthError.General()
             }
             ctx.getString(R.string.const_result_cancel) -> {
                 DMELog.e("User rejected consent request.")
-                DMEAuthError.Cancelled
+                AuthError.Cancelled
             }
             else -> {
                 DMELog.i("User accepted consent request; postbox created.")
@@ -92,7 +92,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             }
         }
 
-        val postbox = Postbox(sessionKey!!, postboxId!!, postboxPublicKey!!)
+        val postbox = Data(sessionKey!!, postboxId!!, postboxPublicKey!!)
         pendingPostboxCallbackHandler?.invoke(postbox, error)
         DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
         pendingPostboxCallbackHandler = null

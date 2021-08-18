@@ -16,7 +16,7 @@ import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.DMESessionRequest
@@ -33,11 +33,11 @@ import me.digi.sdk.utilities.crypto.DMEKeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
 
-class DMEPushClient(
+class PushClient(
     val context: Context,
     val configuration: WriteConfiguration
 ) :
-    DMEClient(context, configuration) {
+    Client(context, configuration) {
 
     private val postboxConsentManager: DMEPostboxConsentManager by lazy {
         DMEPostboxConsentManager(sessionManager, configuration.appId)
@@ -73,7 +73,7 @@ class DMEPushClient(
                 onError = {
                     completion.invoke(
                         false,
-                        DMEAuthError.ErrorWithMessage(
+                        AuthError.ErrorWithMessage(
                             it.localizedMessage ?: "Unknown error occurred"
                         )
                     )
@@ -103,7 +103,7 @@ class DMEPushClient(
         }
     }
 
-    fun pushDataToPostbox(postboxFile: DMEPushPayload, completion: DMEPostboxPushCompletion) {
+    fun pushDataToPostbox(postboxFile: DataPayload, completion: DMEPostboxPushCompletion) {
         DMELog.i("Initializing push data to postbox.")
 
         if (sessionManager.isSessionValid()) {
@@ -268,8 +268,8 @@ class DMEPushClient(
                     sessionManager.updatedSession = result.session
 
                     val authSession = AuthorizeResponse().copy(
-                        postboxId = result.postboxData?.postboxId,
-                        publicKey = result.postboxData?.publicKey,
+                        postboxId = result.data?.postboxId,
+                        publicKey = result.data?.publicKey,
                         sessionKey = result.session?.key,
                         accessToken = result.credentials?.accessToken?.value
                     )
@@ -279,7 +279,7 @@ class DMEPushClient(
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                        error.let { it as? Error } ?: APIError.GENERIC(
                             0,
                             error.localizedMessage
                         )
@@ -436,7 +436,7 @@ class DMEPushClient(
 
                             OngoingPostbox().copy(
                                 session = result.session,
-                                postboxData = result.postboxData,
+                                data = result.data,
                                 credentials = tokenExchange
                             )
                         }
@@ -464,7 +464,7 @@ class DMEPushClient(
                         .compose(requestConsent(fromActivity))
                         .compose(exchangeAuthorizationCode())
                         .doOnSuccess {
-                            activePostbox = it.postboxData
+                            activePostbox = it.data
                             activeCredentials = it.credentials
                         }
                 }
@@ -475,13 +475,13 @@ class DMEPushClient(
                 // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
                 // We process the consent flow for ongoing access
                 when {
-                    error is DMEAPIError && error.code == "InternalServerError" -> {
+                    error is APIError && error.code == "InternalServerError" -> {
 
                         requestPreAuthCode()
                             .compose(requestConsent(fromActivity))
                             .compose(exchangeAuthorizationCode())
                             .doOnSuccess {
-                                activePostbox = it.postboxData
+                                activePostbox = it.data
                                 activeCredentials = it.credentials
                             }
 
@@ -490,7 +490,7 @@ class DMEPushClient(
                     }
                     // If an error we encounter is "InvalidToken" error, which means that the ACCESS token
                     // has expired.
-                    error is DMEAPIError && error.code == "InvalidToken" -> {
+                    error is APIError && error.code == "InvalidToken" -> {
                         // If so, we take the active session and expired credentials and try to refresh them.
 
                         requestPreAuthCode()
@@ -507,7 +507,7 @@ class DMEPushClient(
 
                                 // If an error is encountered from this call, we inspect it to see if it's an
                                 // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                                if (innerError is DMEAPIError && error.code == "InvalidToken") {
+                                if (innerError is APIError && error.code == "InvalidToken") {
                                     // If so, we need to obtain a new set of credentials from the digi.me
                                     // application. Process the flow as before, for ongoing access, provided
                                     // that auto-recover is enabled. If not, we throw a specific error and
@@ -517,10 +517,10 @@ class DMEPushClient(
                                             .compose(requestConsent(fromActivity))
                                             .compose(exchangeAuthorizationCode())
                                             .doOnSuccess {
-                                                activePostbox = it.postboxData
+                                                activePostbox = it.data
                                                 activeCredentials = it.credentials
                                             }
-                                    } else Single.error(DMEAuthError.TokenExpired())
+                                    } else Single.error(AuthError.TokenExpired())
                                 } else Single.error(innerError)
                             }
                     }
@@ -537,7 +537,7 @@ class DMEPushClient(
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError } ?: DMEAPIError.GENERIC(
+                        error.let { it as? Error } ?: APIError.GENERIC(
                             0,
                             error.localizedMessage
                         ))
@@ -547,13 +547,13 @@ class DMEPushClient(
     }
 
     fun pushData(
-        postboxFile: DMEPushPayload?,
+        postboxFile: DataPayload?,
         accessToken: String,
-        completion: DMEOngoingPostboxPushCompletion
+        completion: OngoingWriteCompletion
     ) {
         DMELog.i("Initializing push data to postbox.")
 
-        val postbox = postboxFile as DMEPushPayload
+        val postbox = postboxFile as DataPayload
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
@@ -602,15 +602,15 @@ class DMEPushClient(
                     },
                     onError = { error ->
                         when {
-                            error is DMEAPIError && error.code == "InvalidToken" -> completion(
+                            error is APIError && error.code == "InvalidToken" -> completion(
                                 null,
-                                DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
+                                APIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
                             )
                             else -> {
                                 DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
                                 completion(
                                     null,
-                                    DMEAuthError.ErrorWithMessage(error.localizedMessage)
+                                    AuthError.ErrorWithMessage(error.localizedMessage)
                                 )
                             }
                         }
@@ -618,11 +618,11 @@ class DMEPushClient(
                 )
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
-    fun deleteUser(accessToken: String?, completion: DMEUserLibraryDeletion) {
+    fun deleteUser(accessToken: String?, completion: UserDeleteCompletion) {
         DMELog.i(context.getString(R.string.labelDeleteLibrary))
 
         fun deleteLibrary() = Single.create<Boolean> { emitter ->
@@ -645,7 +645,7 @@ class DMEPushClient(
                     }
                 }
             }
-                ?: emitter.onError(DMEAPIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
+                ?: emitter.onError(APIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
         }
 
         deleteLibrary()
@@ -661,7 +661,7 @@ class DMEPushClient(
                             completion.invoke(true, null)
                         else completion.invoke(
                             null,
-                            DMEAPIError.ErrorWithMessage(message)
+                            APIError.ErrorWithMessage(message)
                         )
                     }
                 }

@@ -91,6 +91,8 @@
     <string name="labelTriggeringDataQuery">Triggering data query</string>
     <string name="labelUnknownError">Unknown error occurred</string>
     <string name="labelDeleteLibrary">Requesting library deletion</string>
+    <string name="labelReadingFiles">Starting fetch of session data.</string>
+    <string name="labelAvailableServices">Fetching available services for contract</string>
     <string name="labelAccessTokenInvalidOrMissing">Access token is invalid or is missing</string>
 
 </resources>

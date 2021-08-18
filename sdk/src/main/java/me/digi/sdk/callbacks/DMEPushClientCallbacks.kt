@@ -1,14 +1,14 @@
 package me.digi.sdk.callbacks
 
-import me.digi.sdk.DMEError
+import me.digi.sdk.Error
+import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.OngoingPostbox
-import me.digi.sdk.entities.Postbox
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.OngoingWriteResponse
 
-typealias DMEPostboxCreationCompletion = (Postbox?, error: DMEError?) -> Unit
+typealias DMEPostboxCreationCompletion = (Data?, error: Error?) -> Unit
 
-typealias DMESaasPostboxOngoingCreationCompletion = (OngoingPostbox?, error: DMEError?) -> Unit
+typealias DMESaasPostboxOngoingCreationCompletion = (OngoingPostbox?, error: Error?) -> Unit
 
-typealias DMEPostboxPushCompletion = (error: DMEError?) -> Unit
+typealias DMEPostboxPushCompletion = (error: Error?) -> Unit
 
-typealias DMEOngoingPostboxPushCompletion = (SaasOngoingPushResponse?, error: DMEError?) -> Unit
+typealias OngoingWriteCompletion = (OngoingWriteResponse?, error: Error?) -> Unit

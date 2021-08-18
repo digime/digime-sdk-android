@@ -7,10 +7,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox.*
-import me.digi.sdk.DMEPushClient
+import me.digi.sdk.PushClient
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.crypto.DMECryptoUtilities
 import java.io.IOException
@@ -20,7 +20,7 @@ class Postbox : AppCompatActivity() {
     private var jsonRadio : Boolean =  false
     private var pngRadio : Boolean = false
     private var pdfRadio : Boolean = false
-    private lateinit var client: DMEPushClient
+    private lateinit var client: PushClient
 
 //    private val client: DMEPushClient by lazy {
 //
@@ -63,7 +63,7 @@ class Postbox : AppCompatActivity() {
 //        configuration.baseUrl = "https://api.stagingdigi.me/"
 //        configuration.baseUrl = "https://api.development.devdigi.me/"
 
-        client = DMEPushClient(applicationContext, configuration)
+        client = PushClient(applicationContext, configuration)
 
         console_log.movementMethod = ScrollingMovementMethod()
 
@@ -122,7 +122,7 @@ class Postbox : AppCompatActivity() {
                     val metadata = getFileContent("metadatajson.json")
 
                     client.pushDataToPostbox(
-                        DMEPushPayload(
+                        DataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,
@@ -144,7 +144,7 @@ class Postbox : AppCompatActivity() {
                     val metadata = getFileContent("metadatapng.json")
 
                     client.pushDataToPostbox(
-                        DMEPushPayload(
+                        DataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,
@@ -166,7 +166,7 @@ class Postbox : AppCompatActivity() {
                     val fileContent = getFileContent("file.pdf")
 
                     client.pushDataToPostbox(
-                        DMEPushPayload(
+                        DataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,

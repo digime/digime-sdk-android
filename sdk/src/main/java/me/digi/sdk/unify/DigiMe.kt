@@ -17,7 +17,7 @@ import me.digi.sdk.api.helpers.DMEMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.payload.TokenReferencePayload
 import me.digi.sdk.entities.request.*
@@ -31,13 +31,10 @@ import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
 import kotlin.math.max
 
-class DigiMeClient(
+class DigiMe(
     val context: Context,
     val configuration: DigiMeConfiguration
-) : DMEClient(
-    context = context,
-    config = configuration
-) {
+) : Client(context = context, config = configuration) {
 
     private val authorizeConsentManager: SaasConsentManager by lazy {
         SaasConsentManager(configuration.baseUrl, "authorize")
@@ -47,10 +44,10 @@ class DigiMeClient(
         SaasConsentManager(configuration.baseUrl, type = "onboard")
     }
 
-    private var activeFileDownloadHandler: DMEFileContentCompletion? = null
-    private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
-    private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
-    private var fileListCompletionHandler: DMEFileListCompletion? = null
+    private var activeFileDownloadHandler: FileContentCompletion? = null
+    private var activeSessionDataFetchCompletionHandler: FileListCompletion? = null
+    private var fileListUpdateHandler: IncrementalFileListUpdate? = null
+    private var fileListCompletionHandler: FileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
     private var latestFileList: DMEFileList? = null
     private var activeSyncStatus: DMEFileList.SyncStatus? = null
@@ -84,6 +81,7 @@ class DigiMeClient(
 
     private var stalePollCount = 0
 
+    // TODO: Maybe to remove
     /**
      *
      */
@@ -120,8 +118,8 @@ class DigiMeClient(
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage(
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(
                                 error.localizedMessage ?: "Unknown error occurred"
                             ))
                 }
@@ -129,17 +127,26 @@ class DigiMeClient(
     }
 
     /**
+     * Authorizes the contract configured with this digi.me instance to access to a library.
      *
+     * If the user has not already authorized, will be presented with a browser window
+     * in which user consents.
+     * If the user has already authorized, refreshes the authorization, if necessary
+     * (which may require user consent again)
+     *
+     * @param data Data to reference same write access point.
+     * @param credentials Credentials used to reference the same library if one is not created
+     * @param completion Block called upon authorization with any errors encountered.
      */
-    fun authorizeOngoingWriteAccess(
+    fun authorizeWriteAccess(
         fromActivity: Activity,
-        postbox: OngoingPostboxData? = null,
+        data: OngoingPostboxData? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: OngoingPostboxData? = postbox
+        var activeData: OngoingPostboxData? = data
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -147,15 +154,15 @@ class DigiMeClient(
             // Next, we check if any credentials were supplied (for access restoration).
             // If not, we kick the user out of the flow and authorize normally.
             .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (activeCredentials != null && activePostbox != null)
+                if (activeCredentials != null && activeData != null)
                     preAuthorizationCodeResponse.map {
                         GetTokenExchangeDone()
                             .copy(
                                 consentData = GetConsentDone(
                                     session = it.session,
                                     consentResponse = ConsentAuthResponse(
-                                        postboxId = activePostbox?.postboxId,
-                                        publicKey = activePostbox?.publicKey
+                                        postboxId = activeData?.postboxId,
+                                        publicKey = activeData?.publicKey
                                     )
                                 ),
                                 credentials = activeCredentials!!
@@ -165,7 +172,7 @@ class DigiMeClient(
                     .compose(requestTokenExchange())
                     .doOnSuccess { tokenExchangeResponse ->
                         activeCredentials = tokenExchangeResponse.credentials
-                        activePostbox = OngoingPostboxData(
+                        activeData = OngoingPostboxData(
                             postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
                             publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
                         )
@@ -204,17 +211,39 @@ class DigiMeClient(
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage(error.localizedMessage)
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(error.localizedMessage)
                     )
                 }
             )
     }
 
     /**
+     * Authorizes the contract configured with this digi.me instance to access to a library.
      *
+     * If the user has not already authorized, will be presented with a browser window in which user consents.
+     * If the user has already authorized, refreshes the authorization, if necessary
+     * (which may require user consent again).
+     *
+     * To authorize this contract to access the same library that another contract has
+     * been authorized to access, specify the contract to link to. This is useful when
+     * a read contract needs to access the same library that a write contract has
+     * written data to.
+     *
+     * Additionally for read contracts:
+     * - Upon first authorization, can optionally specify a service from which user
+     * can log in to an retrieve data.
+     * - Creates a session during which data can be read from library.
+     *
+     * @param scope Options to filter which data is read from sources for this session.
+     * Only used for read contracts.
+     * @param serviceId Identifier of initial service to add. Only valid for first
+     * authorization of read contracts where user has not previously granted consent.
+     * Ignored for all subsequent calls.
+     * @param credentials Credentials used to reference the same library if one is not created
+     * @param completion Block called upon authorization with any errors encountered.
      */
-    fun authorizeOngoingReadAccess(
+    fun authorizeReadAccess(
         fromActivity: Activity,
         scope: DataRequest? = null,
         credentials: CredentialsPayload? = null,
@@ -276,121 +305,25 @@ class DigiMeClient(
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage(error.localizedMessage)
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(error.localizedMessage)
                     )
                 }
             )
     }
 
     /**
+     * Deletes the user's library associated with the configured contract.
      *
-     */
-    private fun errorHandler(
-        fromActivity: Activity,
-        error: Throwable?,
-        credentials: CredentialsPayload?,
-        scope: DataRequest?,
-        serviceId: String?
-    ): SingleSource<out GetTokenExchangeDone>? {
-
-        var activeCredentials: CredentialsPayload? = credentials
-
-        return if (error is DMEAPIError && error.code == "InternalServerError") {
-            requestPreAuthorizationCode(credentials, scope)
-                .compose(requestConsentAccess(fromActivity, serviceId))
-                .compose(requestTokenExchange())
-                .doOnSuccess { activeCredentials = it.credentials }
-
-            // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
-            // has expired.
-        } else if (error is DMEAPIError && error.code == "InvalidToken") {
-            // If so, we take the active session and expired credentials and try to refresh them.
-            requestPreAuthorizationCode(credentials, scope)
-                .map { response: GetPreAuthCodeDone ->
-                    GetTokenExchangeDone()
-                        .copy(
-                            consentData = GetConsentDone(session = response.session),
-                            credentials = activeCredentials!!
-                        )
-                }
-                .compose(requestCredentialsRefresh())
-                .doOnSuccess { activeCredentials = it.credentials }
-                .onErrorResumeNext { error ->
-
-                    // If an error is encountered from this call, we inspect it to see if it's an
-                    // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                    if (error is DMEAPIError && error.code == "InvalidToken") {
-                        // If so, we need to obtain a new set of credentials from the digi.me
-                        // application. Process the flow as before, for ongoing access, provided
-                        // that auto-recover is enabled. If not, we throw a specific error and
-                        // exit the flow.
-                        if (configuration.autoRecoverExpiredCredentials) {
-                            requestPreAuthorizationCode(credentials, scope)
-                                .compose(requestConsentAccess(fromActivity, serviceId))
-                                .compose(requestTokenExchange())
-                                .doOnSuccess { activeCredentials = it.credentials }
-
-                                // Once new credentials are obtained, re-trigger the data query.
-                                // If it fails here, credentials are not the issue. The error
-                                // will be propagated down to the callback as normal.
-                                .compose(requestDataQuery(scope))
-                        } else Single.error(DMEAuthError.TokenExpired())
-                    } else Single.error(error)
-                }
-        } else Single.error(error)
-    }
-
-    /**
-     * Probably to remove
-     */
-    fun updateSession(completion: GetSessionCompletion) {
-
-        val sessionRequest = DMESessionRequest(
-            configuration.appId,
-            configuration.contractId,
-            SdkAgent(),
-            compression = "gzip",
-            scope = null
-        )
-
-        fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
-            Single.create { emitter ->
-                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
-                    when {
-                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
-                        error != null -> emitter.onError(error)
-                        else -> emitter.onError(IllegalArgumentException())
-                    }
-                }
-            }
-
-        requestSession(sessionRequest)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    val session = Session().copy(key = it.key, expiry = it.expiry)
-                    sessionManager.updatedSession = session
-                    completion.invoke(true, null)
-                },
-                onError = {
-                    completion.invoke(
-                        false,
-                        DMEAuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
-                        )
-                    )
-                }
-            )
-    }
-
-    /**
+     * Please note that if multiple contracts are linked to the same library,
+     * then 'deleteUser' will also need to be called on those contracts to remove
+     * any stored credentials, in which case an error may be reported on those calls.
      *
+     * @param completion block called on completion with any error encountered
      */
     fun deleteUser(
         accessToken: String?,
-        completion: DMEUserLibraryDeletion
+        completion: UserDeleteCompletion
     ) {
         DMELog.i(context.getString(R.string.labelDeleteLibrary))
 
@@ -414,51 +347,50 @@ class DigiMeClient(
                     }
                 }
             }
-                ?: emitter.onError(DMEAPIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
+                ?: emitter.onError(APIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
         }
 
         deleteLibrary()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    completion.invoke(it, null)
-                },
-                onError = {
-                    it.localizedMessage?.let { message ->
-                        if (message.contains("204"))
-                            completion.invoke(true, null)
-                        else completion.invoke(
-                            null,
-                            DMEAPIError.ErrorWithMessage(message)
-                        )
-                    }
+            .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
+                it.localizedMessage?.let { message ->
+                    if (message.contains("204"))
+                        completion.invoke(true, null)
+                    else completion.invoke(
+                        null,
+                        APIError.ErrorWithMessage(message)
+                    )
                 }
-            )
+            })
     }
 
     /**
+     * Writes data to user's library associated with configured contract
      *
+     * @param data The data to be written
+     * @param accessToken Token to reference the existing library
+     * @param completion Block called when writing data has completed. Contains ...
      */
-    fun writeData(
-        postboxFile: DMEPushPayload?,
+    fun write(
+        data: DataPayload?,
         accessToken: String,
-        completion: DMEOngoingPostboxPushCompletion
+        completion: OngoingWriteCompletion
     ) {
         DMELog.i("Initializing push data to postbox.")
 
-        val postbox = postboxFile as DMEPushPayload
+        val activeData = data as DataPayload
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                postbox.postbox.publicKey!!,
-                postbox.content,
-                postbox.metadata
+                activeData.postbox.publicKey!!,
+                activeData.content,
+                activeData.metadata
             )
 
             val multipartBody: DMEMultipartBody = DMEMultipartBody.Builder()
-                .postboxPushPayload(postbox)
-                .dataContent(encryptedData.fileContent, postbox.mimeType)
+                .postboxPushPayload(activeData)
+                .dataContent(encryptedData.fileContent, activeData.mimeType)
                 .build()
 
             val jwt = DMEAuthTokenRequestJWT(
@@ -476,11 +408,11 @@ class DigiMeClient(
 
             apiClient.argonService.pushOngoingData(
                 authHeader,
-                postbox.postbox.key!!,
+                activeData.postbox.key!!,
                 encryptedData.symmetricalKey,
                 encryptedData.iv,
                 encryptedData.metadata,
-                postbox.postbox.postboxId!!,
+                activeData.postbox.postboxId!!,
                 multipartBody.requestBody,
                 multipartBody.description
             )
@@ -496,15 +428,15 @@ class DigiMeClient(
                     },
                     onError = { error ->
                         when {
-                            error is DMEAPIError && error.code == "InvalidToken" -> completion(
+                            error is APIError && error.code == "InvalidToken" -> completion(
                                 null,
-                                DMEAPIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
+                                APIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
                             )
                             else -> {
                                 DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
                                 completion(
                                     null,
-                                    DMEAuthError.ErrorWithMessage(error.localizedMessage)
+                                    AuthError.ErrorWithMessage(error.localizedMessage)
                                 )
                             }
                         }
@@ -512,19 +444,36 @@ class DigiMeClient(
                 )
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
     /**
+     * Fetches content for all the files limited by read options.
      *
+     * An attempt is made to fetch each requested file and the result of the attempt
+     * is passed back via the download handler.
+     * As download requests are asynchronous, the download handler may be called
+     * concurrently, so the handler implementation should allow for this.
+     *
+     * If this method is called while files are being read, an error denoting this
+     * will be immediately returned in the completion block of this subsequent call
+     * and will not affect current calls.
+     *
+     * For the service-based data sources, will also attempt to retrieve any new data
+     * directly from the services.
+     *
+     * @param downloadHandler Handler called after every file fetch attempt finishes.
+     * Either contains the file or an error if fetch failed.
+     * @param completion Block called when fetching all files has completed. Contains
+     * final list of files or an error if reading file list failed.
      */
-    fun readData(
-        downloadHandler: DMEFileContentCompletion,
-        completion: DMEFileListCompletion
+    fun readFiles(
+        downloadHandler: FileContentCompletion,
+        completion: FileListCompletion
     ) {
 
-        DMELog.i("Starting fetch of session data.")
+        DMELog.i(context.getString(R.string.labelReadingFiles))
 
         activeFileDownloadHandler = downloadHandler
         activeSessionDataFetchCompletionHandler = completion
@@ -557,13 +506,17 @@ class DigiMeClient(
     }
 
     /**
+     * Once a user has granted consent, adds an additional service
      *
+     * @param serviceId Identifier of service to add
+     * @param accessToken Token to reference the same library
+     * @param completion Block called upon completion with any errors encountered
      */
-    fun onboardService(
+    fun addService(
         fromActivity: Activity,
         serviceId: String,
         accessToken: String,
-        completion: OnboardingCompletion
+        completion: ServiceOnboardingCompletion
     ) {
 
         fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
@@ -661,7 +614,7 @@ class DigiMeClient(
                 onError = {
                     activeSyncStatus = null
                     completion.invoke(
-                        DMEAuthError.ErrorWithMessage(
+                        AuthError.ErrorWithMessage(
                             it.localizedMessage ?: "Unknown error occurred"
                         )
                     )
@@ -670,83 +623,32 @@ class DigiMeClient(
     }
 
     /**
+     * Get a list of possible services a user can add to their digi.me library
      *
+     * @param completion Block called upon completion with either the service list
+     * or any errors encountered
      */
-    fun getServicesForContractId(contractId: String, completion: DMEServicesForContract) {
-        DMELog.i("Fetching services for contract")
+    fun availableServices(completion: AvailableServicesCompletion) {
+        DMELog.i(context.getString(R.string.labelAvailableServices))
 
-        apiClient.argonService.getServicesForContract(contractId)
+        apiClient.argonService.getServicesForContract(configuration.contractId)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    completion.invoke(it, null)
-                },
-                onError = {
-                    completion.invoke(
-                        null,
-                        DMEAuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Could not fetch services. Something went wrong"
-                        )
+            .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
+                completion.invoke(
+                    null,
+                    AuthError.ErrorWithMessage(
+                        it.localizedMessage ?: "Could not fetch services. Something went wrong"
                     )
-                }
-            )
-    }
-
-    /**
-     *
-     */
-    private fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
-
-        val currentSession = sessionManager.updatedSession
-
-        if (currentSession != null && sessionManager.isSessionValid()) {
-
-            apiClient.argonService.getFileBytes(currentSession.key, fileId)
-                .map { response ->
-                    val headers = response.headers()["X-Metadata"]
-                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                    val payloadHeader =
-                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
-
-                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
-
-                    val contentBytes: ByteArray =
-                        DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
-
-                    val compression: String = try {
-                        payloadHeader.compression
-                    } catch (e: Throwable) {
-                        DMECompressor.COMPRESSION_NONE
-                    }
-                    val decompressedContentBytes: ByteArray =
-                        DMECompressor.decompressData(contentBytes, compression)
-
-                    DMEFile().copy(fileContent = String(decompressedContentBytes))
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { completion.invoke(it, null) },
-                    onError = {
-                        completion.invoke(
-                            null,
-                            DMEAuthError.ErrorWithMessage(
-                                it.localizedMessage ?: "Unknown error occurred"
-                            )
-                        )
-                    }
                 )
-        } else {
-            DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
-        }
+            })
     }
 
+    // TODO: Maybe to remove?
     /**
      * Probably to remove
      */
-    fun getFileByName(fileId: String, completion: DMEFileContentCompletion) {
+    fun getFileByName(fileId: String, completion: FileContentCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
@@ -780,7 +682,7 @@ class DigiMeClient(
                     onError = {
                         completion.invoke(
                             null,
-                            DMEAuthError.ErrorWithMessage(
+                            AuthError.ErrorWithMessage(
                                 it.localizedMessage ?: "Unknown error occurred"
                             )
                         )
@@ -788,21 +690,81 @@ class DigiMeClient(
                 )
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
+    // TODO: Maybe to remove?
     /**
      *
      */
+    fun getFileList(completion: FileListCompletion) {
+
+        val currentSession = sessionManager.updatedSession
+
+        if (currentSession != null && sessionManager.isSessionValid()) {
+            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, AuthError.InvalidSession())
+        }
+    }
+
+    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
+
+        val currentSession = sessionManager.updatedSession
+
+        if (currentSession != null && sessionManager.isSessionValid()) {
+
+            apiClient.argonService.getFileBytes(currentSession.key, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader =
+                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray =
+                        DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try {
+                        payloadHeader.compression
+                    } catch (e: Throwable) {
+                        DMECompressor.COMPRESSION_NONE
+                    }
+                    val decompressedContentBytes: ByteArray =
+                        DMECompressor.decompressData(contentBytes, compression)
+
+                    DMEFile().copy(fileContent = String(decompressedContentBytes))
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            AuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
+                        )
+                    }
+                )
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, AuthError.InvalidSession())
+        }
+    }
+
     private fun getSessionFileList(
-        updateHandler: DMEIncrementalFileListUpdate,
-        completion: DMEFileListCompletion
+        updateHandler: IncrementalFileListUpdate,
+        completion: FileListCompletion
     ) {
 
         fileListUpdateHandler = updateHandler
         fileListCompletionHandler = { fileList, error ->
-            val err = if (error is DMESDKError.FileListPollingTimeout) null else error
+            val err = if (error is SDKError.FileListPollingTimeout) null else error
             completion(fileList, err)
             if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
                 completeDeliveryOfSessionData(err)
@@ -816,24 +778,6 @@ class DigiMeClient(
         }
     }
 
-    /**
-     *
-     */
-    fun getFileList(completion: DMEFileListCompletion) {
-
-        val currentSession = sessionManager.updatedSession
-
-        if (currentSession != null && sessionManager.isSessionValid()) {
-            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
-        } else {
-            DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
-        }
-    }
-
-    /**
-     *
-     */
     private fun scheduleNextPoll(immediately: Boolean = false) {
 
         DMELog.d("Session data poll scheduled.")
@@ -868,7 +812,7 @@ class DigiMeClient(
                 } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
                     fileListCompletionHandler?.invoke(
                         fileList,
-                        DMESDKError.FileListPollingTimeout()
+                        SDKError.FileListPollingTimeout()
                     )
                     return@getFileList
                 }
@@ -893,10 +837,7 @@ class DigiMeClient(
         }, delay)
     }
 
-    /**
-     *
-     */
-    private fun completeDeliveryOfSessionData(error: DMEError?) {
+    private fun completeDeliveryOfSessionData(error: Error?) {
 
         when {
             error != null -> DMELog.e(
@@ -918,9 +859,69 @@ class DigiMeClient(
     }
 
     /**
+     *
+     */
+    private fun errorHandler(
+        fromActivity: Activity,
+        error: Throwable?,
+        credentials: CredentialsPayload?,
+        scope: DataRequest?,
+        serviceId: String?
+    ): SingleSource<out GetTokenExchangeDone>? {
+
+        var activeCredentials: CredentialsPayload? = credentials
+
+        return if (error is APIError && error.code == "InternalServerError") {
+            requestPreAuthorizationCode(credentials, scope)
+                .compose(requestConsentAccess(fromActivity, serviceId))
+                .compose(requestTokenExchange())
+                .doOnSuccess { activeCredentials = it.credentials }
+
+            // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
+            // has expired.
+        } else if (error is APIError && error.code == "InvalidToken") {
+            // If so, we take the active session and expired credentials and try to refresh them.
+            requestPreAuthorizationCode(credentials, scope)
+                .map { response: GetPreAuthCodeDone ->
+                    GetTokenExchangeDone()
+                        .copy(
+                            consentData = GetConsentDone(session = response.session),
+                            credentials = activeCredentials!!
+                        )
+                }
+                .compose(requestCredentialsRefresh())
+                .doOnSuccess { activeCredentials = it.credentials }
+                .onErrorResumeNext { error ->
+
+                    // If an error is encountered from this call, we inspect it to see if it's an
+                    // 'InvalidToken' error, meaning that the REFRESH token has expired.
+                    if (error is APIError && error.code == "InvalidToken") {
+                        // If so, we need to obtain a new set of credentials from the digi.me
+                        // application. Process the flow as before, for ongoing access, provided
+                        // that auto-recover is enabled. If not, we throw a specific error and
+                        // exit the flow.
+                        if (configuration.autoRecoverExpiredCredentials) {
+                            requestPreAuthorizationCode(credentials, scope)
+                                .compose(requestConsentAccess(fromActivity, serviceId))
+                                .compose(requestTokenExchange())
+                                .doOnSuccess { activeCredentials = it.credentials }
+
+                                // Once new credentials are obtained, re-trigger the data query.
+                                // If it fails here, credentials are not the issue. The error
+                                // will be propagated down to the callback as normal.
+                                .compose(requestDataQuery(scope))
+                        } else Single.error(AuthError.TokenExpired())
+                    } else Single.error(error)
+                }
+        } else Single.error(error)
+    }
+
+    /**
+     * /////////////////////////////////////////////
      * Defined bellow are a number of 'modules' that are used within the Cyclic flow.
      * These can be combined in various ways as the auth state demands.
      * See the flow below for details.
+     * /////////////////////////////////////////////
      */
 
     /**
@@ -970,7 +971,7 @@ class DigiMeClient(
                 apiClient
                     .argonService
                     .getPreAuthorizationCode(authHeader, authScope)
-            ) { response: PreAuthorizationResponse?, error: DMEError? ->
+            ) { response: PreAuthorizationResponse?, error: Error? ->
                 when {
                     response != null -> {
                         val chunks: List<String> = response.token.split(".")
@@ -1014,7 +1015,7 @@ class DigiMeClient(
                             fromActivity,
                             code,
                             serviceId
-                        ) { consentResponse: ConsentAuthResponse?, error: DMEError? ->
+                        ) { consentResponse: ConsentAuthResponse?, error: Error? ->
                             when {
                                 consentResponse?.success == true -> {
                                     val consentDone = GetConsentDone()

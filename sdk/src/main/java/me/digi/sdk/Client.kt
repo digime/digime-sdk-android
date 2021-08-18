@@ -9,7 +9,7 @@ import me.digi.sdk.interapp.DMEAppCommunicator
 import me.digi.sdk.utilities.DMEDeepLinkBuilder
 import me.digi.sdk.utilities.DMESessionManager
 
-abstract class DMEClient(private val context: Context, private val config: ClientConfiguration) {
+abstract class Client(private val context: Context, private val config: ClientConfiguration) {
 
     protected val apiClient: DMEAPIClient
     protected val sessionManager: DMESessionManager
@@ -17,7 +17,7 @@ abstract class DMEClient(private val context: Context, private val config: Clien
     init {
 
         if (context !is Application) {
-            throw DMESDKError.InvalidContext()
+            throw SDKError.InvalidContext()
         }
 
         apiClient = DMEAPIClient(context, config)
@@ -30,7 +30,7 @@ abstract class DMEClient(private val context: Context, private val config: Clien
     fun viewReceiptsInDigiMeApp() {
 
         if (!canOpenDigiMeApp())
-            throw DMESDKError.DigiMeAppNotFound()
+            throw SDKError.DigiMeAppNotFound()
 
         val launchURI = DMEDeepLinkBuilder()
             .setAction("receipt")

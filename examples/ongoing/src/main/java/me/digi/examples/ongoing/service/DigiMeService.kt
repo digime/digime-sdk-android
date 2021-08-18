@@ -19,7 +19,7 @@ import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.RefreshToken
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.unify.DigiMeClient
+import me.digi.sdk.unify.DigiMe
 import me.digi.sdk.unify.DigiMeConfiguration
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -33,7 +33,7 @@ class DigiMeService(private val context: Application) {
         private const val CACHED_CREDENTIAL_KEY = "CachedCredential"
     }
 
-    private val client: DigiMeClient by lazy {
+    private val client: DigiMe by lazy {
 
         val configuration = DigiMeConfiguration(
             context.getString(R.string.staging_app_id),
@@ -43,7 +43,7 @@ class DigiMeService(private val context: Application) {
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
 
-        DigiMeClient(context, configuration)
+        DigiMe(context, configuration)
     }
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }

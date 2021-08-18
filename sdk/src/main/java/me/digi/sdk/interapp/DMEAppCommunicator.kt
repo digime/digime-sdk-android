@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.StringRes
-import me.digi.sdk.DMESDKError
+import me.digi.sdk.SDKError
 import me.digi.sdk.R
 import me.digi.sdk.entities.SdkAgent
 
@@ -22,7 +22,7 @@ class DMEAppCommunicator(val context: Context) {
             try {
                 return _sharedInstance
             } catch(error: Throwable) {
-                throw DMESDKError.CommunicatorNotInitialized()
+                throw SDKError.CommunicatorNotInitialized()
             }
         }
 

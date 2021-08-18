@@ -61,7 +61,7 @@ internal interface DMEArgonService {
         @Path("id") id: String,
         @Part file: MultipartBody.Part,
         @Part("file") description: RequestBody
-    ): Single<SaasOngoingPushResponse>
+    ): Single<OngoingWriteResponse>
 
     @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>

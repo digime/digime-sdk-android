@@ -34,7 +34,7 @@ import java.security.PrivateKey
 import java.util.*
 import kotlin.math.max
 
-class DMEPullClient(val context: Context, val configuration: ReadConfiguration) : DMEClient(
+class PullClient(val context: Context, val configuration: ReadConfiguration) : Client(
     context,
     configuration
 ) {
@@ -50,10 +50,10 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
         )
     }
 
-    private var activeFileDownloadHandler: DMEFileContentCompletion? = null
-    private var activeSessionDataFetchCompletionHandler: DMEFileListCompletion? = null
-    private var fileListUpdateHandler: DMEIncrementalFileListUpdate? = null
-    private var fileListCompletionHandler: DMEFileListCompletion? = null
+    private var activeFileDownloadHandler: FileContentCompletion? = null
+    private var activeSessionDataFetchCompletionHandler: FileListCompletion? = null
+    private var fileListUpdateHandler: IncrementalFileListUpdate? = null
+    private var fileListCompletionHandler: FileListCompletion? = null
     private var fileListItemCache: DMEFileListItemCache? = null
     private var latestFileList: DMEFileList? = null
     private var activeSyncStatus: DMEFileList.SyncStatus? = null
@@ -114,7 +114,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 onError = {
                     completion.invoke(
                         false,
-                        DMEAuthError.ErrorWithMessage(
+                        AuthError.ErrorWithMessage(
                             it.localizedMessage ?: "Unknown error occurred"
                         )
                     )
@@ -342,7 +342,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 // If an error is encountered from this call, we inspect it to see if it's an 'InternalServerError'
                 // error, meaning that implicit sync was triggered wor a removed deviceId (library changed).
                 // We process the consent flow for ongoing access
-                if (error is DMEAPIError && error.code == "InternalServerError") {
+                if (error is APIError && error.code == "InternalServerError") {
 
                     requestPreAuthCode()
                         .compose(requestConsent(fromActivity))
@@ -351,7 +351,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
 
                     // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
                     // has expired.
-                } else if (error is DMEAPIError && error.code == "InvalidToken") {
+                } else if (error is APIError && error.code == "InvalidToken") {
                     // If so, we take the active session and expired credentials and try to refresh them.
 
                     requestPreAuthCode()
@@ -367,7 +367,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
 
                             // If an error is encountered from this call, we inspect it to see if it's an
                             // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                            if (error is DMEAPIError && error.code == "InvalidToken") {
+                            if (error is APIError && error.code == "InvalidToken") {
                                 // If so, we need to obtain a new set of credentials from the digi.me
                                 // application. Process the flow as before, for ongoing access, provided
                                 // that auto-recover is enabled. If not, we throw a specific error and
@@ -382,7 +382,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                                         // If it fails here, credentials are not the issue. The error
                                         // will be propagated down to the callback as normal.
                                         .compose(triggerDataQuery())
-                                } else Single.error(DMEAuthError.TokenExpired())
+                                } else Single.error(AuthError.TokenExpired())
                             } else Single.error(error)
                         }
                 } else Single.error(error)
@@ -397,14 +397,14 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage("Unknown error occurred"))
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)
     }
 
-    fun getServicesForContractId(contractId: String, completion: DMEServicesForContract) {
+    fun getServicesForContractId(contractId: String, completion: AvailableServicesCompletion) {
         DMELog.i("Fetching services for contract")
 
         apiClient.argonService.getServicesForContract(contractId)
@@ -417,7 +417,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 onError = {
                     completion.invoke(
                         null,
-                        DMEAuthError.ErrorWithMessage(
+                        AuthError.ErrorWithMessage(
                             it.localizedMessage ?: "Could not fetch services. Something went wrong"
                         )
                     )
@@ -565,14 +565,14 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 onError = { error ->
                     completion.invoke(
                         null,
-                        error.let { it as? DMEError }
-                            ?: DMEAPIError.ErrorWithMessage("Unknown error occurred"))
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage("Unknown error occurred"))
                 }
             )
             .addTo(compositeDisposable)
     }
 
-    fun deleteUser(accessToken: String?, completion: DMEUserLibraryDeletion) {
+    fun deleteUser(accessToken: String?, completion: UserDeleteCompletion) {
         DMELog.i(context.getString(R.string.labelDeleteLibrary))
 
         fun deleteLibrary() = Single.create<Boolean> { emitter ->
@@ -595,7 +595,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     }
                 }
             }
-                ?: emitter.onError(DMEAPIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
+                ?: emitter.onError(APIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
         }
 
         deleteLibrary()
@@ -611,7 +611,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                             completion.invoke(true, null)
                         else completion.invoke(
                             null,
-                            DMEAPIError.ErrorWithMessage(message)
+                            APIError.ErrorWithMessage(message)
                         )
                     }
                 }
@@ -622,7 +622,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
         fromActivity: Activity,
         serviceId: String,
         accessToken: String,
-        completion: OnboardingCompletion
+        completion: ServiceOnboardingCompletion
     ) {
 
         fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
@@ -720,7 +720,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 onError = {
                     activeSyncStatus = null
                     completion.invoke(
-                        DMEAuthError.ErrorWithMessage(
+                        AuthError.ErrorWithMessage(
                             it.localizedMessage ?: "Unknown error occurred"
                         )
                     )
@@ -729,8 +729,8 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
     }
 
     fun getSessionData(
-        downloadHandler: DMEFileContentCompletion,
-        completion: DMEFileListCompletion
+        downloadHandler: FileContentCompletion,
+        completion: FileListCompletion
     ) {
 
         DMELog.i("Starting fetch of session data.")
@@ -765,7 +765,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
         }
     }
 
-    private fun getSessionData(fileId: String, completion: DMEFileContentCompletion) {
+    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
@@ -800,7 +800,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                     onError = {
                         completion.invoke(
                             null,
-                            DMEAuthError.ErrorWithMessage(
+                            AuthError.ErrorWithMessage(
                                 it.localizedMessage ?: "Unknown error occurred"
                             )
                         )
@@ -808,18 +808,18 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 )
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
     private fun getSessionFileList(
-        updateHandler: DMEIncrementalFileListUpdate,
-        completion: DMEFileListCompletion
+        updateHandler: IncrementalFileListUpdate,
+        completion: FileListCompletion
     ) {
 
         fileListUpdateHandler = updateHandler
         fileListCompletionHandler = { fileList, error ->
-            val err = if (error is DMESDKError.FileListPollingTimeout) null else error
+            val err = if (error is SDKError.FileListPollingTimeout) null else error
             completion(fileList, err)
             if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
                 completeDeliveryOfSessionData(err)
@@ -833,7 +833,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
         }
     }
 
-    fun getFileList(completion: DMEFileListCompletion) {
+    fun getFileList(completion: FileListCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
@@ -841,7 +841,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
             apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
     }
 
@@ -874,7 +874,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
             }
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, DMEAuthError.InvalidSession())
+            completion(null, AuthError.InvalidSession())
         }
 
     }
@@ -913,7 +913,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
                 } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
                     fileListCompletionHandler?.invoke(
                         fileList,
-                        DMESDKError.FileListPollingTimeout()
+                        SDKError.FileListPollingTimeout()
                     )
                     return@getFileList
                 }
@@ -938,7 +938,7 @@ class DMEPullClient(val context: Context, val configuration: ReadConfiguration) 
         }, delay)
     }
 
-    private fun completeDeliveryOfSessionData(error: DMEError?) {
+    private fun completeDeliveryOfSessionData(error: Error?) {
 
         when {
             error != null -> DMELog.e(

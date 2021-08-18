@@ -20,9 +20,9 @@ import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCase
 import me.digi.ongoingpostbox.usecases.WriteDataUseCase
 import me.digi.ongoingpostbox.utils.Resource
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.OngoingWriteResponse
 
 /**
  * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
@@ -48,9 +48,9 @@ class MainViewModel(
     val authState: StateFlow<Resource<AuthorizationResponse>>
         get() = _authState
 
-    private val _uploadState: MutableStateFlow<Resource<SaasOngoingPushResponse>> =
+    private val _uploadState: MutableStateFlow<Resource<OngoingWriteResponse>> =
         MutableStateFlow(Resource.Idle())
-    val uploadState: StateFlow<Resource<SaasOngoingPushResponse>>
+    val uploadState: StateFlow<Resource<OngoingWriteResponse>>
         get() = _uploadState
 
     fun createPostbox(activity: Activity) {
@@ -67,7 +67,7 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun pushDataToPostbox(payload: DMEPushPayload, accessToken: String) {
+    fun pushDataToPostbox(payload: DataPayload, accessToken: String) {
         _uploadState.value = Resource.Loading()
 
         uploadData

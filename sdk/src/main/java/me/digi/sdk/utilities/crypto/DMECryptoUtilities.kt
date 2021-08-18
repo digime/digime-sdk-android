@@ -2,7 +2,7 @@ package me.digi.sdk.utilities.crypto
 
 import android.content.Context
 import android.util.Base64
-import me.digi.sdk.DMESDKError
+import me.digi.sdk.SDKError
 import org.spongycastle.crypto.InvalidCipherTextException
 import org.spongycastle.crypto.engines.AESEngine
 import org.spongycastle.crypto.modes.CBCBlockCipher
@@ -49,7 +49,7 @@ class DMECryptoUtilities(val context: Context) {
         val keyAlaises = keyStore.aliases().toList().filter { keyStore.isKeyEntry(it) }
 
         if (keyAlaises.count() != 1) {
-            throw DMESDKError.P12ParsingError()
+            throw SDKError.P12ParsingError()
         }
 
         val key = keyStore.getKey(keyAlaises.first(), password.toCharArray()) as PrivateKey
@@ -66,7 +66,7 @@ class DMECryptoUtilities(val context: Context) {
 
             }
             catch (error: Throwable) {
-                throw DMESDKError.DecryptionFailed() // Throw generic crypto error.
+                throw SDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }
 
@@ -78,7 +78,7 @@ class DMECryptoUtilities(val context: Context) {
                 cipher.init(Cipher.ENCRYPT_MODE, publicKey)
                 return cipher.doFinal(data)
             } catch (e: Exception) {
-                throw DMESDKError.EncryptionFailed()
+                throw SDKError.EncryptionFailed()
             }
         }
 
@@ -107,7 +107,7 @@ class DMECryptoUtilities(val context: Context) {
                 return result
             }
             catch (error: Throwable) {
-                throw DMESDKError.DecryptionFailed() // Throw generic crypto error.
+                throw SDKError.DecryptionFailed() // Throw generic crypto error.
             }
         }
 
@@ -122,7 +122,7 @@ class DMECryptoUtilities(val context: Context) {
                 cipher.doFinal(outBuf, processed)
                 return outBuf
             } catch (e: InvalidCipherTextException) {
-                throw DMESDKError.EncryptionFailed()
+                throw SDKError.EncryptionFailed()
             }
 
         }

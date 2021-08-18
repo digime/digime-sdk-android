@@ -6,7 +6,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
-import me.digi.sdk.DMESDKError
+import me.digi.sdk.SDKError
 import me.digi.sdk.entities.response.DMEFile
 import me.digi.sdk.entities.FileMetadata
 import me.digi.sdk.entities.response.Status
@@ -19,12 +19,12 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): DMEFile {
 
         if (json !is JsonObject || context == null) {
-            throw DMESDKError.InvalidData()
+            throw SDKError.InvalidData()
         }
 
         val metadata = extractMetadata(json, context)
 
-        val encryptedContent = json["fileContent"].asString ?: throw DMESDKError.InvalidData()
+        val encryptedContent = json["fileContent"].asString ?: throw SDKError.InvalidData()
         val encryptedBytes: ByteArray = Base64.decode(encryptedContent, Base64.DEFAULT)
 
         val contentBytes: ByteArray = DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
@@ -38,7 +38,7 @@ class DMEFileUnpackAdapter(private val privateKeyHex: String): JsonDeserializer<
     private fun extractMetadata(rootJSON: JsonObject, context: JsonDeserializationContext): FileMetadata? {
 
         return try {
-            val metadataJSON = rootJSON["fileMetadata"].asJsonObject ?: throw DMESDKError.InvalidData()
+            val metadataJSON = rootJSON["fileMetadata"].asJsonObject ?: throw SDKError.InvalidData()
             val metadataObjectType = object: TypeToken<FileMetadata>() {}.type
             context.deserialize(metadataJSON, metadataObjectType)
         }
