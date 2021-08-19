@@ -22,13 +22,13 @@ import me.digi.sdk.entities.payload.TokenReferencePayload
 import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
-import me.digi.sdk.utilities.DMECompressor
+import me.digi.sdk.utilities.Compressor
 import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
-import me.digi.sdk.utilities.crypto.DMEDataDecryptor
-import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.crypto.DataDecryptor
+import me.digi.sdk.utilities.crypto.KeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
 import java.util.*
@@ -89,9 +89,9 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
 
     private val compositeDisposable = CompositeDisposable()
 
-    fun updateSession(sessionRequest: DMESessionRequest, completion: GetSessionCompletion) {
+    fun updateSession(sessionRequest: SessionRequest, completion: GetSessionCompletion) {
 
-        fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
+        fun requestSession(sessionRequest: SessionRequest): Single<SessionResponse> =
             Single.create { emitter ->
                 apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
                     when {
@@ -127,7 +127,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
         scope: DataRequest? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
-        completion: DMESaasOngoingAuthorizationCompletion
+        completion: SaasOngoingAuthorizationCompletion
     ) {
 
         fun requestPreAuthCode(): Single<GetPreAuthCodeDone> = Single.create { emitter ->
@@ -148,7 +148,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                 codeVerifier
             )
 
-            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val signingKey = KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
             val authScope: AuthorizationScopeRequest = scope?.let {
@@ -227,7 +227,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     )
 
                     val signingKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
@@ -257,7 +257,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     )
 
                     val signingKey: PrivateKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
@@ -287,7 +287,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     )
 
                     val signingKey: PrivateKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
                     val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
@@ -450,7 +450,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     codeVerifier
                 )
 
-                val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                val signingKey = KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                 val authHeader = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(
@@ -526,7 +526,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     )
 
                     val signingKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
@@ -585,7 +585,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                 )
 
                 val signingKey: PrivateKey =
-                    DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                 val authHeader: String = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->
@@ -635,7 +635,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
             )
 
             val signingKey: PrivateKey =
-                DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader: String = jwt.sign(signingKey).tokenize()
 
             apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
@@ -688,7 +688,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     )
 
                     val signingKey: PrivateKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(
@@ -781,15 +781,15 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
 
                     val contentBytes: ByteArray =
-                        DMEDataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
 
                     val compression: String = try {
                         payloadHeader.compression
                     } catch (e: Throwable) {
-                        DMECompressor.COMPRESSION_NONE
+                        Compressor.COMPRESSION_NONE
                     }
                     val decompressedContentBytes: ByteArray =
-                        DMECompressor.decompressData(contentBytes, compression)
+                        Compressor.decompressData(contentBytes, compression)
 
                     File().copy(fileContent = String(decompressedContentBytes))
                 }
@@ -846,7 +846,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
     }
 
     // TODO: Handle better if possible
-    fun getSessionAccounts(completion: DMEAccountsCompletion) {
+    fun getSessionAccounts(completion: AccountsCompletion) {
 
         val currentSession = sessionManager.updatedSession
 

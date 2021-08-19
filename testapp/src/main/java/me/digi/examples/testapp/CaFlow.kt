@@ -9,7 +9,7 @@ import kotlinx.android.synthetic.main.ca_flow.*
 import me.digi.sdk.PullClient
 import me.digi.sdk.entities.CaScope
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 
 class CaFlow : AppCompatActivity() {
@@ -143,6 +143,6 @@ class CaFlow : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }

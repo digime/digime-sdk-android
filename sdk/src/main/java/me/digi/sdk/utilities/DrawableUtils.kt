@@ -6,7 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import kotlin.math.max
 
-internal object DMEDrawableUtils {
+internal object DrawableUtils {
 
     fun createBitmap(from: Drawable): Bitmap {
         if (from is BitmapDrawable && from.bitmap != null) {

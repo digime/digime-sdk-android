@@ -17,7 +17,7 @@ import me.digi.sdk.api.interceptors.RetryInterceptor
 import me.digi.sdk.api.services.ArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.File
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
@@ -72,7 +72,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
 
     init {
         val gsonBuilder = GsonBuilder()
-            .registerTypeAdapter(DMESessionRequest::class.java, SessionRequestAdapter)
+            .registerTypeAdapter(SessionRequest::class.java, SessionRequestAdapter)
             .registerTypeAdapter(Date::class.java, object : JsonDeserializer<Date> {
                 override fun deserialize(
                     json: JsonElement?,
@@ -160,6 +160,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
             }
 
             override fun onFailure(call: Call<ResponseType>, error: Throwable) {
+                println("Error: ${error.localizedMessage}")
                 // A failure here indicates that the API was unreachable, so we can return a generic error at best.
                 val genericAPIError = APIError.UNREACHABLE()
                 completion(null, genericAPIError)

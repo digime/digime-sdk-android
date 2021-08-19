@@ -9,7 +9,7 @@ import me.digi.sdk.callbacks.AuthorizationCompletion
 import me.digi.sdk.callbacks.ServiceOnboardingCompletion
 import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.interapp.AppCallbackHandler
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.ui.GuestConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
@@ -39,7 +39,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         serviceId: String? = null,
         completion: AuthorizationCompletion
     ) {
-        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
+        AppCommunicator.getSharedInstance().addCallbackHandler(this)
         authorizationCallbackHandler = completion
         handlerAction(fromActivity, serviceId, codeValue)
     }
@@ -50,13 +50,13 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         serviceId: String? = null,
         completion: ServiceOnboardingCompletion
     ) {
-        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
+        AppCommunicator.getSharedInstance().addCallbackHandler(this)
         onboardingCallbackHandler = completion
         handlerAction(fromActivity, serviceId, codeValue)
     }
 
     private fun handlerAction(fromActivity: Activity, serviceId: String?, codeValue: String) {
-        val guestRequestCode = DMEAppCommunicator.getSharedInstance()
+        val guestRequestCode = AppCommunicator.getSharedInstance()
             .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
         val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
@@ -67,7 +67,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
     }
 
     override fun canHandle(requestCode: Int, responseCode: Int, data: Intent?): Boolean {
-        val communicator = DMEAppCommunicator.getSharedInstance()
+        val communicator = AppCommunicator.getSharedInstance()
         return (requestCode == communicator.requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback))
     }
 
@@ -76,13 +76,13 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         if (intent == null) {
             // Received no data, Android system failed to start activity.
             DMELog.e("There was a problem launching the guest consent browser activity.")
-            DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+            AppCommunicator.getSharedInstance().removeCallbackHandler(this)
             authorizationCallbackHandler = null
             onboardingCallbackHandler = null
             return
         }
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val ctx = AppCommunicator.getSharedInstance().context
 
         val params = intent.extras?.toMap() ?: emptyMap()
 
@@ -131,7 +131,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
             ), error
         )
         onboardingCallbackHandler?.invoke(error)
-        DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+        AppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
         onboardingCallbackHandler = null
     }
@@ -142,7 +142,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
 
     private fun buildSaaSClientURI(serviceId: String? = null, codeValue: String): Uri {
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val ctx = AppCommunicator.getSharedInstance().context
 
         val code = ctx.getString(R.string.saas_client_code)
 

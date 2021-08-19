@@ -3,7 +3,7 @@ package me.digi.saas
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,6 +15,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }

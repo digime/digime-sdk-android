@@ -2,7 +2,7 @@ package me.digi.sdk.utilities
 
 import android.net.Uri
 
-class DMEDeepLinkBuilder {
+class DeepLinkBuilder {
 
     companion object {
         private const val digimeScheme = "digime"
@@ -11,17 +11,17 @@ class DMEDeepLinkBuilder {
     private var action: String? = null
     private var parameters: Map<String, String>? = null
 
-    fun setAction(action: String): DMEDeepLinkBuilder {
+    fun setAction(action: String): DeepLinkBuilder {
         this.action = action
         return this
     }
 
-    fun setParameters(parameters: Map<String, String>): DMEDeepLinkBuilder {
+    fun setParameters(parameters: Map<String, String>): DeepLinkBuilder {
         this.parameters = parameters
         return this
     }
 
-    fun addParameter(key: String, value: String): DMEDeepLinkBuilder {
+    fun addParameter(key: String, value: String): DeepLinkBuilder {
         if (parameters == null)
             setParameters(emptyMap())
 

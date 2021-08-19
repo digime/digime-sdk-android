@@ -2,7 +2,7 @@ package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.request.Pull
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
@@ -16,7 +16,7 @@ import retrofit2.http.*
 internal interface ArgonService {
 
     @POST("v1.6/permission-access/session")
-    fun getSession(@Body sessionRequest: DMESessionRequest): Call<SessionResponse>
+    fun getSession(@Body sessionRequest: SessionRequest): Call<SessionResponse>
 
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<FileList>

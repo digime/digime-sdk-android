@@ -3,14 +3,14 @@ package me.digi.sdk.api.adapters
 import com.google.gson.*
 import me.digi.sdk.entities.DataAcceptCondition
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
 
-object SessionRequestAdapter : JsonSerializer<DMESessionRequest> {
+object SessionRequestAdapter : JsonSerializer<SessionRequest> {
 
     override fun serialize(
-        src: DMESessionRequest?,
+        src: SessionRequest?,
         typeOfSrc: Type?,
         context: JsonSerializationContext?
     ): JsonElement {

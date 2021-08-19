@@ -2,7 +2,7 @@ package me.digi.sdk.utilities.crypto
 
 import me.digi.sdk.SDKError
 
-object DMEDataDecryptor {
+object DataDecryptor {
 
     private const val dskLength = 256
     private const val ivLength = 16
@@ -13,7 +13,7 @@ object DMEDataDecryptor {
         val encryptedDSK = encryptedBytes.copyOfRange(0, dskLength)
         val dataIV = encryptedBytes.copyOfRange(dskLength, dskLength + ivLength)
 
-        val privateKey = DMEKeyTransformer.privateKeyFromString(privateKeyHex)
+        val privateKey = KeyTransformer.privateKeyFromString(privateKeyHex)
         val dsk = CryptoUtilities.decryptRSA(encryptedDSK, privateKey)
 
         val encryptedContent = encryptedBytes.copyOfRange(dskLength + ivLength, encryptedBytes.count())

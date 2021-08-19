@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class DMECertificatePinnerSpec {
+class CertificatePinnerSpec {
 
     @Test
     fun `cert pinner built without error`() {

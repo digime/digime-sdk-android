@@ -4,20 +4,20 @@ import me.digi.sdk.api.APIClient
 import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.configuration.ClientConfiguration
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.SessionResponse
 import java.util.*
 
-class DMESessionManager(
+class SessionManager(
     private val apiClient: APIClient,
     private val clientConfig: ClientConfiguration
 ) {
 
     var currentSession: SessionResponse? = null
     var updatedSession: Session? = null
-    var currentScope: DMESessionRequest? = null
+    var currentScope: SessionRequest? = null
 
-    fun getSession(sessionRequest: DMESessionRequest, completion: DMEAuthorizationCompletion) {
+    fun getSession(sessionRequest: SessionRequest, completion: DMEAuthorizationCompletion) {
 
         currentSession = null
         currentScope = null

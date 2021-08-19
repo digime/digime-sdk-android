@@ -19,17 +19,17 @@ import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.AuthorizeResponse
 import me.digi.sdk.entities.response.SessionResponse
 import me.digi.sdk.entities.response.TokenResponse
-import me.digi.sdk.interapp.managers.DMEPostboxConsentManager
+import me.digi.sdk.interapp.managers.PostboxConsentManager
 import me.digi.sdk.interapp.managers.SaasConsentManager
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
-import me.digi.sdk.utilities.crypto.DMEDataEncryptor
-import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.crypto.DataEncryptor
+import me.digi.sdk.utilities.crypto.KeyTransformer
 import me.digi.sdk.utilities.jwt.*
 import java.security.PrivateKey
 
@@ -39,8 +39,8 @@ class PushClient(
 ) :
     Client(context, configuration) {
 
-    private val postboxConsentManager: DMEPostboxConsentManager by lazy {
-        DMEPostboxConsentManager(sessionManager, configuration.appId)
+    private val postboxConsentManager: PostboxConsentManager by lazy {
+        PostboxConsentManager(sessionManager, configuration.appId)
     }
     private val authorizeManger: SaasConsentManager by lazy {
         SaasConsentManager(configuration.baseUrl, "authorize")
@@ -48,9 +48,9 @@ class PushClient(
 
     private val disposable: CompositeDisposable = CompositeDisposable()
 
-    fun updateSession(sessionRequest: DMESessionRequest, completion: GetSessionCompletion) {
+    fun updateSession(sessionRequest: SessionRequest, completion: GetSessionCompletion) {
 
-        fun requestSession(sessionRequest: DMESessionRequest): Single<SessionResponse> =
+        fun requestSession(sessionRequest: SessionRequest): Single<SessionResponse> =
             Single.create { emitter ->
                 apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
                     when {
@@ -81,11 +81,11 @@ class PushClient(
             )
     }
 
-    fun createPostbox(fromActivity: Activity, completion: DMEPostboxCreationCompletion) {
+    fun createPostbox(fromActivity: Activity, completion: PostboxCreationCompletion) {
 
         DMELog.i("Launching user consent request.")
 
-        val req = DMESessionRequest(
+        val req = SessionRequest(
             configuration.appId,
             configuration.contractId,
             SdkAgent(),
@@ -103,12 +103,12 @@ class PushClient(
         }
     }
 
-    fun pushDataToPostbox(postboxFile: DataPayload, completion: DMEPostboxPushCompletion) {
+    fun pushDataToPostbox(postboxFile: DataPayload, completion: PostboxPushCompletion) {
         DMELog.i("Initializing push data to postbox.")
 
         if (sessionManager.isSessionValid()) {
-            val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                postboxFile.postbox.publicKey!!,
+            val encryptedData = DataEncryptor.encryptedDataFromBytes(
+                postboxFile.data.publicKey!!,
                 postboxFile.content,
                 postboxFile.metadata
             )
@@ -120,11 +120,11 @@ class PushClient(
 
             apiClient.makeCall(
                 apiClient.argonService.pushData(
-                    postboxFile.postbox.key!!,
+                    postboxFile.data.key!!,
                     encryptedData.symmetricalKey,
                     encryptedData.iv,
                     encryptedData.metadata,
-                    postboxFile.postbox.postboxId!!,
+                    postboxFile.data.postboxId!!,
                     multipartBody.requestBody,
                     multipartBody.description
                 )
@@ -165,7 +165,7 @@ class PushClient(
                 codeVerifier
             )
 
-            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val signingKey = KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
             apiClient.makeCall(
@@ -237,7 +237,7 @@ class PushClient(
                     )
 
                     val signingKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
@@ -294,7 +294,7 @@ class PushClient(
         existingPostbox: WriteDataPayload? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
-        completion: DMESaasPostboxOngoingCreationCompletion
+        completion: SaasPostboxOngoingCreationCompletion
     ) {
 
         // Defined bellow are a number of 'modules' that are used within the Cyclic Postbox flow.
@@ -319,7 +319,7 @@ class PushClient(
                 codeVerifier
             )
 
-            val signingKey = DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val signingKey = KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
             apiClient.makeCall(
@@ -391,7 +391,7 @@ class PushClient(
                     )
 
                     val signingKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.exchangeAuthToken(authHeader))
@@ -423,7 +423,7 @@ class PushClient(
                     )
 
                     val signingKey: PrivateKey =
-                        DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
                     apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
@@ -556,8 +556,8 @@ class PushClient(
         val postbox = postboxFile as DataPayload
 
         if (sessionManager.isSessionValid()) {
-            val encryptedData = DMEDataEncryptor.encryptedDataFromBytes(
-                postbox.postbox.publicKey!!,
+            val encryptedData = DataEncryptor.encryptedDataFromBytes(
+                postbox.data.publicKey!!,
                 postbox.content,
                 postbox.metadata
             )
@@ -577,16 +577,16 @@ class PushClient(
             )
 
             val signingKey: PrivateKey =
-                DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader: String = jwt.sign(signingKey).tokenize()
 
             apiClient.argonService.pushOngoingData(
                 authHeader,
-                postbox.postbox.key!!,
+                postbox.data.key!!,
                 encryptedData.symmetricalKey,
                 encryptedData.iv,
                 encryptedData.metadata,
-                postbox.postbox.postboxId!!,
+                postbox.data.postboxId!!,
                 multipartBody.requestBody,
                 multipartBody.description
             )
@@ -635,7 +635,7 @@ class PushClient(
                 )
 
                 val signingKey: PrivateKey =
-                    DMEKeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                 val authHeader: String = jwt.sign(signingKey).tokenize()
 
                 apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->

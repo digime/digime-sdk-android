@@ -9,11 +9,12 @@ import java.security.PublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.RSAPublicKeySpec
 
-object DMEKeyTransformer {
+object KeyTransformer {
 
     fun privateKeyFromString(key: String): PrivateKey {
         val privateKeyContent: String =
-            key.replace("\n", "").replace("-----BEGIN RSA PRIVATE KEY-----", "")
+            key.replace("\n", "")
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
                 .replace("-----END RSA PRIVATE KEY-----", "")
         val data: ByteArray = Base64.decode(privateKeyContent.toByteArray(), 0)
         val spec = PKCS8EncodedKeySpec(data)

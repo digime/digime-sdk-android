@@ -23,13 +23,13 @@ sealed class SDKError(override val message: String) : Error(message) {
     class NoURLScheme : SDKError("Intent filter for URL scheme (for callbacks) not found.")
     class DigiMeAppNotFound : SDKError("DigiMe app is not installed")
     class CommunicatorNotInitialized :
-        SDKError("DMEAppCommunicator shared instance accessed before initialization.")
+        SDKError("AppCommunicator shared instance accessed before initialization.")
 
     class InvalidContext :
         SDKError("Given context is not the application context; ONLY the application context may be used.")
 
     class FileListPollingTimeout :
-        SDKError("File List time out reached as there have been no changes during the number of retries specified in `DMEPullConfiguration`.")
+        SDKError("File List time out reached as there have been no changes during the number of retries specified in `PullConfiguration`.")
 }
 
 sealed class AuthError(override val message: String) : Error(message) {

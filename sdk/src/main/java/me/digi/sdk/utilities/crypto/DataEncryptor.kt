@@ -2,12 +2,12 @@ package me.digi.sdk.utilities.crypto
 
 import com.google.gson.annotations.SerializedName
 
-object DMEDataEncryptor {
+object DataEncryptor {
 
     private const val symKeyLength = 32
     private const val ivLength = 16
 
-    data class DMEEncryptedData(
+    data class EncryptedData(
 
         @SerializedName("fileContent")
         val fileContent: ByteArray,
@@ -22,10 +22,10 @@ object DMEDataEncryptor {
         val iv: String
     )
 
-    fun encryptedDataFromBytes(publicKey: String, fileContent: ByteArray, metadata: ByteArray): DMEEncryptedData {
+    fun encryptedDataFromBytes(publicKey: String, fileContent: ByteArray, metadata: ByteArray): EncryptedData {
 
         val key = CryptoUtilities.generateSecureRandom(symKeyLength)
-        val rsa = DMEKeyTransformer.publicKeyFromString(publicKey)
+        val rsa = KeyTransformer.publicKeyFromString(publicKey)
 
         val encryptedKey = CryptoUtilities.encryptRSA(key, rsa)
         val base64EncryptedKey = org.spongycastle.util.encoders.Base64.toBase64String(encryptedKey)
@@ -38,7 +38,7 @@ object DMEDataEncryptor {
         val base64encodedMetadata =
             org.spongycastle.util.encoders.Base64.toBase64String(encryptedMetaData)
 
-        return DMEEncryptedData(
+        return EncryptedData(
             encryptedData,
             base64encodedMetadata,
             base64EncryptedKey,

@@ -11,7 +11,7 @@ import me.digi.sdk.PushClient
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.DataPayload
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.io.IOException
 
@@ -204,6 +204,6 @@ class Postbox : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }

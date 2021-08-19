@@ -35,7 +35,7 @@ class CryptoUtilities(val context: Context) {
         // extract the private key
         val keySpec = PKCS8EncodedKeySpec(pkcs8EncodedBytes)
         val kf = KeyFactory.getInstance("RSA")
-        return DMEKeyTransformer.hexFromJavaPrivateKey(kf.generatePrivate(keySpec))
+        return KeyTransformer.hexFromJavaPrivateKey(kf.generatePrivate(keySpec))
     }
 
     fun privateKeyHexFrom(p12File: String, password: String): String {
@@ -51,7 +51,7 @@ class CryptoUtilities(val context: Context) {
 
         val key = keyStore.getKey(keyAlaises.first(), password.toCharArray()) as PrivateKey
 
-        return DMEKeyTransformer.hexFromJavaPrivateKey(key)
+        return KeyTransformer.hexFromJavaPrivateKey(key)
     }
 
     companion object {

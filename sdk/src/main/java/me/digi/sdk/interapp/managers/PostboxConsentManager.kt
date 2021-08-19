@@ -4,17 +4,17 @@ import android.app.Activity
 import android.content.Intent
 import me.digi.sdk.AuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.DMEPostboxCreationCompletion
+import me.digi.sdk.callbacks.PostboxCreationCompletion
 import me.digi.sdk.entities.Data
 import me.digi.sdk.interapp.AppCallbackHandler
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.utilities.DMELog
-import me.digi.sdk.utilities.DMESessionManager
+import me.digi.sdk.utilities.SessionManager
 import me.digi.sdk.utilities.toMap
 
-class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId: String): AppCallbackHandler() {
+class PostboxConsentManager(val sessionManager: SessionManager, val appId: String): AppCallbackHandler() {
 
-    private var pendingPostboxCallbackHandler: DMEPostboxCreationCompletion? = null
+    private var pendingPostboxCallbackHandler: PostboxCreationCompletion? = null
         set(value) {
             if (field != null && value != null) {
                 field?.invoke(null, AuthError.Cancelled)
@@ -22,11 +22,11 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             field = value
         }
 
-    fun beginPostboxAuthorization(fromActivity: Activity, completion: DMEPostboxCreationCompletion) {
+    fun beginPostboxAuthorization(fromActivity: Activity, completion: PostboxCreationCompletion) {
 
-        DMEAppCommunicator.getSharedInstance().addCallbackHandler(this)
+        AppCommunicator.getSharedInstance().addCallbackHandler(this)
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val ctx = AppCommunicator.getSharedInstance().context
 
         sessionManager.currentSession?.let { session ->
 
@@ -35,9 +35,9 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
                 ctx.getString(R.string.key_app_id) to appId
             )
 
-            val launchIntent = DMEAppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_create_postbox, caParams)
+            val launchIntent = AppCommunicator.getSharedInstance().buildIntentFor(R.string.deeplink_create_postbox, caParams)
             pendingPostboxCallbackHandler = completion
-            DMEAppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
+            AppCommunicator.getSharedInstance().openDigiMeApp(fromActivity, launchIntent)
 
         } ?: run {
             DMELog.e("Your session is invalid, please request a new one.")
@@ -46,7 +46,7 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
     }
 
     override fun canHandle(requestCode: Int, responseCode: Int, data:Intent?): Boolean {
-        val communicator = DMEAppCommunicator.getSharedInstance()
+        val communicator = AppCommunicator.getSharedInstance()
         return (requestCode == communicator.requestCodeForDeeplinkIntentActionId(R.string.deeplink_create_postbox))
     }
 
@@ -55,12 +55,12 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
             // Received no data, Android system failed to start activity.
             DMELog.e("There was a problem launching the consent request activity.")
             pendingPostboxCallbackHandler?.invoke(null, AuthError.General())
-            DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+            AppCommunicator.getSharedInstance().removeCallbackHandler(this)
             pendingPostboxCallbackHandler = null
             return
         }
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val ctx = AppCommunicator.getSharedInstance().context
 
         val params = intent.extras?.toMap() ?: emptyMap()
         val result = params[ctx.getString(R.string.key_result)] as? String
@@ -94,13 +94,13 @@ class DMEPostboxConsentManager(val sessionManager: DMESessionManager, val appId:
 
         val postbox = Data(sessionKey!!, postboxId!!, postboxPublicKey!!)
         pendingPostboxCallbackHandler?.invoke(postbox, error)
-        DMEAppCommunicator.getSharedInstance().removeCallbackHandler(this)
+        AppCommunicator.getSharedInstance().removeCallbackHandler(this)
         pendingPostboxCallbackHandler = null
     }
 
     override fun extractAndAppendMetadata(payload: Map<String, Any>) = sessionManager.currentSession?.let { session ->
 
-        val ctx = DMEAppCommunicator.getSharedInstance().context
+        val ctx = AppCommunicator.getSharedInstance().context
 
         val metadataWhitelistedKeys = listOf(
 

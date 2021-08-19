@@ -10,8 +10,8 @@ import me.digi.sdk.SDKError
 import me.digi.sdk.entities.FileMetadata
 import me.digi.sdk.entities.response.File
 import me.digi.sdk.entities.response.Status
-import me.digi.sdk.utilities.DMECompressor
-import me.digi.sdk.utilities.crypto.DMEDataDecryptor
+import me.digi.sdk.utilities.Compressor
+import me.digi.sdk.utilities.crypto.DataDecryptor
 import java.lang.reflect.Type
 
 class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<File> {
@@ -32,15 +32,15 @@ class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<Fi
         val encryptedBytes: ByteArray = Base64.decode(encryptedContent, Base64.DEFAULT)
 
         val contentBytes: ByteArray =
-            DMEDataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
+            DataDecryptor.dataFromEncryptedBytes(encryptedBytes, privateKeyHex)
 
         val compression: String = try {
             json["compression"].asString
         } catch (e: Throwable) {
-            DMECompressor.COMPRESSION_NONE
+            Compressor.COMPRESSION_NONE
         }
         val decompressedContentBytes: ByteArray =
-            DMECompressor.decompressData(contentBytes, compression)
+            Compressor.decompressData(contentBytes, compression)
 
         return File(String(decompressedContentBytes), status = Status())
     }

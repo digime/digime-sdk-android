@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.SdkAgent
 
-data class DMESessionRequest (
+data class SessionRequest (
 
     @SerializedName("appId")
     val appId: String,

@@ -2,7 +2,7 @@ package me.digi.sdk.entities
 
 import com.google.gson.annotations.SerializedName
 
-data class DMEAccount (
+data class Account (
 
     @SerializedName("id")
     val id: String,

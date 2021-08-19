@@ -3,7 +3,7 @@ package me.digi.sdk.utilities
 import me.digi.sdk.SDKError
 import java.util.zip.GZIPInputStream
 
-object DMECompressor {
+object Compressor {
 
     const val COMPRESSION_NONE = ""
     const val COMPRESSION_GZIP = "gzip"

@@ -5,7 +5,7 @@ import android.util.Base64
 import androidx.test.core.app.ApplicationProvider
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
-import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.crypto.KeyTransformer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -84,7 +84,7 @@ class CryptoUtilitiesSpec {
             """.trimIndent()
 
         val privateKeyBytes = Base64.decode(privateKeyBase64, Base64.DEFAULT)
-        val privateKey = DMEKeyTransformer.javaPrivateKeyFromBytes(privateKeyBytes)
+        val privateKey = KeyTransformer.javaPrivateKeyFromBytes(privateKeyBytes)
 
         val decryptedBytes = CryptoUtilities.decryptRSA(encryptedData, privateKey)
         val decryptedString = String(decryptedBytes, StandardCharsets.UTF_8)

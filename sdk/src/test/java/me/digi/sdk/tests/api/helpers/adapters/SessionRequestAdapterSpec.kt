@@ -8,7 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import me.digi.sdk.api.adapters.SessionRequestAdapter
 import me.digi.sdk.entities.*
-import me.digi.sdk.entities.request.DMESessionRequest
+import me.digi.sdk.entities.request.SessionRequest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class DMESessionRequestAdapterSpec {
+class SessionRequestAdapterSpec {
 
     private var dummyScope: CaScope = CaScope()
     private val mockContext = mockk<JsonSerializationContext>(relaxed = true)
@@ -42,7 +42,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
         val actualResult = SessionRequestAdapter.serialize(
-            DMESessionRequest(
+            SessionRequest(
                 "dummyAppId",
                 "dummyContractId",
                 SdkAgent(),
@@ -68,7 +68,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
         val actualResult = SessionRequestAdapter.serialize(
-            DMESessionRequest(
+            SessionRequest(
                 "dummyAppId",
                 "dummyContractId",
                 SdkAgent(),
@@ -95,7 +95,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
         val actualResult = SessionRequestAdapter.serialize(
-            DMESessionRequest(
+            SessionRequest(
                 "dummyAppId",
                 "dummyContractId",
                 SdkAgent(),
@@ -121,7 +121,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.serviceGroups = serviceGroups
 
         val actualResult = SessionRequestAdapter.serialize(
-            DMESessionRequest(
+            SessionRequest(
                 "dummyAppId",
                 "dummyContractId",
                 SdkAgent(),
@@ -143,7 +143,7 @@ class DMESessionRequestAdapterSpec {
         dummyScope.timeRanges = listOf(TimeRange(null, null, null, "all"))
 
         val actualResult = SessionRequestAdapter.serialize(
-            DMESessionRequest(
+            SessionRequest(
                 "dummyAppId",
                 "dummyContractId",
                 SdkAgent(),

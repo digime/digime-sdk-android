@@ -9,39 +9,37 @@ import me.digi.sdk.R
 import me.digi.sdk.SDKError
 import me.digi.sdk.entities.SdkAgent
 
-
-class DMEAppCommunicator(val context: Context) {
+class AppCommunicator(val context: Context) {
 
     companion object {
 
         // Mem leak warning not an issue as we enforce the context be app context. This is always held in mem anyway.
-        private lateinit var _sharedInstance: DMEAppCommunicator
+        private lateinit var _sharedInstance: AppCommunicator
 
         @JvmStatic
-        fun getSharedInstance(): DMEAppCommunicator {
+        fun getSharedInstance(): AppCommunicator {
             try {
                 return _sharedInstance
-            } catch(error: Throwable) {
+            } catch (error: Throwable) {
                 throw SDKError.CommunicatorNotInitialized()
             }
         }
 
-        fun initializeSharedInstance(context: Context): DMEAppCommunicator {
-            _sharedInstance = DMEAppCommunicator(context)
+        fun initializeSharedInstance(context: Context): AppCommunicator {
+            _sharedInstance = AppCommunicator(context)
             return _sharedInstance
         }
     }
 
     private var callbackHandlers = emptyList<AppCallbackHandler>().toMutableList()
 
-    fun canOpenDMEApp(): Boolean {
+    fun canOpenApp(): Boolean {
         val packageManager = context.packageManager
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 
         return try {
             packageManager.getApplicationInfo(digiMeAppPackageName, 0).enabled
-        }
-        catch (error: Throwable) {
+        } catch (error: Throwable) {
             return false
         }
     }
@@ -53,11 +51,14 @@ class DMEAppCommunicator(val context: Context) {
         val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
 
         try {
-            val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$digiMeAppPackageName"))
+            val playStoreIntent =
+                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$digiMeAppPackageName"))
             from.startActivity(playStoreIntent)
-        }
-        catch (e: Throwable) {
-            val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$digiMeAppPackageName"))
+        } catch (e: Throwable) {
+            val playStoreIntent = Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=$digiMeAppPackageName")
+            )
             from.startActivity(playStoreIntent)
         }
     }
@@ -86,11 +87,15 @@ class DMEAppCommunicator(val context: Context) {
     }
 
     fun openDigiMeApp(fromActivity: Activity, intent: Intent) {
-        fromActivity.startActivityForResult(intent, requestCodeForDeeplinkIntentAction(intent.action.orEmpty()))
+        fromActivity.startActivityForResult(
+            intent,
+            requestCodeForDeeplinkIntentAction(intent.action.orEmpty())
+        )
     }
 
     fun onActivityResult(requestCode: Int, responseCode: Int, data: Intent?) {
-        val availableHandlers = callbackHandlers.filter { it.canHandle(requestCode, responseCode, data) }
+        val availableHandlers =
+            callbackHandlers.filter { it.canHandle(requestCode, responseCode, data) }
         availableHandlers.forEach {
             it.handle(data)
         }
@@ -108,14 +113,16 @@ class DMEAppCommunicator(val context: Context) {
         }
     }
 
-    fun requestCodeForDeeplinkIntentAction(deeplinkIntentAction: String) = when (deeplinkIntentAction) {
-        buildActionFor(R.string.deeplink_consent_access) -> 18450
-        buildActionFor(R.string.deeplink_create_postbox) -> 18451
-        buildActionFor(R.string.deeplink_guest_consent_callback) -> 18452
-        else -> 0
-    }
+    fun requestCodeForDeeplinkIntentAction(deeplinkIntentAction: String) =
+        when (deeplinkIntentAction) {
+            buildActionFor(R.string.deeplink_consent_access) -> 18450
+            buildActionFor(R.string.deeplink_create_postbox) -> 18451
+            buildActionFor(R.string.deeplink_guest_consent_callback) -> 18452
+            else -> 0
+        }
 
-    fun requestCodeForDeeplinkIntentActionId(@StringRes deeplinkIntentActionId: Int) = requestCodeForDeeplinkIntentAction(buildActionFor(deeplinkIntentActionId))
+    fun requestCodeForDeeplinkIntentActionId(@StringRes deeplinkIntentActionId: Int) =
+        requestCodeForDeeplinkIntentAction(buildActionFor(deeplinkIntentActionId))
 
     private fun embeddingAppName(): String {
         val pkgName = context.packageName
@@ -124,8 +131,7 @@ class DMEAppCommunicator(val context: Context) {
 
         return try {
             context.getString(appLabelId)
-        }
-        catch (e: Throwable) {
+        } catch (e: Throwable) {
             "unknown"
         }
     }

@@ -14,7 +14,7 @@ class InstallHandler : BroadcastReceiver() {
 
         fun registerNewInstallHandler(installCallback: () -> Unit): InstallHandler {
             val receiver = InstallHandler()
-            val applicationContext = DMEAppCommunicator.getSharedInstance().context
+            val applicationContext = AppCommunicator.getSharedInstance().context
 
             val filter = IntentFilter(Intent.ACTION_PACKAGE_ADDED)
             filter.addDataScheme("package")
@@ -41,7 +41,7 @@ class InstallHandler : BroadcastReceiver() {
     }
 
     fun unregister() {
-        val applicationContext = DMEAppCommunicator.getSharedInstance().context
+        val applicationContext = AppCommunicator.getSharedInstance().context
         applicationContext.unregisterReceiver(this)
     }
 }

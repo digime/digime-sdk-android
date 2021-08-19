@@ -8,7 +8,7 @@ import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.features.create.view.CreatePostboxFragment
 import me.digi.ongoingpostbox.features.upload.view.UploadContentFragment
 import me.digi.ongoingpostbox.utils.replaceFragment
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import org.koin.android.ext.android.inject
 import kotlin.system.exitProcess
 
@@ -50,6 +50,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }

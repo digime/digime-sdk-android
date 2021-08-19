@@ -1,7 +1,7 @@
 package me.digi.sdk.callbacks
 
 import me.digi.sdk.Error
-import me.digi.sdk.entities.DMEAccount
+import me.digi.sdk.entities.Account
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
@@ -21,12 +21,12 @@ typealias FileListCompletion = (fileList: FileList?, error: Error?) -> Unit
 typealias FileContentCompletion = (file: File?, error: Error?) -> Unit
 
 // TODO: Unused - kinda
-typealias DMEAccountsCompletion = (accounts: List<DMEAccount>?, error: Error?) -> Unit
+typealias AccountsCompletion = (accounts: List<Account>?, error: Error?) -> Unit
 
 typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<String>) -> Unit
 
 // TODO: Unused
-typealias DMESaasOngoingAuthorizationCompletion = (credentials: CredentialsPayload?, error: Error?) -> Unit
+typealias SaasOngoingAuthorizationCompletion = (credentials: CredentialsPayload?, error: Error?) -> Unit
 
 typealias AvailableServicesCompletion = (ServicesResponse?, error: Error?) -> Unit
 

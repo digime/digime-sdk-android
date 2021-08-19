@@ -4,7 +4,7 @@ import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
-import me.digi.sdk.utilities.crypto.DMEKeyTransformer
+import me.digi.sdk.utilities.crypto.KeyTransformer
 import me.digi.sdk.utilities.jwt.JsonWebToken
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -63,7 +63,7 @@ class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
     private fun Request.withRegeneratedJwtNonce(): Request {
         val authHeader = header("Authorization") ?: return this
         val signingKey = (config as? ReadConfiguration)?.privateKeyHex?.let {
-            DMEKeyTransformer.javaPrivateKeyFromHex(it)
+            KeyTransformer.javaPrivateKeyFromHex(it)
         } ?: return this
         val tokenisedJwt = authHeader.split(" ").last()
         val jwt = JsonWebToken(tokenisedJwt)

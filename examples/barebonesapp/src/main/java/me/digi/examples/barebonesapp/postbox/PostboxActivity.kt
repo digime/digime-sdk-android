@@ -12,7 +12,7 @@ import me.digi.sdk.PushClient
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.DataPayload
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.io.IOException
 
@@ -39,7 +39,7 @@ class PostboxActivity : AppCompatActivity() {
         client = PushClient(applicationContext, cfg)
 
         item_postbox_button.setOnClickListener {
-            if(DMEAppCommunicator.getSharedInstance().canOpenDMEApp())
+            if(AppCommunicator.getSharedInstance().canOpenApp())
                 createPostbox()
             else
                 Toast.makeText(this, "Please install digi.me in order to continue", Toast.LENGTH_SHORT).show()
@@ -90,7 +90,7 @@ class PostboxActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 
     private fun displayResults() {

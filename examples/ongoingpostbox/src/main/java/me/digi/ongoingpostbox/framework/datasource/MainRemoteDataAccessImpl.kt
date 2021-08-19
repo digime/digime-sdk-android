@@ -6,11 +6,11 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
+import me.digi.sdk.DigiMe
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.OngoingWriteResponse
-import me.digi.sdk.DigiMe
-import me.digi.sdk.entities.configuration.DigiMeConfiguration
 
 /**
  * Idea behind remote main data access is to isolate
@@ -40,7 +40,7 @@ class MainRemoteDataAccessImpl(
         Single.create { emitter ->
             writeClient.authorizeWriteAccess(
                 activity,
-                data = localDataAccess.getCachedPostbox(),
+                writeDataPayload = localDataAccess.getCachedPostbox(),
                 credentials = localDataAccess.getCachedCredential()
             ) { response, error ->
                 error?.let(emitter::onError)
