@@ -22,7 +22,7 @@ import me.digi.ongoingpostbox.usecases.WriteDataUseCase
 import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 
 /**
  * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
@@ -48,9 +48,9 @@ class MainViewModel(
     val authState: StateFlow<Resource<AuthorizationResponse>>
         get() = _authState
 
-    private val _uploadState: MutableStateFlow<Resource<OngoingWriteResponse>> =
+    private val _uploadState: MutableStateFlow<Resource<DataWriteResponse>> =
         MutableStateFlow(Resource.Idle())
-    val uploadState: StateFlow<Resource<OngoingWriteResponse>>
+    val uploadState: StateFlow<Resource<DataWriteResponse>>
         get() = _uploadState
 
     fun createPostbox(activity: Activity) {

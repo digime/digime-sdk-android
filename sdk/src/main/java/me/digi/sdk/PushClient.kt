@@ -16,7 +16,6 @@ import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.WriteConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.SessionRequest
@@ -248,7 +247,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = WriteDataPayload().copy(
+                            val postboxData = WriteDataInfoPayload().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -291,7 +290,7 @@ class PushClient(
 
     fun authorizeOngoingPostbox(
         fromActivity: Activity,
-        existingPostbox: WriteDataPayload? = null,
+        existingPostbox: WriteDataInfoPayload? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         completion: SaasPostboxOngoingCreationCompletion
@@ -402,7 +401,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = WriteDataPayload().copy(
+                            val postboxData = WriteDataInfoPayload().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -444,7 +443,7 @@ class PushClient(
             }
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: WriteDataPayload? = existingPostbox
+        var activePostbox: WriteDataInfoPayload? = existingPostbox
 
         // First, we request pre-auth code needed for auth consent manager
         requestPreAuthCode()

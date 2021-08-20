@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.WriteDataUseCase
 import me.digi.saas.utils.Resource
 import me.digi.sdk.entities.payload.DataPayload
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 
 class WriteViewModel(private val writeData: WriteDataUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<OngoingWriteResponse>> = MutableStateFlow(Resource.Idle())
-    val state: StateFlow<Resource<OngoingWriteResponse>>
+    private val _state: MutableStateFlow<Resource<DataWriteResponse>> = MutableStateFlow(Resource.Idle())
+    val state: StateFlow<Resource<DataWriteResponse>>
         get() = _state
 
     fun pushDataToPostbox(payload: DataPayload, accessToken: String) {

@@ -16,7 +16,7 @@ import me.digi.saas.framework.utils.AppConst.CACHED_READ_RAW_CONTRACT
 import me.digi.saas.framework.utils.AppConst.CACHED_SESSION_DATA
 import me.digi.saas.framework.utils.AppConst.CONTRACT_PREFS_KEY
 import me.digi.saas.framework.utils.AppConst.SHARED_PREFS_KEY
-import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.WriteDataInfoPayload
 import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.RefreshToken
@@ -76,7 +76,7 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                             /**
                              * Save postbox data
                              */
-                            val postboxData = WriteDataPayload().copy(
+                            val postboxData = WriteDataInfoPayload().copy(
                                 postboxId = response.postboxData?.postboxId,
                                 publicKey = response.postboxData?.publicKey
                             )
@@ -99,10 +99,10 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun getCachedPostbox(): WriteDataPayload? =
+    override fun getCachedPostbox(): WriteDataInfoPayload? =
         context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_DATA, null)?.let {
-                Gson().fromJson(it, WriteDataPayload::class.java)
+                Gson().fromJson(it, WriteDataInfoPayload::class.java)
             }
         }
 

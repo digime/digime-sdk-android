@@ -10,7 +10,7 @@ import me.digi.sdk.DigiMe
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 
 /**
  * Idea behind remote main data access is to isolate
@@ -51,13 +51,13 @@ class MainRemoteDataAccessImpl(
     override fun writeData(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse> = Single.create { emitter ->
+    ): Single<DataWriteResponse> = Single.create { emitter ->
         writeClient.write(
             payload,
             accessToken
         ) { response, error ->
             error?.let(emitter::onError)
-                ?: emitter.onSuccess(response as OngoingWriteResponse)
+                ?: emitter.onSuccess(response as DataWriteResponse)
         }
     }
 }
