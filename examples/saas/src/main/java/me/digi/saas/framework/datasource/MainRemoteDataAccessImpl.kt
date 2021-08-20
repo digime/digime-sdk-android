@@ -8,17 +8,18 @@ import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
+import me.digi.sdk.DigiMe
 import me.digi.sdk.Error
 import me.digi.sdk.entities.DataRequest
+import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileList
 import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
-import me.digi.sdk.DigiMe
-import me.digi.sdk.entities.configuration.DigiMeConfiguration
 
 class MainRemoteDataAccessImpl(
     private val context: Context,
@@ -93,7 +94,7 @@ class MainRemoteDataAccessImpl(
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         Single.create { emitter ->
-            readClient.availableServices() { servicesResponse, error ->
+            readClient.availableServices { servicesResponse, error ->
                 error?.let(emitter::onError)
                     ?: emitter.onSuccess(servicesResponse?.data?.services as List<Service>)
             }
@@ -125,27 +126,27 @@ class MainRemoteDataAccessImpl(
         contractType: String,
         scope: DataRequest?,
         credentials: CredentialsPayload?,
-        serviceId: String?
+        serviceId: String?,
+        writeDataPayload: WriteDataPayload?
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> readClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.pull -> readClient.authorizeReadAccess(
+                    fromActivity = activity,
+                    scope = scope,
+                    credentials = credentials,
+                    serviceId = serviceId
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.push -> writeClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.push -> writeClient.authorizeWriteAccess(
+                    fromActivity = activity,
+                    credentials = credentials,
+                    writeDataPayload = writeDataPayload
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.readRaw -> readRawClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.readRaw -> readRawClient.authorizeReadAccess(
+                    fromActivity = activity,
+                    scope = scope,
+                    credentials = credentials,
+                    serviceId = serviceId
                 ) { response, error -> handleIncomingData(response, error, emitter) }
                 else -> throw IllegalArgumentException("Unknown or empty contract type")
             }
@@ -159,7 +160,7 @@ class MainRemoteDataAccessImpl(
         ?: (if (response != null) emitter.onSuccess(response)
         else emitter.onError(AuthError.General())))
 
-    override fun getFile(fileName: String): Single<File> =
+    override fun getFile(fileName: String): Single<FileItem> =
         Single.create { emitter ->
             readClient.getFileByName(fileId = fileName) { file, error ->
                 error?.let(emitter::onError)

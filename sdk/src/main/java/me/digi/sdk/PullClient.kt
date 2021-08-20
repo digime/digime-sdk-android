@@ -791,7 +791,7 @@ class PullClient(val context: Context, val configuration: ReadConfiguration) : C
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    File().copy(fileContent = String(decompressedContentBytes))
+                    FileItem().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

@@ -18,7 +18,7 @@ typealias ServiceOnboardingCompletion = (error: Error?) -> Unit
 
 typealias FileListCompletion = (fileList: FileList?, error: Error?) -> Unit
 
-typealias FileContentCompletion = (file: File?, error: Error?) -> Unit
+typealias FileContentCompletion = (fileItem: FileItem?, error: Error?) -> Unit
 
 // TODO: Unused - kinda
 typealias AccountsCompletion = (accounts: List<Account>?, error: Error?) -> Unit

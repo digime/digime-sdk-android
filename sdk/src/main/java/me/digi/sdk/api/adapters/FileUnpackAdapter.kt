@@ -8,19 +8,19 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.SDKError
 import me.digi.sdk.entities.FileMetadata
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.Status
 import me.digi.sdk.utilities.Compressor
 import me.digi.sdk.utilities.crypto.DataDecryptor
 import java.lang.reflect.Type
 
-class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<File> {
+class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<FileItem> {
 
     override fun deserialize(
         json: JsonElement?,
         typeOfT: Type?,
         context: JsonDeserializationContext?
-    ): File {
+    ): FileItem {
 
         if (json !is JsonObject || context == null) {
             throw SDKError.InvalidData()
@@ -42,7 +42,7 @@ class FileUnpackAdapter(private val privateKeyHex: String) : JsonDeserializer<Fi
         val decompressedContentBytes: ByteArray =
             Compressor.decompressData(contentBytes, compression)
 
-        return File(String(decompressedContentBytes), status = Status())
+        return FileItem(String(decompressedContentBytes), status = Status())
     }
 
     private fun extractMetadata(

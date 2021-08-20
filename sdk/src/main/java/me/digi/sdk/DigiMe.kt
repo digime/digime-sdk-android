@@ -82,51 +82,6 @@ class DigiMe(
 
     private var stalePollCount = 0
 
-    // TODO: Maybe to remove
-    /**
-     *
-     */
-    fun authorizeAccess(
-        fromActivity: Activity,
-        scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null,
-        serviceId: String? = null,
-        completion: GetAuthorizationDoneCompletion
-    ) {
-        requestPreAuthorizationCode(credentials, scope)
-            .compose(requestConsentAccess(fromActivity, serviceId))
-            .compose(requestTokenExchange())
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { result: GetTokenExchangeDone ->
-                    sessionManager.updatedSession = result.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = result.consentData.session.key,
-                        postboxData = WriteDataPayload(
-                            postboxId = result.consentData.consentResponse.postboxId,
-                            publicKey = result.consentData.consentResponse.publicKey
-                        ),
-                        credentials = Credentials(
-                            result.credentials.accessToken.value,
-                            result.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? Error }
-                            ?: APIError.ErrorWithMessage(
-                                error.localizedMessage ?: "Unknown error occurred"
-                            ))
-                }
-            )
-    }
-
     /**
      * Authorizes the contract configured with this digi.me instance to access to a library.
      *
@@ -654,9 +609,8 @@ class DigiMe(
             })
     }
 
-    // TODO: Maybe to remove?
     /**
-     * Probably to remove
+     * 
      */
     fun getFileByName(fileId: String, completion: FileContentCompletion) {
 
@@ -683,7 +637,7 @@ class DigiMe(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    File().copy(fileContent = String(decompressedContentBytes))
+                    FileItem().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -704,7 +658,6 @@ class DigiMe(
         }
     }
 
-    // TODO: Maybe to make private?
     /**
      *
      */
@@ -746,7 +699,7 @@ class DigiMe(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    File().copy(fileContent = String(decompressedContentBytes))
+                    FileItem().copy(fileContent = String(decompressedContentBytes))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

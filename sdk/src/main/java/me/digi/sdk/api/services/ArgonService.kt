@@ -26,7 +26,7 @@ internal interface ArgonService {
     fun getFile(
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
-    ): Call<File>
+    ): Call<FileItem>
 
     @Headers("Accept: application/octet-stream")
     @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")

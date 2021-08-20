@@ -18,7 +18,7 @@ import me.digi.sdk.api.services.ArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.ReadConfiguration
 import me.digi.sdk.entities.request.SessionRequest
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -84,7 +84,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
             })
         if (clientConfig is ReadConfiguration) {
             gsonBuilder.registerTypeAdapter(
-                File::class.java,
+                FileItem::class.java,
                 FileUnpackAdapter(clientConfig.privateKeyHex)
             )
         }

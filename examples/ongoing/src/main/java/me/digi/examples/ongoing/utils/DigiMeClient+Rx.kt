@@ -7,7 +7,7 @@ import me.digi.sdk.AuthError
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.DigiMe
 
 fun DigiMe.authorizeOngoingAccess(
@@ -23,7 +23,7 @@ fun DigiMe.authorizeOngoingAccess(
     }
 }
 
-fun DigiMe.getSessionData(): Observable<File> = Observable.create { emitter ->
+fun DigiMe.getSessionData(): Observable<FileItem> = Observable.create { emitter ->
     readFiles({ file, error -> file?.let { emitter.onNext(it) } }) { fileList, error ->
         error?.let {
             emitter.onError(it)

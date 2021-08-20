@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.GetFileUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 
 class DetailsViewModel(private val getFile: GetFileUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<File>> = MutableStateFlow(Resource.Loading())
-    val state: StateFlow<Resource<File>>
+    private val _state: MutableStateFlow<Resource<FileItem>> = MutableStateFlow(Resource.Loading())
+    val state: StateFlow<Resource<FileItem>>
         get() = _state
 
     fun getFileByName(fileName: String) {

@@ -5,7 +5,7 @@ import com.google.gson.JsonElement
 
 data class Status(val state: String = "")
 
-data class File(
+data class FileItem(
     val fileContent: String? = "",
     val status: Status = Status()
 ) {

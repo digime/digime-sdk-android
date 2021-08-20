@@ -4,17 +4,19 @@ import android.content.Context
 import com.google.gson.Gson
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.saas.data.localaccess.MainLocalDataAccess
-import me.digi.saas.entities.AuthData
 import me.digi.saas.entities.ContractHandler
+import me.digi.saas.entities.LocalSession
 import me.digi.saas.framework.utils.AppConst.CACHED_APP_ID
-import me.digi.saas.framework.utils.AppConst.CACHED_AUTH_DATA
 import me.digi.saas.framework.utils.AppConst.CACHED_BASE_URL
 import me.digi.saas.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
+import me.digi.saas.framework.utils.AppConst.CACHED_POSTBOX_DATA
 import me.digi.saas.framework.utils.AppConst.CACHED_PUSH_CONTRACT
 import me.digi.saas.framework.utils.AppConst.CACHED_READ_CONTRACT
 import me.digi.saas.framework.utils.AppConst.CACHED_READ_RAW_CONTRACT
+import me.digi.saas.framework.utils.AppConst.CACHED_SESSION_DATA
 import me.digi.saas.framework.utils.AppConst.CONTRACT_PREFS_KEY
 import me.digi.saas.framework.utils.AppConst.SHARED_PREFS_KEY
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.RefreshToken
@@ -61,33 +63,53 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
         SingleTransformer<AuthorizationResponse, AuthorizationResponse> {
             it.map { response ->
                 response?.apply {
-                    context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).edit().run {
+                    context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).edit()
+                        .run {
 
-                        val data = AuthData().copy(
-                            sessionKey = response.sessionKey,
-                            postboxId = response.postboxData?.postboxId,
-                            publicKey = response.postboxData?.publicKey
-                        )
-                        val encodedData = Gson().toJson(data)
-                        putString(CACHED_AUTH_DATA, encodedData)
+                            /**
+                             * Save session key
+                             */
+                            val sessionData = LocalSession().copy(sessionKey = response.sessionKey)
+                            val encodedLocalSession = Gson().toJson(sessionData)
+                            putString(CACHED_SESSION_DATA, encodedLocalSession)
 
-                        val accessToken = CredentialsPayload().copy(
-                            accessToken = AccessToken(value = response.credentials?.accessToken),
-                            refreshToken = RefreshToken(value = response.credentials?.refreshToken)
-                        )
-                        val encodedAccessToken = Gson().toJson(accessToken)
-                        putString(CACHED_CREDENTIAL_KEY, encodedAccessToken)
+                            /**
+                             * Save postbox data
+                             */
+                            val postboxData = WriteDataPayload().copy(
+                                postboxId = response.postboxData?.postboxId,
+                                publicKey = response.postboxData?.publicKey
+                            )
+                            val encodedLocalPostbox = Gson().toJson(postboxData)
+                            putString(CACHED_POSTBOX_DATA, encodedLocalPostbox)
 
-                        apply()
-                    }
+                            /**
+                             * Save credentials data
+                             */
+                            val credentials = CredentialsPayload().copy(
+                                accessToken = AccessToken(value = response.credentials?.accessToken),
+                                refreshToken = RefreshToken(value = response.credentials?.refreshToken)
+                            )
+                            val encodedCredentials = Gson().toJson(credentials)
+                            putString(CACHED_CREDENTIAL_KEY, encodedCredentials)
+
+                            apply()
+                        }
                 }
             }
         }
 
-    override fun getCachedAuthData(): AuthData? =
+    override fun getCachedPostbox(): WriteDataPayload? =
         context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
-            getString(CACHED_AUTH_DATA, null)?.let {
-                Gson().fromJson(it, AuthData::class.java)
+            getString(CACHED_POSTBOX_DATA, null)?.let {
+                Gson().fromJson(it, WriteDataPayload::class.java)
+            }
+        }
+
+    override fun getCachedSession(): LocalSession? =
+        context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
+            getString(CACHED_SESSION_DATA, null)?.let {
+                Gson().fromJson(it, LocalSession::class.java)
             }
         }
 

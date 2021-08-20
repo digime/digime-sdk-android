@@ -5,7 +5,7 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.File
+import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileList
 import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
@@ -31,8 +31,8 @@ interface MainRepository {
         activity: Activity,
         contractType: String,
         scope: DataRequest?,
-        serviceId: String?
+        serviceId: String?,
     ): Single<AuthorizationResponse>
 
-    fun getFile(fileName: String): Single<File>
+    fun getFile(fileName: String): Single<FileItem>
 }
