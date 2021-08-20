@@ -10,15 +10,15 @@ import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
 import me.digi.sdk.DigiMe
 import me.digi.sdk.Error
+import me.digi.sdk.entities.DataPayload
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.WriteDataInfoPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileList
-import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
 
 class MainRemoteDataAccessImpl(
@@ -103,14 +103,14 @@ class MainRemoteDataAccessImpl(
     override fun pushDataToPostbox(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse> =
+    ): Single<DataWriteResponse> =
         Single.create { emitter ->
             writeClient.write(
                 payload,
                 accessToken
-            ) { response: OngoingWriteResponse?, error ->
+            ) { response: DataWriteResponse?, error ->
                 error?.let(emitter::onError)
-                    ?: emitter.onSuccess(response as OngoingWriteResponse)
+                    ?: emitter.onSuccess(response as DataWriteResponse)
             }
         }
 
@@ -127,7 +127,7 @@ class MainRemoteDataAccessImpl(
         scope: DataRequest?,
         credentials: CredentialsPayload?,
         serviceId: String?,
-        writeDataPayload: WriteDataPayload?
+        data: WriteDataInfoPayload?
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
@@ -140,7 +140,7 @@ class MainRemoteDataAccessImpl(
                 ContractType.push -> writeClient.authorizeWriteAccess(
                     fromActivity = activity,
                     credentials = credentials,
-                    writeDataPayload = writeDataPayload
+                    data = data
                 ) { response, error -> handleIncomingData(response, error, emitter) }
                 ContractType.readRaw -> readRawClient.authorizeReadAccess(
                     fromActivity = activity,

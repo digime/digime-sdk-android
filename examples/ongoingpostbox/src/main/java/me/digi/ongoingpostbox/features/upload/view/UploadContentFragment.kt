@@ -24,11 +24,11 @@ import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.WriteDataInfoPayload
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -91,7 +91,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
         }
 
         lifecycleScope.launchWhenResumed {
-            viewModel.uploadState.collectLatest { result: Resource<OngoingWriteResponse> ->
+            viewModel.uploadState.collectLatest { result: Resource<DataWriteResponse> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -177,7 +177,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
 
             val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
             val session: LocalSession = localAccess.getCachedSession()!!
-            val postboxData: WriteDataPayload = localAccess.getCachedPostbox()!!
+            val postboxData: WriteDataInfoPayload = localAccess.getCachedPostbox()!!
 
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")

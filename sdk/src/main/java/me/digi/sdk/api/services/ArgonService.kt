@@ -61,7 +61,7 @@ internal interface ArgonService {
         @Path("id") id: String,
         @Part file: MultipartBody.Part,
         @Part("file") description: RequestBody
-    ): Single<OngoingWriteResponse>
+    ): Single<DataWriteResponse>
 
     @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>

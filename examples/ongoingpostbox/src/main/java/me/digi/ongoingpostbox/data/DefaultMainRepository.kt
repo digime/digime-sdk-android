@@ -6,7 +6,7 @@ import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 
 /**
  * This is our main repository (only one too!)
@@ -30,5 +30,5 @@ class DefaultMainRepository(
     override fun writeData(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse> = remoteAccess.writeData(payload, accessToken)
+    ): Single<DataWriteResponse> = remoteAccess.writeData(payload, accessToken)
 }

@@ -18,7 +18,6 @@ import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
 import me.digi.sdk.entities.payload.TokenReferencePayload
 import me.digi.sdk.entities.request.*
@@ -38,11 +37,14 @@ class DigiMe(
 ) : Client(context = context, config = configuration) {
 
     private val authorizeConsentManager: SaasConsentManager by lazy {
-        SaasConsentManager(configuration.baseUrl, "authorize")
+        SaasConsentManager(configuration.baseUrl, context.getString(R.string.labelSaasAuthorize))
     }
 
     private val onboardConsentManager: SaasConsentManager by lazy {
-        SaasConsentManager(configuration.baseUrl, type = "onboard")
+        SaasConsentManager(
+            configuration.baseUrl,
+            type = context.getString(R.string.labelSaasOnboarding)
+        )
     }
 
     private var activeFileDownloadHandler: FileContentCompletion? = null
@@ -91,18 +93,18 @@ class DigiMe(
      * (which may require user consent again)
      *
      * @param data Data to reference same write access point.
-     * @param credentials Credentials used to reference the same library if one is not created
+     * @param credentials Credentials used to reference the same library if one is not created.
      * @param completion Block called upon authorization with any errors encountered.
      */
     fun authorizeWriteAccess(
         fromActivity: Activity,
-        writeDataPayload: WriteDataPayload? = null,
+        data: WriteDataInfoPayload? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activeData: WriteDataPayload? = writeDataPayload
+        var activeData: WriteDataInfoPayload? = data
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -128,7 +130,7 @@ class DigiMe(
                     .compose(requestTokenExchange())
                     .doOnSuccess { tokenExchangeResponse ->
                         activeCredentials = tokenExchangeResponse.credentials
-                        activeData = WriteDataPayload(
+                        activeData = WriteDataInfoPayload(
                             postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
                             publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
                         )
@@ -152,7 +154,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = it.consentData.session.key,
-                        postboxData = WriteDataPayload(
+                        postboxData = WriteDataInfoPayload(
                             postboxId = it.consentData.consentResponse.postboxId,
                             publicKey = it.consentData.consentResponse.publicKey
                         ),
@@ -199,7 +201,7 @@ class DigiMe(
      * @param serviceId Identifier of initial service to add. Only valid for first
      * authorization of read contracts where user has not previously granted consent.
      * Ignored for all subsequent calls.
-     * @param credentials Credentials used to reference the same library if one is not created
+     * @param credentials Credentials used to reference the same library if one is not created.
      * @param completion Block called upon authorization with any errors encountered.
      */
     fun authorizeReadAccess(
@@ -281,7 +283,8 @@ class DigiMe(
      * then 'deleteUser' will also need to be called on those contracts to remove
      * any stored credentials, in which case an error may be reported on those calls.
      *
-     * @param completion block called on completion with any error encountered
+     * @param completion Block called on completion with value true/false upon library deletion
+     * or any error encountered
      */
     fun deleteUser(
         accessToken: String?,
@@ -332,14 +335,15 @@ class DigiMe(
      *
      * @param data The data to be written
      * @param accessToken Token to reference the existing library
-     * @param completion Block called when writing data has completed. Contains ...
+     * @param completion Block called on completion with updated/returned session values with
+     * delivery status or any error encountered.
      */
     fun write(
         data: DataPayload?,
         accessToken: String,
         completion: OngoingWriteCompletion
     ) {
-        DMELog.i("Initializing push data to postbox.")
+        DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
         val activeData = data as DataPayload
 
@@ -610,7 +614,10 @@ class DigiMe(
     }
 
     /**
-     * 
+     * Get a file content by file ID.
+     *
+     * @param fileId ID for specific file
+     * @param completion Block called upon completion with either file or any errors encountered.
      */
     fun getFileByName(fileId: String, completion: FileContentCompletion) {
 
@@ -659,7 +666,10 @@ class DigiMe(
     }
 
     /**
+     * Get list of possible files from the users library.
      *
+     * @param completion Block called upon completion with either list of files in the library;
+     * returned as json objects, or any errors encountered.
      */
     fun getFileList(completion: FileListCompletion) {
 

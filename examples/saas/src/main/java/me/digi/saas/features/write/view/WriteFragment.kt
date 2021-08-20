@@ -17,9 +17,9 @@ import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.WriteDataInfoPayload
 import me.digi.sdk.entities.payload.DataPayload
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -42,7 +42,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     private fun handlePayload() {
 
         val session: LocalSession = localAccess.getCachedSession()!!
-        val postboxData: WriteDataPayload = localAccess.getCachedPostbox()!!
+        val postboxData: WriteDataInfoPayload = localAccess.getCachedPostbox()!!
 
         val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
         val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
@@ -61,7 +61,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collectLatest { result: Resource<OngoingWriteResponse> ->
+            viewModel.state.collectLatest { result: Resource<DataWriteResponse> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */

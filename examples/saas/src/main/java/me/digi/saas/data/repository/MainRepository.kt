@@ -7,7 +7,7 @@ import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileList
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 import me.digi.sdk.entities.service.Service
 
 interface MainRepository {
@@ -23,7 +23,7 @@ interface MainRepository {
     fun pushDataToPostbox(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse>
+    ): Single<DataWriteResponse>
 
     fun deleteUsersLibrary(): Single<Boolean>
 

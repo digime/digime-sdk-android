@@ -3,13 +3,13 @@ package me.digi.ongoingpostbox.usecases
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.MainRepository
 import me.digi.sdk.entities.payload.DataPayload
-import me.digi.sdk.entities.response.OngoingWriteResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 
 interface WriteDataUseCase {
     operator fun invoke(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse>
+    ): Single<DataWriteResponse>
 }
 
 class WriteDataUseCaseImpl(private val repository: MainRepository) : WriteDataUseCase {
@@ -17,6 +17,6 @@ class WriteDataUseCaseImpl(private val repository: MainRepository) : WriteDataUs
     override fun invoke(
         payload: DataPayload,
         accessToken: String
-    ): Single<OngoingWriteResponse> =
+    ): Single<DataWriteResponse> =
         repository.writeData(payload, accessToken)
 }
