@@ -7,25 +7,26 @@ import io.reactivex.rxjava3.core.SingleEmitter
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
-import me.digi.sdk.DMEAuthError
-import me.digi.sdk.DMEError
+import me.digi.sdk.AuthError
+import me.digi.sdk.DigiMe
+import me.digi.sdk.Error
 import me.digi.sdk.entities.DataRequest
+import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.FileItem
+import me.digi.sdk.entities.response.FileList
+import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
-import me.digi.sdk.unify.DigiMeClient
-import me.digi.sdk.unify.DigiMeConfiguration
 
 class MainRemoteDataAccessImpl(
     private val context: Context,
     private val localAccess: MainLocalDataAccess
 ) : MainRemoteDataAccess {
 
-    private val readClient: DigiMeClient by lazy {
+    private val readClient: DigiMe by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
@@ -35,10 +36,10 @@ class MainRemoteDataAccessImpl(
 
         configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
-        DigiMeClient(context, configuration)
+        DigiMe(context, configuration)
     }
 
-    private val writeClient: DigiMeClient by lazy {
+    private val writeClient: DigiMe by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
@@ -48,10 +49,10 @@ class MainRemoteDataAccessImpl(
 
         configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
-        DigiMeClient(context, configuration)
+        DigiMe(context, configuration)
     }
 
-    private val readRawClient: DigiMeClient by lazy {
+    private val readRawClient: DigiMe by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
@@ -61,7 +62,7 @@ class MainRemoteDataAccessImpl(
 
         configuration.baseUrl = localAccess.getCachedBaseUrl()!!
 
-        DigiMeClient(context, configuration)
+        DigiMe(context, configuration)
     }
 
     override fun onboardService(
@@ -70,46 +71,46 @@ class MainRemoteDataAccessImpl(
         accessToken: String
     ): Single<Boolean> =
         Single.create { emitter ->
-            readClient.onboardService(activity, serviceId, accessToken) { error ->
+            readClient.addService(activity, serviceId, accessToken) { error ->
                 error?.let(emitter::onError) ?: emitter.onSuccess(true)
             }
         }
 
-    override fun getFileList(): Single<DMEFileList> = Single.create { emitter ->
-        readClient.getFileList { fileList: DMEFileList?, error ->
+    override fun getFileList(): Single<FileList> = Single.create { emitter ->
+        readClient.getFileList { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
-                else emitter.onError(DMEAuthError.General()))
+                else emitter.onError(AuthError.General()))
         }
     }
 
-    override fun getRawFileList(): Single<DMEFileList> = Single.create { emitter ->
-        readRawClient.getFileList { fileList: DMEFileList?, error ->
+    override fun getRawFileList(): Single<FileList> = Single.create { emitter ->
+        readRawClient.getFileList { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
-                else emitter.onError(DMEAuthError.General()))
+                else emitter.onError(AuthError.General()))
         }
     }
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         Single.create { emitter ->
-            readClient.getServicesForContractId(contractId) { servicesResponse, error ->
+            readClient.availableServices { servicesResponse, error ->
                 error?.let(emitter::onError)
                     ?: emitter.onSuccess(servicesResponse?.data?.services as List<Service>)
             }
         }
 
     override fun pushDataToPostbox(
-        payload: DMEPushPayload,
+        payload: DataPayload,
         accessToken: String
-    ): Single<SaasOngoingPushResponse> =
+    ): Single<OngoingWriteResponse> =
         Single.create { emitter ->
-            writeClient.writeData(
+            writeClient.write(
                 payload,
                 accessToken
-            ) { response: SaasOngoingPushResponse?, error ->
+            ) { response: OngoingWriteResponse?, error ->
                 error?.let(emitter::onError)
-                    ?: emitter.onSuccess(response as SaasOngoingPushResponse)
+                    ?: emitter.onSuccess(response as OngoingWriteResponse)
             }
         }
 
@@ -125,27 +126,27 @@ class MainRemoteDataAccessImpl(
         contractType: String,
         scope: DataRequest?,
         credentials: CredentialsPayload?,
-        serviceId: String?
+        serviceId: String?,
+        writeDataPayload: WriteDataPayload?
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> readClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.pull -> readClient.authorizeReadAccess(
+                    fromActivity = activity,
+                    scope = scope,
+                    credentials = credentials,
+                    serviceId = serviceId
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.push -> writeClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.push -> writeClient.authorizeWriteAccess(
+                    fromActivity = activity,
+                    credentials = credentials,
+                    writeDataPayload = writeDataPayload
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.readRaw -> readRawClient.authorizeAccess(
-                    activity,
-                    scope,
-                    credentials,
-                    serviceId
+                ContractType.readRaw -> readRawClient.authorizeReadAccess(
+                    fromActivity = activity,
+                    scope = scope,
+                    credentials = credentials,
+                    serviceId = serviceId
                 ) { response, error -> handleIncomingData(response, error, emitter) }
                 else -> throw IllegalArgumentException("Unknown or empty contract type")
             }
@@ -153,17 +154,17 @@ class MainRemoteDataAccessImpl(
 
     private fun handleIncomingData(
         response: AuthorizationResponse?,
-        error: DMEError?,
+        error: Error?,
         emitter: SingleEmitter<AuthorizationResponse>
     ) = (error?.let(emitter::onError)
         ?: (if (response != null) emitter.onSuccess(response)
-        else emitter.onError(DMEAuthError.General())))
+        else emitter.onError(AuthError.General())))
 
-    override fun getFile(fileName: String): Single<DMEFile> =
+    override fun getFile(fileName: String): Single<FileItem> =
         Single.create { emitter ->
             readClient.getFileByName(fileId = fileName) { file, error ->
                 error?.let(emitter::onError)
-                    ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(DMEAuthError.General()))
+                    ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(AuthError.General()))
             }
         }
 }

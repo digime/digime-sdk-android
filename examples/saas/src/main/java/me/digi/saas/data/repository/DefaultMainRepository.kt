@@ -5,11 +5,11 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DMEFile
-import me.digi.sdk.entities.response.DMEFileList
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
+import me.digi.sdk.entities.response.FileItem
+import me.digi.sdk.entities.response.FileList
+import me.digi.sdk.entities.response.OngoingWriteResponse
 import me.digi.sdk.entities.service.Service
 
 class DefaultMainRepository(
@@ -17,9 +17,9 @@ class DefaultMainRepository(
     private val localAccess: MainLocalDataAccess
 ) : MainRepository {
 
-    override fun getFileList(): Single<DMEFileList> = remoteAccess.getFileList()
+    override fun getFileList(): Single<FileList> = remoteAccess.getFileList()
 
-    override fun getRawFileList(): Single<DMEFileList> = remoteAccess.getRawFileList()
+    override fun getRawFileList(): Single<FileList> = remoteAccess.getRawFileList()
 
     override fun onboardService(
         activity: Activity,
@@ -31,9 +31,9 @@ class DefaultMainRepository(
         remoteAccess.getServicesForContract(contractId)
 
     override fun pushDataToPostbox(
-        payload: DMEPushPayload,
+        payload: DataPayload,
         accessToken: String
-    ): Single<SaasOngoingPushResponse> =
+    ): Single<OngoingWriteResponse> =
         remoteAccess.pushDataToPostbox(payload, accessToken)
 
     override fun deleteUsersLibrary(): Single<Boolean> =
@@ -51,10 +51,11 @@ class DefaultMainRepository(
                 contractType,
                 scope,
                 localAccess.getCachedCredential(),
-                serviceId
+                serviceId,
+                localAccess.getCachedPostbox()
             )
             .compose(localAccess.cacheAuthorizationData())
 
-    override fun getFile(fileName: String): Single<DMEFile> =
+    override fun getFile(fileName: String): Single<FileItem> =
         remoteAccess.getFile(fileName)
 }

@@ -8,16 +8,16 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
-import me.digi.sdk.DMEPushClient
+import me.digi.sdk.PushClient
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
-import me.digi.sdk.entities.payload.DMEPushPayload
-import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.interapp.AppCommunicator
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.io.IOException
 
 class PostboxActivity : AppCompatActivity() {
-    private lateinit var client: DMEPushClient
+    private lateinit var client: PushClient
     private lateinit var cfg: WriteConfiguration
     private lateinit var pk: String
 
@@ -25,7 +25,7 @@ class PostboxActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.postbox_activity_layout)
 
-        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+        pk = CryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename),
             applicationContext.getString(R.string.digime_p12_password)
         )
@@ -36,10 +36,10 @@ class PostboxActivity : AppCompatActivity() {
             pk
         )
 
-        client = DMEPushClient(applicationContext, cfg)
+        client = PushClient(applicationContext, cfg)
 
         item_postbox_button.setOnClickListener {
-            if(DMEAppCommunicator.getSharedInstance().canOpenDMEApp())
+            if(AppCommunicator.getSharedInstance().canOpenApp())
                 createPostbox()
             else
                 Toast.makeText(this, "Please install digi.me in order to continue", Toast.LENGTH_SHORT).show()
@@ -56,7 +56,7 @@ class PostboxActivity : AppCompatActivity() {
                 val metadata = getFileContent("metadatapng.json")
 
                 client.pushDataToPostbox(
-                    DMEPushPayload(
+                    DataPayload(
                         dmePostbox,
                         metadata,
                         fileContent,
@@ -90,7 +90,7 @@ class PostboxActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 
     private fun displayResults() {

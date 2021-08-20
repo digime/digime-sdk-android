@@ -6,14 +6,14 @@ import android.text.method.ScrollingMovementMethod
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.ca_flow.*
-import me.digi.sdk.DMEPullClient
+import me.digi.sdk.PullClient
 import me.digi.sdk.entities.CaScope
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.interapp.AppCommunicator
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 
 class CaFlow : AppCompatActivity() {
-    private lateinit var client: DMEPullClient
+    private lateinit var client: PullClient
     private lateinit var pk: String
     private lateinit var cfg: ReadConfiguration
     private var test : CaScope? = null
@@ -27,7 +27,7 @@ class CaFlow : AppCompatActivity() {
             test = gson.fromJson<CaScope>(intent.getStringExtra("DMEScope"), CaScope::class.java)
         }
 
-        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+        pk = CryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename)
         )
 
@@ -61,7 +61,7 @@ class CaFlow : AppCompatActivity() {
 
     private fun shareViaDigiMe() {
 //        cfg.baseUrl = "https://api.development.devdigi.me/"
-        client = DMEPullClient(applicationContext, cfg)
+        client = PullClient(applicationContext, cfg)
         cfg.guestEnabled = true
 
         //        val serviceObjectTypes: List<DMEServiceObjectType> = mutableListOf()
@@ -143,6 +143,6 @@ class CaFlow : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 }

@@ -6,11 +6,11 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.entities.payload.DMEPushPayload
+import me.digi.sdk.DigiMe
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
+import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.SaasOngoingPushResponse
-import me.digi.sdk.unify.DigiMeClient
-import me.digi.sdk.unify.DigiMeConfiguration
+import me.digi.sdk.entities.response.OngoingWriteResponse
 
 /**
  * Idea behind remote main data access is to isolate
@@ -23,7 +23,7 @@ class MainRemoteDataAccessImpl(
     private val localDataAccess: MainLocalDataAccess
 ) : MainRemoteDataAccess {
 
-    private val writeClient: DigiMeClient by lazy {
+    private val writeClient: DigiMe by lazy {
 
         val configuration = DigiMeConfiguration(
             context.getString(R.string.digime_application_id),
@@ -33,14 +33,14 @@ class MainRemoteDataAccessImpl(
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
 
-        DigiMeClient(context, configuration)
+        DigiMe(context, configuration)
     }
 
     override fun authorizeAccess(activity: Activity): Single<AuthorizationResponse> =
         Single.create { emitter ->
-            writeClient.authorizeOngoingWriteAccess(
+            writeClient.authorizeWriteAccess(
                 activity,
-                postbox = localDataAccess.getCachedPostbox(),
+                writeDataPayload = localDataAccess.getCachedPostbox(),
                 credentials = localDataAccess.getCachedCredential()
             ) { response, error ->
                 error?.let(emitter::onError)
@@ -49,15 +49,15 @@ class MainRemoteDataAccessImpl(
         }
 
     override fun writeData(
-        payload: DMEPushPayload,
+        payload: DataPayload,
         accessToken: String
-    ): Single<SaasOngoingPushResponse> = Single.create { emitter ->
-        writeClient.writeData(
+    ): Single<OngoingWriteResponse> = Single.create { emitter ->
+        writeClient.write(
             payload,
             accessToken
         ) { response, error ->
             error?.let(emitter::onError)
-                ?: emitter.onSuccess(response as SaasOngoingPushResponse)
+                ?: emitter.onSuccess(response as OngoingWriteResponse)
         }
     }
 }

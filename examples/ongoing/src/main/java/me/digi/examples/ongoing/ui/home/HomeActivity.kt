@@ -9,7 +9,7 @@ import me.digi.examples.ongoing.service.DigiMeService
 import me.digi.examples.ongoing.ui.home.fragments.ConnectToDigimeFragment
 import me.digi.examples.ongoing.ui.home.fragments.ResultsFragment
 import me.digi.ongoing.R
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.interapp.AppCommunicator
 import kotlin.system.exitProcess
 
 class HomeActivity : BaseActivity(R.layout.activity_home) {
@@ -52,7 +52,7 @@ class HomeActivity : BaseActivity(R.layout.activity_home) {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 
     fun proceedToResultsFragment() {

@@ -8,13 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.consent_access_activity_layout.*
 import me.digi.examples.barebonesapp.R
 import me.digi.examples.barebonesapp.util.ConsentAccessInProgress
-import me.digi.sdk.DMEPullClient
+import me.digi.sdk.PullClient
 import me.digi.sdk.entities.configuration.ReadConfiguration
-import me.digi.sdk.interapp.DMEAppCommunicator
-import me.digi.sdk.utilities.crypto.DMECryptoUtilities
+import me.digi.sdk.interapp.AppCommunicator
+import me.digi.sdk.utilities.crypto.CryptoUtilities
 
 class ConsentAccessActivity : AppCompatActivity() {
-    private lateinit var client: DMEPullClient
+    private lateinit var client: PullClient
     private lateinit var pk: String
     private lateinit var cfg: ReadConfiguration
 
@@ -22,7 +22,7 @@ class ConsentAccessActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.consent_access_activity_layout)
 
-        pk = DMECryptoUtilities(applicationContext).privateKeyHexFrom(
+        pk = CryptoUtilities(applicationContext).privateKeyHexFrom(
             applicationContext.getString(R.string.digime_p12_filename),
             applicationContext.getString(R.string.digime_p12_password)
         )
@@ -40,7 +40,7 @@ class ConsentAccessActivity : AppCompatActivity() {
     }
 
     private fun shareViaDigiMe() {
-        client = DMEPullClient(applicationContext, cfg)
+        client = PullClient(applicationContext, cfg)
         client.authorize(this) { session, error ->
             session?.let {
                 client.getSessionData({ file, error ->
@@ -63,7 +63,7 @@ class ConsentAccessActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
     }
 
     private fun displayReceiving() {
