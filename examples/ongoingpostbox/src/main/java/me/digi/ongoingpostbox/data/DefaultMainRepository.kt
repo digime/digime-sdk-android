@@ -4,7 +4,7 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 
@@ -28,7 +28,7 @@ class DefaultMainRepository(
             .compose(localAccess.cacheAuthorizationData())
 
     override fun writeData(
-        payload: DataPayload,
+        payload: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> = remoteAccess.writeData(payload, accessToken)
 }

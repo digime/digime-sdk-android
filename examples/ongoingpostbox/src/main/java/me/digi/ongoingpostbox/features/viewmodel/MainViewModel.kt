@@ -20,7 +20,7 @@ import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCase
 import me.digi.ongoingpostbox.usecases.WriteDataUseCase
 import me.digi.ongoingpostbox.utils.Resource
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 
@@ -67,7 +67,7 @@ class MainViewModel(
             .addTo(disposable)
     }
 
-    fun pushDataToPostbox(payload: DataPayload, accessToken: String) {
+    fun pushDataToPostbox(payload: WriteDataPayload, accessToken: String) {
         _uploadState.value = Resource.Loading()
 
         uploadData

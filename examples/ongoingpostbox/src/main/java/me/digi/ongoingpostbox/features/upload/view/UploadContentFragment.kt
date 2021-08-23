@@ -25,8 +25,8 @@ import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.WriteDataInfo
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
@@ -188,7 +188,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     postboxId = postboxData.postboxId,
                     publicKey = postboxData.publicKey
                 )
-            val payload = DataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
+            val payload = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
 
             btnUploadImage?.setOnClickListener {
                 viewModel.pushDataToPostbox(payload, credentials.accessToken.value!!)

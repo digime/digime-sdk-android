@@ -7,8 +7,8 @@ import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.DigiMe
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 
@@ -40,7 +40,7 @@ class MainRemoteDataAccessImpl(
         Single.create { emitter ->
             writeClient.authorizeWriteAccess(
                 activity,
-                writeDataPayload = localDataAccess.getCachedPostbox(),
+                data = localDataAccess.getCachedPostbox(),
                 credentials = localDataAccess.getCachedCredential()
             ) { response, error ->
                 error?.let(emitter::onError)
@@ -49,11 +49,11 @@ class MainRemoteDataAccessImpl(
         }
 
     override fun writeData(
-        payload: DataPayload,
+        payloadWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> = Single.create { emitter ->
         writeClient.write(
-            payload,
+            payloadWrite,
             accessToken
         ) { response, error ->
             error?.let(emitter::onError)
