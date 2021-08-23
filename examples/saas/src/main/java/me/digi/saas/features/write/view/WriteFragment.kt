@@ -16,9 +16,9 @@ import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.Data
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.WriteDataInfoPayload
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataInfo
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -29,7 +29,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     private val viewModel: WriteViewModel by viewModel()
     private val binding: FragmentWriteBinding by viewBinding()
     private val localAccess: MainLocalDataAccess by inject()
-    private var payload: DataPayload? = null
+    private var payloadWrite: WriteDataPayload? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -42,7 +42,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     private fun handlePayload() {
 
         val session: LocalSession = localAccess.getCachedSession()!!
-        val postboxData: WriteDataInfoPayload = localAccess.getCachedPostbox()!!
+        val postboxData: WriteDataInfo = localAccess.getCachedPostbox()!!
 
         val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
         val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
@@ -52,7 +52,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
             publicKey = postboxData.publicKey
         )
 
-        payload = DataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
+        payloadWrite = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
     }
 
     private fun setupClickListeners() {
@@ -83,7 +83,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.btnPushData -> payload?.let {
+            R.id.btnPushData -> payloadWrite?.let {
                 viewModel.pushDataToPostbox(
                     it,
                     localAccess.getCachedCredential()?.accessToken?.value!!

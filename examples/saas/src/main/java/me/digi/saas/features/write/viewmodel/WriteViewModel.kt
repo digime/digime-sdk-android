@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.WriteDataUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.response.DataWriteResponse
 
 class WriteViewModel(private val writeData: WriteDataUseCase) : ViewModel() {
@@ -17,11 +17,11 @@ class WriteViewModel(private val writeData: WriteDataUseCase) : ViewModel() {
     val state: StateFlow<Resource<DataWriteResponse>>
         get() = _state
 
-    fun pushDataToPostbox(payload: DataPayload, accessToken: String) {
+    fun pushDataToPostbox(payloadWrite: WriteDataPayload, accessToken: String) {
         _state.value = Resource.Loading()
 
         writeData
-            .invoke(payload, accessToken)
+            .invoke(payloadWrite, accessToken)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(

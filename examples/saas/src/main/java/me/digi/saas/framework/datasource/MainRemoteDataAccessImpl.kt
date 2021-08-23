@@ -10,9 +10,9 @@ import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
 import me.digi.sdk.DigiMe
 import me.digi.sdk.Error
-import me.digi.sdk.entities.DataPayload
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.WriteDataInfoPayload
+import me.digi.sdk.entities.WriteDataInfo
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
@@ -101,12 +101,12 @@ class MainRemoteDataAccessImpl(
         }
 
     override fun pushDataToPostbox(
-        payload: DataPayload,
+        payloadWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> =
         Single.create { emitter ->
             writeClient.write(
-                payload,
+                payloadWrite,
                 accessToken
             ) { response: DataWriteResponse?, error ->
                 error?.let(emitter::onError)
@@ -127,7 +127,7 @@ class MainRemoteDataAccessImpl(
         scope: DataRequest?,
         credentials: CredentialsPayload?,
         serviceId: String?,
-        data: WriteDataInfoPayload?
+        writeData: WriteDataInfo?
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
@@ -140,7 +140,7 @@ class MainRemoteDataAccessImpl(
                 ContractType.push -> writeClient.authorizeWriteAccess(
                     fromActivity = activity,
                     credentials = credentials,
-                    data = data
+                    data = writeData
                 ) { response, error -> handleIncomingData(response, error, emitter) }
                 ContractType.readRaw -> readRawClient.authorizeReadAccess(
                     fromActivity = activity,

@@ -16,7 +16,7 @@ import me.digi.saas.framework.utils.AppConst.CACHED_READ_RAW_CONTRACT
 import me.digi.saas.framework.utils.AppConst.CACHED_SESSION_DATA
 import me.digi.saas.framework.utils.AppConst.CONTRACT_PREFS_KEY
 import me.digi.saas.framework.utils.AppConst.SHARED_PREFS_KEY
-import me.digi.sdk.entities.WriteDataInfoPayload
+import me.digi.sdk.entities.WriteDataInfo
 import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.payload.RefreshToken
@@ -76,19 +76,21 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                             /**
                              * Save postbox data
                              */
-                            val postboxData = WriteDataInfoPayload().copy(
-                                postboxId = response.postboxData?.postboxId,
-                                publicKey = response.postboxData?.publicKey
-                            )
-                            val encodedLocalPostbox = Gson().toJson(postboxData)
-                            putString(CACHED_POSTBOX_DATA, encodedLocalPostbox)
+                            if (response.postboxData?.postboxId != null && response.postboxData?.publicKey != null) {
+                                val postboxData = WriteDataInfo().copy(
+                                    postboxId = response.postboxData?.postboxId,
+                                    publicKey = response.postboxData?.publicKey
+                                )
+                                val encodedLocalPostbox = Gson().toJson(postboxData)
+                                putString(CACHED_POSTBOX_DATA, encodedLocalPostbox)
+                            }
 
                             /**
                              * Save credentials data
                              */
                             val credentials = CredentialsPayload().copy(
-                                accessToken = AccessToken(value = response.credentials?.accessToken),
-                                refreshToken = RefreshToken(value = response.credentials?.refreshToken)
+                                accessToken = AccessToken().copy(value = response.credentials?.accessToken),
+                                refreshToken = RefreshToken().copy(value = response.credentials?.refreshToken)
                             )
                             val encodedCredentials = Gson().toJson(credentials)
                             putString(CACHED_CREDENTIAL_KEY, encodedCredentials)
@@ -99,10 +101,10 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun getCachedPostbox(): WriteDataInfoPayload? =
+    override fun getCachedPostbox(): WriteDataInfo? =
         context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_DATA, null)?.let {
-                Gson().fromJson(it, WriteDataInfoPayload::class.java)
+                Gson().fromJson(it, WriteDataInfo::class.java)
             }
         }
 

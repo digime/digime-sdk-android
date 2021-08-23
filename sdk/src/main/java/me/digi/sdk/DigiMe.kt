@@ -13,7 +13,7 @@ import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.*
-import me.digi.sdk.api.helpers.MultipartBody
+import me.digi.sdk.api.helpers.WriteMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
@@ -98,13 +98,13 @@ class DigiMe(
      */
     fun authorizeWriteAccess(
         fromActivity: Activity,
-        data: WriteDataInfoPayload? = null,
+        data: WriteDataInfo? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activeData: WriteDataInfoPayload? = data
+        var activeData: WriteDataInfo? = data
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -130,7 +130,7 @@ class DigiMe(
                     .compose(requestTokenExchange())
                     .doOnSuccess { tokenExchangeResponse ->
                         activeCredentials = tokenExchangeResponse.credentials
-                        activeData = WriteDataInfoPayload(
+                        activeData = WriteDataInfo(
                             postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
                             publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
                         )
@@ -154,7 +154,7 @@ class DigiMe(
 
                     val response = AuthorizationResponse(
                         sessionKey = it.consentData.session.key,
-                        postboxData = WriteDataInfoPayload(
+                        postboxData = WriteDataInfo(
                             postboxId = it.consentData.consentResponse.postboxId,
                             publicKey = it.consentData.consentResponse.publicKey
                         ),
@@ -339,13 +339,13 @@ class DigiMe(
      * delivery status or any error encountered.
      */
     fun write(
-        data: DataPayload?,
+        data: WriteDataPayload?,
         accessToken: String,
         completion: OngoingWriteCompletion
     ) {
         DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
-        val activeData = data as DataPayload
+        val activeData = data as WriteDataPayload
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DataEncryptor.encryptedDataFromBytes(
@@ -354,7 +354,7 @@ class DigiMe(
                 activeData.metadata
             )
 
-            val multipartBody: MultipartBody = MultipartBody.Builder()
+            val multipartBody: WriteMultipartBody = WriteMultipartBody.Builder()
                 .postboxPushPayload(activeData)
                 .dataContent(encryptedData.fileContent, activeData.mimeType)
                 .build()

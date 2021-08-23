@@ -12,7 +12,7 @@ import me.digi.sdk.entities.response.DataWriteResponse
 interface MainRemoteDataAccess {
     fun authorizeAccess(activity: Activity): Single<AuthorizationResponse>
     fun writeData(
-        payload: DataPayload,
+        payloadWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse>
 }

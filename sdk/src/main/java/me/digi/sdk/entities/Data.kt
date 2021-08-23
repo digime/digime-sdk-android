@@ -3,7 +3,7 @@ package me.digi.sdk.entities
 import com.google.gson.annotations.SerializedName
 import me.digi.sdk.entities.payload.CredentialsPayload
 
-data class DataPayload(
+data class WriteDataPayload(
     val data: Data,
     val metadata: ByteArray,
     val content: ByteArray,
@@ -17,7 +17,7 @@ data class Data(
     val publicKey: String? = null
 )
 
-data class WriteDataInfoPayload(
+data class WriteDataInfo(
     val postboxId: String? = null,
     val publicKey: String? = null
 )
@@ -25,6 +25,6 @@ data class WriteDataInfoPayload(
 // TODO: Can be removed
 data class OngoingData(
     val session: Session? = null,
-    val data: WriteDataInfoPayload? = null,
+    val data: WriteDataInfo? = null,
     val credentials: CredentialsPayload? = null
 )

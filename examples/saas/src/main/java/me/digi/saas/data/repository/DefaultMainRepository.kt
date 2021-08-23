@@ -5,11 +5,11 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.DataWriteResponse
 import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileList
-import me.digi.sdk.entities.response.DataWriteResponse
 import me.digi.sdk.entities.service.Service
 
 class DefaultMainRepository(
@@ -31,10 +31,10 @@ class DefaultMainRepository(
         remoteAccess.getServicesForContract(contractId)
 
     override fun pushDataToPostbox(
-        payload: DataPayload,
+        payloadWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> =
-        remoteAccess.pushDataToPostbox(payload, accessToken)
+        remoteAccess.pushDataToPostbox(payloadWrite, accessToken)
 
     override fun deleteUsersLibrary(): Single<Boolean> =
         remoteAccess.deleteUsersLibrary(localAccess.getCachedCredential()?.accessToken?.value)

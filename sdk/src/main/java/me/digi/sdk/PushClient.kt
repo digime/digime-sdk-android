@@ -11,7 +11,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
-import me.digi.sdk.api.helpers.MultipartBody
+import me.digi.sdk.api.helpers.WriteMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.WriteConfiguration
@@ -102,7 +102,7 @@ class PushClient(
         }
     }
 
-    fun pushDataToPostbox(postboxFile: DataPayload, completion: PostboxPushCompletion) {
+    fun pushDataToPostbox(postboxFile: WriteDataPayload, completion: PostboxPushCompletion) {
         DMELog.i("Initializing push data to postbox.")
 
         if (sessionManager.isSessionValid()) {
@@ -112,7 +112,7 @@ class PushClient(
                 postboxFile.metadata
             )
 
-            val multipartBody = MultipartBody.Builder()
+            val multipartBody = WriteMultipartBody.Builder()
                 .postboxPushPayload(postboxFile)
                 .dataContent(encryptedData.fileContent, postboxFile.mimeType)
                 .build()
@@ -247,7 +247,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = WriteDataInfoPayload().copy(
+                            val postboxData = WriteDataInfo().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -290,7 +290,7 @@ class PushClient(
 
     fun authorizeOngoingPostbox(
         fromActivity: Activity,
-        existingPostbox: WriteDataInfoPayload? = null,
+        existingPostbox: WriteDataInfo? = null,
         credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         completion: SaasPostboxOngoingCreationCompletion
@@ -401,7 +401,7 @@ class PushClient(
                             val tokenExchange: CredentialsPayload =
                                 Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                            val postboxData = WriteDataInfoPayload().copy(
+                            val postboxData = WriteDataInfo().copy(
                                 postboxId = response.consentResponse.postboxId,
                                 publicKey = response.consentResponse.publicKey
                             )
@@ -443,7 +443,7 @@ class PushClient(
             }
 
         var activeCredentials: CredentialsPayload? = credentials
-        var activePostbox: WriteDataInfoPayload? = existingPostbox
+        var activePostbox: WriteDataInfo? = existingPostbox
 
         // First, we request pre-auth code needed for auth consent manager
         requestPreAuthCode()
@@ -546,13 +546,13 @@ class PushClient(
     }
 
     fun pushData(
-        postboxFile: DataPayload?,
+        postboxFile: WriteDataPayload?,
         accessToken: String,
         completion: OngoingWriteCompletion
     ) {
         DMELog.i("Initializing push data to postbox.")
 
-        val postbox = postboxFile as DataPayload
+        val postbox = postboxFile as WriteDataPayload
 
         if (sessionManager.isSessionValid()) {
             val encryptedData = DataEncryptor.encryptedDataFromBytes(
@@ -561,7 +561,7 @@ class PushClient(
                 postbox.metadata
             )
 
-            val multipartBody: MultipartBody = MultipartBody.Builder()
+            val multipartBody: WriteMultipartBody = WriteMultipartBody.Builder()
                 .postboxPushPayload(postbox)
                 .dataContent(encryptedData.fileContent, postbox.mimeType)
                 .build()

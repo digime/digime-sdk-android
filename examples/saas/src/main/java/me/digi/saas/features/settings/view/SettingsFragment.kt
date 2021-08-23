@@ -34,6 +34,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), View.OnClickListe
     }
 
     private fun handleCachedUi() {
+        localAccess.getCachedBaseUrl()?.let { binding.ilBaseUrlPicker.editText?.setText(it) }
         localAccess.getCachedAppId()?.let { binding.ilAppId.editText?.setText(it) }
         localAccess.getCachedReadContract()?.contractId?.let {
             binding.ilReadContractId.editText?.setText(it)

@@ -1,7 +1,7 @@
 package me.digi.sdk.api.helpers
 
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.payload.DataPayload
+import me.digi.sdk.entities.WriteDataPayload
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -11,7 +11,7 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
-internal class MultipartBody(description: RequestBody, requestBody: MultipartBody.Part) {
+internal class WriteMultipartBody(description: RequestBody, requestBody: MultipartBody.Part) {
     var description: RequestBody
     var requestBody: MultipartBody.Part
 
@@ -28,9 +28,9 @@ internal class MultipartBody(description: RequestBody, requestBody: MultipartBod
         private var description: RequestBody? = null
         private var requestBody: MultipartBody.Part? = null
 
-        fun postboxPushPayload(postboxPushPayload: DataPayload): Builder {
+        fun postboxPushPayload(postboxPushPayloadWrite: WriteDataPayload): Builder {
             description =
-                REQUEST_BODY_NAME.toRequestBody(postboxPushPayload.mimeType.stringValue.toMediaTypeOrNull())
+                REQUEST_BODY_NAME.toRequestBody(postboxPushPayloadWrite.mimeType.stringValue.toMediaTypeOrNull())
             return this
         }
 
@@ -47,8 +47,8 @@ internal class MultipartBody(description: RequestBody, requestBody: MultipartBod
             return this
         }
 
-        fun build(): me.digi.sdk.api.helpers.MultipartBody {
-            return description?.let { requestBody?.let { it1 -> MultipartBody(it, it1) } }!!
+        fun build(): me.digi.sdk.api.helpers.WriteMultipartBody {
+            return description?.let { requestBody?.let { it1 -> WriteMultipartBody(it, it1) } }!!
         }
     }
 }

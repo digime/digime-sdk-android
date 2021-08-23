@@ -8,9 +8,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.postbox.*
 import me.digi.sdk.PushClient
+import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.configuration.WriteConfiguration
-import me.digi.sdk.entities.payload.DataPayload
 import me.digi.sdk.interapp.AppCommunicator
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.io.IOException
@@ -122,7 +122,7 @@ class Postbox : AppCompatActivity() {
                     val metadata = getFileContent("metadatajson.json")
 
                     client.pushDataToPostbox(
-                        DataPayload(
+                        WriteDataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,
@@ -144,7 +144,7 @@ class Postbox : AppCompatActivity() {
                     val metadata = getFileContent("metadatapng.json")
 
                     client.pushDataToPostbox(
-                        DataPayload(
+                        WriteDataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,
@@ -166,7 +166,7 @@ class Postbox : AppCompatActivity() {
                     val fileContent = getFileContent("file.pdf")
 
                     client.pushDataToPostbox(
-                        DataPayload(
+                        WriteDataPayload(
                             dmePostbox,
                             metadata,
                             fileContent,
