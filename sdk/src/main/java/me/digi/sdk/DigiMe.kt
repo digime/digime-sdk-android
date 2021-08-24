@@ -85,6 +85,62 @@ class DigiMe(
     private var stalePollCount = 0
 
     /**
+     * Testing purposes:
+     * We use this method on Hive (Saas) example, due to the fact that we have multiple
+     * contracts. Each contract needs to trigger consent access, therefore this approach
+     * allows us to jump between contracts
+     */
+    fun authorizeAccess(
+        fromActivity: Activity,
+        scope: DataRequest? = null,
+        credentials: CredentialsPayload? = null,
+        serviceId: String? = null,
+        completion: GetAuthorizationDoneCompletion
+    ) {
+        requestPreAuthorizationCode(credentials, scope)
+            .compose(requestConsentAccess(fromActivity, serviceId))
+            .compose(requestTokenExchange())
+            .onErrorResumeNext { error ->
+                errorHandler(
+                    fromActivity,
+                    error,
+                    credentials,
+                    scope,
+                    serviceId
+                )
+            }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: GetTokenExchangeDone ->
+                    sessionManager.updatedSession = result.consentData.session
+
+                    val response = AuthorizationResponse().copy(
+                        sessionKey = result.consentData.session.key,
+                        postboxData = WriteDataInfo().copy(
+                            postboxId = result.consentData.consentResponse.postboxId,
+                            publicKey = result.consentData.consentResponse.publicKey
+                        ),
+                        credentials = Credentials().copy(
+                            accessToken = result.credentials.accessToken.value,
+                            refreshToken = result.credentials.refreshToken.value
+                        )
+                    )
+
+                    completion.invoke(response, null)
+                },
+                onError = { error ->
+                    completion.invoke(
+                        null,
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(
+                                error.localizedMessage ?: "Unknown error occurred"
+                            ))
+                }
+            )
+    }
+
+    /**
      * Authorizes the contract configured with this digi.me instance to access to a library.
      *
      * If the user has not already authorized, will be presented with a browser window
@@ -98,13 +154,9 @@ class DigiMe(
      */
     fun authorizeWriteAccess(
         fromActivity: Activity,
-        data: WriteDataInfo? = null,
         credentials: CredentialsPayload? = null,
         completion: GetAuthorizationDoneCompletion
     ) {
-
-        var activeCredentials: CredentialsPayload? = credentials
-        var activeData: WriteDataInfo? = data
 
         // First, we request pre-auth code needed for authorization consent manager.
         // In this instance, we don't need scope, hence it's defaulted to null.
@@ -112,29 +164,16 @@ class DigiMe(
             // Next, we check if any credentials were supplied (for access restoration).
             // If not, we kick the user out of the flow and authorize normally.
             .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (activeCredentials != null && activeData != null)
+                if (credentials != null)
                     preAuthorizationCodeResponse.map {
                         GetTokenExchangeDone()
                             .copy(
-                                consentData = GetConsentDone(
-                                    session = it.session,
-                                    consentResponse = ConsentAuthResponse(
-                                        postboxId = activeData?.postboxId,
-                                        publicKey = activeData?.publicKey
-                                    )
-                                ),
-                                credentials = activeCredentials!!
+                                consentData = GetConsentDone(session = it.session),
+                                credentials = credentials
                             )
                     } else preAuthorizationCodeResponse
                     .compose(requestConsentAccess(fromActivity, serviceId = null))
                     .compose(requestTokenExchange())
-                    .doOnSuccess { tokenExchangeResponse ->
-                        activeCredentials = tokenExchangeResponse.credentials
-                        activeData = WriteDataInfo(
-                            postboxId = tokenExchangeResponse.consentData.consentResponse.postboxId,
-                            publicKey = tokenExchangeResponse.consentData.consentResponse.publicKey,
-                        )
-                    }
             }
             .onErrorResumeNext { error ->
                 errorHandler(
@@ -212,27 +251,22 @@ class DigiMe(
         completion: GetAuthorizationDoneCompletion
     ) {
 
-        var activeCredentials: CredentialsPayload? = credentials
-
         // First, we request pre-auth code needed for authorization consent manager.
         requestPreAuthorizationCode(credentials, scope)
             // Next, we check if any credentials were supplied (for access restoration).
             // If not, we kick the user out of the flow to authorise normally.
             .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (activeCredentials != null)
+                if (credentials != null)
                     preAuthorizationCodeResponse.map {
                         GetTokenExchangeDone()
                             .copy(
                                 consentData = GetConsentDone(session = it.session),
-                                credentials = activeCredentials!!
+                                credentials = credentials
                             )
                     }
                 else preAuthorizationCodeResponse
                     .compose(requestConsentAccess(fromActivity, serviceId))
                     .compose(requestTokenExchange())
-                    .doOnSuccess { tokenExchangeResponse ->
-                        activeCredentials = tokenExchangeResponse.credentials
-                    }
             }
             // At this point, we have a session and a set of credentials, so we can trigger
             // the data query to 'prepare' data to be synced'.

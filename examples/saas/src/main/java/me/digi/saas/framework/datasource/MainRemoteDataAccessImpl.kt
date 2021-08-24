@@ -131,18 +131,17 @@ class MainRemoteDataAccessImpl(
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
-                ContractType.pull -> readClient.authorizeReadAccess(
+                ContractType.pull -> readClient.authorizeAccess(
                     fromActivity = activity,
                     scope = scope,
                     credentials = credentials,
                     serviceId = serviceId
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.push -> writeClient.authorizeWriteAccess(
+                ContractType.push -> writeClient.authorizeAccess(
                     fromActivity = activity,
-                    credentials = credentials,
-                    data = writeData
+                    credentials = credentials
                 ) { response, error -> handleIncomingData(response, error, emitter) }
-                ContractType.readRaw -> readRawClient.authorizeReadAccess(
+                ContractType.readRaw -> readRawClient.authorizeAccess(
                     fromActivity = activity,
                     scope = scope,
                     credentials = credentials,
