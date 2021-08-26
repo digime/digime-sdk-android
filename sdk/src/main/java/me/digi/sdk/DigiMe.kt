@@ -292,39 +292,100 @@ class DigiMe(
     }
 
     /**
-     * Provide commentary
+     * Provides way for user to continue to share their data by refreshing data.
+     *
+     * @param contractData Contract information for jwt construction.
+     * @param accessToken Token to reference the same library.
+     * @param scope Options to filter which data is read from sources for this session.
+     * Only used for read contracts.
+     * @param completion Block called on completion with updated user authorization information
+     * or any error encountered.
      */
-    fun readSession(sessionRequest: SessionRequest, completion: GetSessionCompletion) {
+    fun readSession(
+        contractData: ConsentAuthResponse,
+        accessToken: String,
+        scope: DataRequest? = null,
+        completion: GetAuthorizationDoneCompletion
+    ) {
 
-        fun requestSession(sessionRequest: SessionRequest): Single<SessionResponse> =
-            Single.create { emitter ->
-                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
-                    when {
-                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
-                        error != null -> emitter.onError(error)
-                        else -> emitter.onError(IllegalArgumentException())
+        fun requestDataQuery(): Single<DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                accessToken
+            )
+
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
+
+            val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+
+            apiClient.makeCall(
+                apiClient.argonService.triggerDataQuery(authHeader, dataQueryScope)
+            ) { dataQueryResponse: DataQueryResponse?, error: Error? ->
+                when {
+                    dataQueryResponse != null -> emitter.onSuccess(dataQueryResponse)
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
+            }
+        }
+
+        fun requestTokenExchange(): SingleTransformer<in DataQueryResponse, out AuthorizationResponse> =
+            SingleTransformer {
+                it.flatMap { result ->
+                    Single.create { emitter ->
+                        val codeVerifier =
+                            result.session.metadata[context.getString(R.string.key_code_verifier)].toString()
+
+                        val jwt = AuthCodeExchangeRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            contractData.code!!,
+                            codeVerifier
+                        )
+
+                        val signingKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val autHeader = jwt.sign(signingKey).tokenize()
+
+                        apiClient.makeCall(apiClient.argonService.exchangeAuthToken(autHeader)) { tokenResponse: TokenResponse?, error: Error? ->
+                            when {
+                                tokenResponse != null -> {
+                                    val chunks: List<String> = tokenResponse.token.split(".")
+                                    val payloadJson =
+                                        String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                                    val credentialsPayload: CredentialsPayload =
+                                        Gson().fromJson(payloadJson, CredentialsPayload::class.java)
+
+                                    val response = AuthorizationResponse().copy(
+                                        session = result.session,
+                                        credentials = credentialsPayload
+                                    )
+
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
                     }
                 }
             }
 
-        requestSession(sessionRequest)
+        requestDataQuery()
+            .compose(requestTokenExchange())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    val session = Session().copy(key = it.key, expiry = it.expiry)
-                    sessionManager.updatedSession = session
-                    completion.invoke(true, null)
-                },
-                onError = {
-                    completion.invoke(
-                        false,
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
-                        )
+            .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
+                completion.invoke(
+                    null,
+                    APIError.ErrorWithMessage(
+                        it.localizedMessage ?: context.getString(R.string.labelUnknownError)
                     )
-                }
-            )
+                )
+            })
     }
 
     /**
