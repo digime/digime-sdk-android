@@ -19,15 +19,15 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.domain.LocalSession
 import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.WriteDataInfo
+import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
@@ -176,15 +176,15 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             btnUploadImage?.isEnabled = true
 
             val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
-            val session: LocalSession = localAccess.getCachedSession()!!
-            val postboxData: WriteDataInfo = localAccess.getCachedPostbox()!!
+            val session: Session = localAccess.getCachedSession()!!
+            val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
 
             val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
 
             val postbox: Data =
                 Data().copy(
-                    key = session.sessionKey,
+                    key = session.key,
                     postboxId = postboxData.postboxId,
                     publicKey = postboxData.publicKey
                 )

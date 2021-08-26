@@ -32,7 +32,6 @@ typealias AvailableServicesCompletion = (ServicesResponse?, error: Error?) -> Un
 
 typealias UserDeleteCompletion = (isLibraryDeleted: Boolean?, error: Error?) -> Unit
 
-// TODO: Unused
 typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: Error?) -> Unit
 
 typealias GetAuthorizationDoneCompletion = (response: AuthorizationResponse?, error: Error?) -> Unit

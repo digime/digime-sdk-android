@@ -17,9 +17,7 @@ import me.digi.ongoing.R
 import me.digi.sdk.DigiMe
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
-import me.digi.sdk.entities.payload.AccessToken
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.RefreshToken
 import me.digi.sdk.entities.response.AuthorizationResponse
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -58,7 +56,10 @@ class DigiMeService(private val context: Application) {
         .compose(cacheCredentials())
         .flatMapCompletable { Completable.complete() }
 
-    fun fetchData(): Observable<Song> = client.getSessionData()
+    fun fetchData(): Observable<Song> = client.getSessionData(
+        scope = createScopeForDailyPlayHistory(),
+        accessToken = getCachedCredential()?.accessToken?.value.toString()
+    )
         .map {
             gsonAgent.fromJson<List<Song>>(
                 it.fileContent,
@@ -96,12 +97,7 @@ class DigiMeService(private val context: Application) {
                     context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).edit()
                         .run {
 
-                            val credentials = CredentialsPayload().copy(
-                                accessToken = AccessToken(value = response.credentials?.accessToken),
-                                refreshToken = RefreshToken(value = response.credentials?.refreshToken)
-                            )
-
-                            val encodedCredential = Gson().toJson(credentials)
+                            val encodedCredential = Gson().toJson(response.credentials)
                             putString(CACHED_CREDENTIAL_KEY, encodedCredential)
 
                             apply()

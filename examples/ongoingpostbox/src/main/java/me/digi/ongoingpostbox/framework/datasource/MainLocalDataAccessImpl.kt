@@ -4,16 +4,14 @@ import android.content.Context
 import com.google.gson.Gson
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.domain.LocalSession
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_DATA
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_SESSION_DATA
 import me.digi.ongoingpostbox.framework.utils.AppConst.SHARED_PREFS_KEY
-import me.digi.sdk.entities.WriteDataInfo
-import me.digi.sdk.entities.payload.AccessToken
+import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.RefreshToken
 import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.ConsentAuthResponse
 
 /**
  * Idea behind local main data access is to isolate
@@ -34,30 +32,22 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
                         .run {
 
                             /**
-                             * Save session key
+                             * Save session
                              */
-                            val sessionData = LocalSession().copy(sessionKey = response.sessionKey)
-                            val encodedLocalSession = Gson().toJson(sessionData)
+                            val encodedLocalSession = Gson().toJson(response.session)
                             putString(CACHED_SESSION_DATA, encodedLocalSession)
 
                             /**
                              * Save postbox data
                              */
-                            val postboxData = WriteDataInfo().copy(
-                                postboxId = response.postboxData?.postboxId,
-                                publicKey = response.postboxData?.publicKey
-                            )
-                            val encodedLocalPostbox = Gson().toJson(postboxData)
+
+                            val encodedLocalPostbox = Gson().toJson(response.authResponse)
                             putString(CACHED_POSTBOX_DATA, encodedLocalPostbox)
 
                             /**
                              * Save credentials data
                              */
-                            val accessToken = CredentialsPayload().copy(
-                                accessToken = AccessToken(value = response.credentials?.accessToken),
-                                refreshToken = RefreshToken(value = response.credentials?.refreshToken)
-                            )
-                            val encodedAccessToken = Gson().toJson(accessToken)
+                            val encodedAccessToken = Gson().toJson(response.credentials)
                             putString(CACHED_CREDENTIAL_KEY, encodedAccessToken)
 
                             apply()
@@ -66,17 +56,17 @@ class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAcces
             }
         }
 
-    override fun getCachedSession(): LocalSession? =
+    override fun getCachedSession(): Session? =
         context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_SESSION_DATA, null)?.let {
-                Gson().fromJson(it, LocalSession::class.java)
+                Gson().fromJson(it, Session::class.java)
             }
         }
 
-    override fun getCachedPostbox(): WriteDataInfo? =
+    override fun getCachedPostbox(): ConsentAuthResponse? =
         context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
             getString(CACHED_POSTBOX_DATA, null)?.let {
-                Gson().fromJson(it, WriteDataInfo::class.java)
+                Gson().fromJson(it, ConsentAuthResponse::class.java)
             }
         }
 

@@ -1,10 +1,10 @@
 package me.digi.sdk.entities.response
 
-import me.digi.sdk.entities.Credentials
-import me.digi.sdk.entities.WriteDataInfo
+import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.payload.CredentialsPayload
 
 data class AuthorizationResponse(
-    val sessionKey: String? = null,
-    val postboxData: WriteDataInfo? = null,
-    val credentials: Credentials? = null
+    val session: Session? = null,
+    val authResponse: ConsentAuthResponse? = null,
+    val credentials: CredentialsPayload? = null
 )

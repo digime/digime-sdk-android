@@ -51,8 +51,7 @@ class DefaultMainRepository(
                 contractType,
                 scope,
                 localAccess.getCachedCredential(),
-                serviceId,
-                localAccess.getCachedPostbox()
+                serviceId
             )
             .compose(localAccess.cacheAuthorizationData())
 

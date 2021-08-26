@@ -11,7 +11,6 @@ import me.digi.sdk.AuthError
 import me.digi.sdk.DigiMe
 import me.digi.sdk.Error
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.WriteDataInfo
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
@@ -77,7 +76,7 @@ class MainRemoteDataAccessImpl(
         }
 
     override fun getFileList(): Single<FileList> = Single.create { emitter ->
-        readClient.getFileList { fileList: FileList?, error ->
+        readClient.readFileList(localAccess.getCachedCredential()?.accessToken?.value!!) { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
                 else emitter.onError(AuthError.General()))
@@ -85,7 +84,7 @@ class MainRemoteDataAccessImpl(
     }
 
     override fun getRawFileList(): Single<FileList> = Single.create { emitter ->
-        readRawClient.getFileList { fileList: FileList?, error ->
+        readRawClient.readFileList(localAccess.getCachedCredential()?.accessToken?.value!!) { fileList: FileList?, error ->
             error?.let(emitter::onError)
                 ?: (if (fileList != null) emitter.onSuccess(fileList)
                 else emitter.onError(AuthError.General()))
@@ -101,12 +100,12 @@ class MainRemoteDataAccessImpl(
         }
 
     override fun pushDataToPostbox(
-        payloadWrite: WriteDataPayload,
+        payloadToWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> =
         Single.create { emitter ->
             writeClient.write(
-                payloadWrite,
+                payloadToWrite,
                 accessToken
             ) { response: DataWriteResponse?, error ->
                 error?.let(emitter::onError)
@@ -126,8 +125,7 @@ class MainRemoteDataAccessImpl(
         contractType: String,
         scope: DataRequest?,
         credentials: CredentialsPayload?,
-        serviceId: String?,
-        writeData: WriteDataInfo?
+        serviceId: String?
     ): Single<AuthorizationResponse> =
         Single.create { emitter ->
             when (contractType) {
@@ -161,7 +159,7 @@ class MainRemoteDataAccessImpl(
 
     override fun getFile(fileName: String): Single<FileItem> =
         Single.create { emitter ->
-            readClient.getFileByName(fileId = fileName) { file, error ->
+            readClient.readFile(fileId = fileName) { file, error ->
                 error?.let(emitter::onError)
                     ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(AuthError.General()))
             }

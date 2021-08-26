@@ -85,10 +85,28 @@ class DigiMe(
     private var stalePollCount = 0
 
     /**
-     * Testing purposes:
-     * We use this method on Hive (Saas) example, due to the fact that we have multiple
-     * contracts. Each contract needs to trigger consent access, therefore this approach
-     * allows us to jump between contracts
+     * Authorizes the contract configured with this digi.me instance to access to a library.
+     *
+     * If the user has not already authorized, will be presented with a browser window in which user consents.
+     * If the user has already authorized, refreshes the authorization, if necessary
+     * (which may require user consent again).
+     *
+     * To authorize this contract to access the same library that another contract has
+     * been authorized to access, specify the contract to link to. This is useful when
+     * a read contract needs to access the same library that a write contract has
+     * written data to.
+     *
+     * Additionally for read contracts:
+     * - Upon first authorization, can optionally specify a service from which user
+     * can log in to an retrieve data.
+     * - Creates a session during which data can be read from library.
+     *
+     * @param scope Options to filter which data is read from sources for this session.
+     * Only used for read contracts.
+     * @param serviceId Identifier of initial service to add. Only valid for first
+     * authorization of read contracts where user has not previously granted consent.
+     * Ignored for all subsequent calls.
+     * @param completion Block called upon authorization with any errors encountered.
      */
     fun authorizeAccess(
         fromActivity: Activity,
@@ -116,15 +134,9 @@ class DigiMe(
                     sessionManager.updatedSession = result.consentData.session
 
                     val response = AuthorizationResponse().copy(
-                        sessionKey = result.consentData.session.key,
-                        postboxData = WriteDataInfo().copy(
-                            postboxId = result.consentData.consentResponse.postboxId,
-                            publicKey = result.consentData.consentResponse.publicKey
-                        ),
-                        credentials = Credentials().copy(
-                            accessToken = result.credentials.accessToken.value,
-                            refreshToken = result.credentials.refreshToken.value
-                        )
+                        session = result.consentData.session,
+                        authResponse = result.consentData.consentResponse,
+                        credentials = result.credentials
                     )
 
                     completion.invoke(response, null)
@@ -136,176 +148,6 @@ class DigiMe(
                             ?: APIError.ErrorWithMessage(
                                 error.localizedMessage ?: "Unknown error occurred"
                             ))
-                }
-            )
-    }
-
-    /**
-     * Authorizes the contract configured with this digi.me instance to access to a library.
-     *
-     * If the user has not already authorized, will be presented with a browser window
-     * in which user consents.
-     * If the user has already authorized, refreshes the authorization, if necessary
-     * (which may require user consent again)
-     *
-     * @param data Data to reference same write access point.
-     * @param credentials Credentials used to reference the same library if one is not created.
-     * @param completion Block called upon authorization with any errors encountered.
-     */
-    fun authorizeWriteAccess(
-        fromActivity: Activity,
-        credentials: CredentialsPayload? = null,
-        completion: GetAuthorizationDoneCompletion
-    ) {
-
-        // First, we request pre-auth code needed for authorization consent manager.
-        // In this instance, we don't need scope, hence it's defaulted to null.
-        requestPreAuthorizationCode(credentials, scope = null)
-            // Next, we check if any credentials were supplied (for access restoration).
-            // If not, we kick the user out of the flow and authorize normally.
-            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (credentials != null)
-                    preAuthorizationCodeResponse.map {
-                        GetTokenExchangeDone()
-                            .copy(
-                                consentData = GetConsentDone(session = it.session),
-                                credentials = credentials
-                            )
-                    } else preAuthorizationCodeResponse
-                    .compose(requestConsentAccess(fromActivity, serviceId = null))
-                    .compose(requestTokenExchange())
-            }
-            .onErrorResumeNext { error ->
-                errorHandler(
-                    fromActivity = fromActivity,
-                    error = error,
-                    credentials = credentials,
-                    scope = null,
-                    serviceId = null
-                )
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-
-                    sessionManager.updatedSession = it.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = it.consentData.session.key,
-                        postboxData = WriteDataInfo(
-                            postboxId = it.consentData.consentResponse.postboxId,
-                            publicKey = it.consentData.consentResponse.publicKey
-                        ),
-                        credentials = Credentials(
-                            accessToken = it.credentials.accessToken.value,
-                            refreshToken = it.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? Error }
-                            ?: APIError.ErrorWithMessage(
-                                error.localizedMessage
-                                    ?: context.getString(R.string.labelUnknownError)
-                            )
-                    )
-                }
-            )
-    }
-
-    /**
-     * Authorizes the contract configured with this digi.me instance to access to a library.
-     *
-     * If the user has not already authorized, will be presented with a browser window in which user consents.
-     * If the user has already authorized, refreshes the authorization, if necessary
-     * (which may require user consent again).
-     *
-     * To authorize this contract to access the same library that another contract has
-     * been authorized to access, specify the contract to link to. This is useful when
-     * a read contract needs to access the same library that a write contract has
-     * written data to.
-     *
-     * Additionally for read contracts:
-     * - Upon first authorization, can optionally specify a service from which user
-     * can log in to an retrieve data.
-     * - Creates a session during which data can be read from library.
-     *
-     * @param scope Options to filter which data is read from sources for this session.
-     * Only used for read contracts.
-     * @param serviceId Identifier of initial service to add. Only valid for first
-     * authorization of read contracts where user has not previously granted consent.
-     * Ignored for all subsequent calls.
-     * @param credentials Credentials used to reference the same library if one is not created.
-     * @param completion Block called upon authorization with any errors encountered.
-     */
-    fun authorizeReadAccess(
-        fromActivity: Activity,
-        scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null,
-        serviceId: String? = null,
-        completion: GetAuthorizationDoneCompletion
-    ) {
-
-        // First, we request pre-auth code needed for authorization consent manager.
-        requestPreAuthorizationCode(credentials, scope)
-            // Next, we check if any credentials were supplied (for access restoration).
-            // If not, we kick the user out of the flow to authorise normally.
-            .let { preAuthorizationCodeResponse: Single<out GetPreAuthCodeDone> ->
-                if (credentials != null)
-                    preAuthorizationCodeResponse.map {
-                        GetTokenExchangeDone()
-                            .copy(
-                                consentData = GetConsentDone(session = it.session),
-                                credentials = credentials
-                            )
-                    }
-                else preAuthorizationCodeResponse
-                    .compose(requestConsentAccess(fromActivity, serviceId))
-                    .compose(requestTokenExchange())
-            }
-            // At this point, we have a session and a set of credentials, so we can trigger
-            // the data query to 'prepare' data to be synced'.
-            .compose(requestDataQuery(scope))
-            .onErrorResumeNext { error ->
-                errorHandler(
-                    fromActivity = fromActivity,
-                    error = error,
-                    credentials = credentials,
-                    scope = scope,
-                    serviceId = serviceId
-                )
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-
-                    sessionManager.updatedSession = it.consentData.session
-
-                    val response = AuthorizationResponse(
-                        sessionKey = it.consentData.session.key,
-                        credentials = Credentials(
-                            it.credentials.accessToken.value,
-                            it.credentials.refreshToken.value
-                        )
-                    )
-
-                    completion.invoke(response, null)
-                },
-                onError = { error ->
-                    completion.invoke(
-                        null,
-                        error.let { it as? Error }
-                            ?: APIError.ErrorWithMessage(
-                                error.localizedMessage
-                                    ?: context.getString(R.string.labelUnknownError)
-                            )
-                    )
                 }
             )
     }
@@ -373,24 +215,22 @@ class DigiMe(
      * delivery status or any error encountered.
      */
     fun write(
-        data: WriteDataPayload?,
+        writeDataPayload: WriteDataPayload,
         accessToken: String,
         completion: OngoingWriteCompletion
     ) {
         DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
-        val activeData = data as WriteDataPayload
-
         if (sessionManager.isSessionValid()) {
             val encryptedData = DataEncryptor.encryptedDataFromBytes(
-                activeData.data.publicKey!!,
-                activeData.content,
-                activeData.metadata
+                writeDataPayload.data.publicKey!!,
+                writeDataPayload.content,
+                writeDataPayload.metadata
             )
 
             val multipartBody: WriteMultipartBody = WriteMultipartBody.Builder()
-                .postboxPushPayload(activeData)
-                .dataContent(encryptedData.fileContent, activeData.mimeType)
+                .postboxPushPayload(writeDataPayload)
+                .dataContent(encryptedData.fileContent, writeDataPayload.mimeType)
                 .build()
 
             val jwt = AuthTokenRequestJWT(
@@ -408,11 +248,11 @@ class DigiMe(
 
             apiClient.argonService.pushOngoingData(
                 authHeader,
-                activeData.data.key!!,
+                writeDataPayload.data.key!!,
                 encryptedData.symmetricalKey,
                 encryptedData.iv,
                 encryptedData.metadata,
-                activeData.data.postboxId!!,
+                writeDataPayload.data.postboxId!!,
                 multipartBody.requestBody,
                 multipartBody.description
             )
@@ -452,60 +292,39 @@ class DigiMe(
     }
 
     /**
-     * Fetches content for all the files limited by read options.
-     *
-     * An attempt is made to fetch each requested file and the result of the attempt
-     * is passed back via the download handler.
-     * As download requests are asynchronous, the download handler may be called
-     * concurrently, so the handler implementation should allow for this.
-     *
-     * If this method is called while files are being read, an error denoting this
-     * will be immediately returned in the completion block of this subsequent call
-     * and will not affect current calls.
-     *
-     * For the service-based data sources, will also attempt to retrieve any new data
-     * directly from the services.
-     *
-     * @param downloadHandler Handler called after every file fetch attempt finishes.
-     * Either contains the file or an error if fetch failed.
-     * @param completion Block called when fetching all files has completed. Contains
-     * final list of files or an error if reading file list failed.
+     * Provide commentary
      */
-    fun readFiles(
-        downloadHandler: FileContentCompletion,
-        completion: FileListCompletion
-    ) {
+    fun readSession(sessionRequest: SessionRequest, completion: GetSessionCompletion) {
 
-        DMELog.i(context.getString(R.string.labelReadingFiles))
-
-        activeFileDownloadHandler = downloadHandler
-        activeSessionDataFetchCompletionHandler = completion
-
-        getSessionFileList({ _, updatedFileIds ->
-
-            updatedFileIds.forEach {
-
-                activeDownloadCount++
-                DMELog.d("Downloading file with ID: $it.")
-
-                getSessionData(it) { file, error ->
-
+        fun requestSession(sessionRequest: SessionRequest): Single<SessionResponse> =
+            Single.create { emitter ->
+                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
                     when {
-                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
                     }
-
-                    downloadHandler.invoke(file, error)
-                    activeDownloadCount--
                 }
             }
 
-        }) { fileList, error ->
-            if (error != null) {
-                completion(fileList, error) // We only want to push this if the error exists, else
-                // it'll cause a premature loop exit.
-            }
-        }
+        requestSession(sessionRequest)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    val session = Session().copy(key = it.key, expiry = it.expiry)
+                    sessionManager.updatedSession = session
+                    completion.invoke(true, null)
+                },
+                onError = {
+                    completion.invoke(
+                        false,
+                        AuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
     }
 
     /**
@@ -640,11 +459,182 @@ class DigiMe(
             .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
                 completion.invoke(
                     null,
-                    AuthError.ErrorWithMessage(
+                    APIError.ErrorWithMessage(
                         it.localizedMessage ?: "Could not fetch services. Something went wrong"
                     )
                 )
             })
+    }
+
+    /**
+     * Fetches content for all the files limited by read options.
+     *
+     * An attempt is made to fetch each requested file and the result of the attempt
+     * is passed back via the download handler.
+     * As download requests are asynchronous, the download handler may be called
+     * concurrently, so the handler implementation should allow for this.
+     *
+     * If this method is called while files are being read, an error denoting this
+     * will be immediately returned in the completion block of this subsequent call
+     * and will not affect current calls.
+     *
+     * For the service-based data sources, will also attempt to retrieve any new data
+     * directly from the services.
+     *
+     * @param downloadHandler Handler called after every file fetch attempt finishes.
+     * Either contains the file or an error if fetch failed.
+     * @param completion Block called when fetching all files has completed. Contains
+     * final list of files or an error if reading file list failed.
+     */
+    fun readAllFiles(
+        scope: DataRequest? = null,
+        accessToken: String,
+        downloadHandler: FileContentCompletion,
+        completion: FileListCompletion
+    ) {
+        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                accessToken
+            )
+
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
+
+            val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+
+            apiClient.makeCall(
+                apiClient
+                    .argonService
+                    .triggerDataQuery(authHeader, dataQueryScope)
+            ) { response: DataQueryResponse?, error: Error? ->
+                when {
+                    response != null -> {
+                        sessionManager.updatedSession = response.session
+                        emitter.onSuccess(response)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
+            }
+        }
+
+        requestDataQuery()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    DMELog.i(context.getString(R.string.labelReadingFiles))
+
+                    activeFileDownloadHandler = downloadHandler
+                    activeSessionDataFetchCompletionHandler = completion
+
+                    getSessionFileList({ _, updatedFileIds ->
+
+                        updatedFileIds.forEach {
+
+                            activeDownloadCount++
+                            DMELog.d("Downloading file with ID: $it.")
+
+                            getSessionData(it) { file, error ->
+
+                                when {
+                                    file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                                    else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                                }
+
+                                downloadHandler.invoke(file, error)
+                                activeDownloadCount--
+                            }
+                        }
+
+                    }) { fileList, error ->
+                        if (error != null) {
+                            completion(
+                                fileList,
+                                error
+                            ) // We only want to push this if the error exists, else
+                            // it'll cause a premature loop exit.
+                        }
+                    }
+                },
+                onError = {
+                    completion.invoke(
+                        null,
+                        APIError.ErrorWithMessage(
+                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
+                        )
+                    )
+                }
+            )
+    }
+
+    /**
+     * Get list of possible files from the users library.
+     *
+     * @param completion Block called upon completion with either list of files in the library;
+     * returned as json objects, or any errors encountered.
+     */
+    fun readFileList(accessToken: String, completion: FileListCompletion) {
+
+        val currentSession = sessionManager.updatedSession
+
+        if (currentSession != null && sessionManager.isSessionValid()) {
+
+            fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+                val jwt = TriggerDataQueryRequestJWT(
+                    configuration.appId,
+                    configuration.contractId,
+                    accessToken
+                )
+
+                val signingKey: PrivateKey =
+                    KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                apiClient.makeCall(
+                    apiClient
+                        .argonService
+                        .triggerDataQuery(authHeader, Pull())
+                ) { response: DataQueryResponse?, error: Error? ->
+                    when {
+                        response != null -> {
+                            sessionManager.updatedSession = response.session
+                            emitter.onSuccess(response)
+                        }
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
+                    }
+                }
+            }
+
+            requestDataQuery()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = {
+                        DMELog.i(context.getString(R.string.labelReadingFiles))
+
+                        apiClient.makeCall(
+                            apiClient.argonService.getFileList(currentSession.key),
+                            completion
+                        )
+                    },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            APIError.ErrorWithMessage(
+                                it.localizedMessage ?: context.getString(R.string.labelUnknownError)
+                            )
+                        )
+                    }
+                )
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, AuthError.InvalidSession())
+        }
     }
 
     /**
@@ -653,7 +643,7 @@ class DigiMe(
      * @param fileId ID for specific file
      * @param completion Block called upon completion with either file or any errors encountered.
      */
-    fun getFileByName(fileId: String, completion: FileContentCompletion) {
+    fun readFile(fileId: String, completion: FileContentCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
@@ -693,24 +683,6 @@ class DigiMe(
                         )
                     }
                 )
-        } else {
-            DMELog.e("Your session is invalid; please request a new one.")
-            completion(null, AuthError.InvalidSession())
-        }
-    }
-
-    /**
-     * Get list of possible files from the users library.
-     *
-     * @param completion Block called upon completion with either list of files in the library;
-     * returned as json objects, or any errors encountered.
-     */
-    fun getFileList(completion: FileListCompletion) {
-
-        val currentSession = sessionManager.updatedSession
-
-        if (currentSession != null && sessionManager.isSessionValid()) {
-            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
         } else {
             DMELog.e("Your session is invalid; please request a new one.")
             completion(null, AuthError.InvalidSession())
@@ -785,6 +757,18 @@ class DigiMe(
         }
     }
 
+    private fun readFileList(completion: FileListCompletion) {
+
+        val currentSession = sessionManager.updatedSession
+
+        if (currentSession != null && sessionManager.isSessionValid()) {
+            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
+        } else {
+            DMELog.e("Your session is invalid; please request a new one.")
+            completion(null, AuthError.InvalidSession())
+        }
+    }
+
     private fun scheduleNextPoll(immediately: Boolean = false) {
 
         DMELog.d("Session data poll scheduled.")
@@ -793,7 +777,7 @@ class DigiMe(
         Handler(Looper.getMainLooper()).postDelayed({
 
             DMELog.d("Fetching file list.")
-            getFileList { fileList, listFetchError ->
+            readFileList { fileList, listFetchError ->
 
                 when {
                     fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
@@ -821,7 +805,7 @@ class DigiMe(
                         fileList,
                         SDKError.FileListPollingTimeout()
                     )
-                    return@getFileList
+                    return@readFileList
                 }
 
                 when (syncStatus) {
@@ -870,13 +854,10 @@ class DigiMe(
         serviceId: String?
     ): SingleSource<out GetTokenExchangeDone>? {
 
-        var activeCredentials: CredentialsPayload? = credentials
-
         return if (error is APIError && error.code == "InternalServerError") {
             requestPreAuthorizationCode(credentials, scope)
                 .compose(requestConsentAccess(fromActivity, serviceId))
                 .compose(requestTokenExchange())
-                .doOnSuccess { activeCredentials = it.credentials }
 
             // If an error we encountered is a "InvalidToken" error, which means that the ACCESS token
             // has expired.
@@ -887,11 +868,10 @@ class DigiMe(
                     GetTokenExchangeDone()
                         .copy(
                             consentData = GetConsentDone(session = response.session),
-                            credentials = activeCredentials!!
+                            credentials = credentials as CredentialsPayload
                         )
                 }
                 .compose(requestCredentialsRefresh())
-                .doOnSuccess { activeCredentials = it.credentials }
                 .onErrorResumeNext { error ->
 
                     // If an error is encountered from this call, we inspect it to see if it's an
@@ -905,7 +885,6 @@ class DigiMe(
                             requestPreAuthorizationCode(credentials, scope)
                                 .compose(requestConsentAccess(fromActivity, serviceId))
                                 .compose(requestTokenExchange())
-                                .doOnSuccess { activeCredentials = it.credentials }
 
                                 // Once new credentials are obtained, re-trigger the data query.
                                 // If it fails here, credentials are not the issue. The error

@@ -10,15 +10,15 @@ import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
 import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.databinding.FragmentWriteBinding
-import me.digi.saas.entities.LocalSession
 import me.digi.saas.features.write.viewmodel.WriteViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.Data
-import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.MimeType
-import me.digi.sdk.entities.WriteDataInfo
+import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.WriteDataPayload
+import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -41,13 +41,13 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
 
     private fun handlePayload() {
 
-        val session: LocalSession = localAccess.getCachedSession()!!
-        val postboxData: WriteDataInfo = localAccess.getCachedPostbox()!!
+        val session: Session = localAccess.getCachedSession()!!
+        val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
 
         val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
         val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
         val postbox: Data = Data().copy(
-            key = session.sessionKey,
+            key = session.key,
             postboxId = postboxData.postboxId,
             publicKey = postboxData.publicKey
         )

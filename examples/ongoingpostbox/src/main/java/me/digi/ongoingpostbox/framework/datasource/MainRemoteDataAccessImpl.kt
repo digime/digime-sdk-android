@@ -38,9 +38,8 @@ class MainRemoteDataAccessImpl(
 
     override fun authorizeAccess(activity: Activity): Single<AuthorizationResponse> =
         Single.create { emitter ->
-            writeClient.authorizeWriteAccess(
+            writeClient.authorizeAccess(
                 activity,
-                data = localDataAccess.getCachedPostbox(),
                 credentials = localDataAccess.getCachedCredential()
             ) { response, error ->
                 error?.let(emitter::onError)
