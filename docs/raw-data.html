@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Raw Data  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+
+    <a title="Raw Data  Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="index.html">
+           Docs
+        </a>
+         (0% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="https://github.com/digime/digime-sdk-android">
+            <img class="header-icon" src="img/gh.png"/>
+            View on GitHub
+          </a>
+        </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="dash-feed://https%3A%2F%2Fgithub%2Eio%2Fdigime%2Fdocsets%2F%2Exml">
+            <img class="header-icon" src="img/dash.png"/>
+            Install in Dash
+          </a>
+        </p>
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="index.html"> Reference</a>
+      <img class="carat" src="img/carat.png" />
+      Raw Data  Reference
+    </p>
+
+    <div class="content-wrapper">
+        <nav class="navigation">
+            <ul class="nav-groups">
+                <li class="nav-group-name">
+                    <a class="nav-group-name-link" href="Guides.html">Guides</a>
+                    <ul class="nav-group-tasks">
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="getting-started.html">Getting Started</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="migration-tips.html">Migration Tips</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="error-handling.html">Error Handling</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="raw-data.html">Raw Data</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="scope.html">Scope</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="postbox.html">Postbox</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="guest-consent.html">Guest Consent</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="ongoing-access.html">Ongoing Access</a>
+                        </li>
+                        <li class="nav-group-task">
+                            <a class="nav-group-task-link" href="ongoing-postbox.html">Ongoing Postbox</a>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <article class="main-content">
+
+        <section class="section">
+          <div class="section-content">
+            
+            <p><img src="https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png" alt=""></p>
+
+<p align="center">
+    <a href="https://developers.digi.me/slack/join">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
+    </a>
+    <a href="#">
+        <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" />
+    </a>
+    <a href="https://kotlinlang.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://developers.digi.me">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+    <a href="https://digime.freshdesk.com/support/home">
+        <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
+    </a>
+</p>
+
+<p><br></p>
+<h1 id='raw-data' class='heading'>Raw Data</h1>
+<h2 id='introduction' class='heading'>Introduction</h2>
+
+<p>digi.me prides itself in normalising data from a huge array of sources into common ontologies, however, sometimes you may encounter data within a user&rsquo;s digi.me that is <strong>unmapped</strong>, in other words, <strong>raw data</strong>. In the digi.me client, this will be rendered as a raw &lsquo;data drop&rsquo;. If we can deserialise this to JSON, we will show the raw JSON tree, otherwise there will be no facility to preview the data, it will only be available over the Private Sharing service - this is for security reasons.</p>
+<h2 id='pulling-raw-data' class='heading'>Pulling Raw Data</h2>
+
+<p>The facility to pull raw data is, much like any data type, bound by one&rsquo;s contract. Please <a href="https://developers.digi.me/contact-us">contact support</a> to discuss having the raw data entitlement added to your contract.</p>
+<h3 id='mime-types' class='heading'>Mime Types:</h3>
+
+<p>When pulling raw data from the Private Sharing platform, any <code>DMEFile</code> containing raw data should be handled appropriately for that data.</p>
+
+<p>For example, <code>DMEFile</code> has a <code>mimeType</code> property. This will be one case of the <code>DMEMimeType</code> enum (see <a href="https://github.com/digime/digime-sdk-android/blob/master/sdk/src/main/java/me/digi/sdk/entities/DMEMimeType.kt">DMEMimeType.kt</a>).</p>
+
+<p>Most instances of raw data will have the <code>APPLICATION_JSON</code> mime type, symbolising JSON data which didn&rsquo;t fit within existing digi.me ontology. In this case, you can invoke <code>fileContentAsJSON</code> just as you would for mapped data.</p>
+
+<p>For any other mime type, <code>fileContentAsJSON</code> will throw an exception. In such cases, it should not be used and you should instead access the <code>ByteArray</code> file content directly with the <code>fileContent</code> property and handle it how you see fit for your use case.</p>
+<h2 id='pushing-raw-data' class='heading'>Pushing Raw Data</h2>
+
+<p>If you push data to a Postbox that isn&rsquo;t pre-mapped to our <a href="https://developers.digi.me/reference-api">Ontology</a>, it will be treated as raw data and pushed into a user&rsquo;s digi.me as such. The metadata supplied with the push will be used to deduce the data&rsquo;s mime type going forward (IE the mime type the file has when pulled back down).</p>
+
+<p>Please see the <a href="./postbox.html">Postbox Documentation</a> for more information on pushing data into digi.me.</p>
+
+          </div>
+        </section>
+
+
+      </article>
+    </div>
+    <section class="footer">
+        <p>&copy; 2021 <a class="link" href="https://developer.digi.me" target="_blank" rel="external">digi.me</a>. All rights reserved. (Last updated: 2021-04-06)</p>
+        <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.6</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>

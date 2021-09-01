@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Ongoing Access  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+
+    <a title="Ongoing Access  Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="index.html">
+           Docs
+        </a>
+         (0% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="https://github.com/digime/digime-sdk-android">
+            <img class="header-icon" src="img/gh.png"/>
+            View on GitHub
+          </a>
+        </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="dash-feed://https%3A%2F%2Fgithub%2Eio%2Fdigime%2Fdocsets%2F%2Exml">
+            <img class="header-icon" src="img/dash.png"/>
+            Install in Dash
+          </a>
+        </p>
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="index.html"> Reference</a>
+      <img class="carat" src="img/carat.png" />
+      Ongoing Access  Reference
+    </p>
+
+    <div class="content-wrapper">
+      <nav class="navigation">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Guides.html">Guides</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="error-handling.html">Error Handling</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="getting-started.html">Getting Started</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="guest-consent.html">Guest Consent</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="migration-tips.html">Migration Tips</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="ongoing-access.html">Ongoing Access</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="postbox.html">Postbox</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="raw-data.html">Raw Data</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="scope.html">Scope</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+
+        <section class="section">
+          <div class="section-content">
+            
+            <p><img src="https://securedownloads.digi.me/partners/digime/SDKReadmeBanner.png" alt=""></p>
+
+<p align="center">
+    <a href="https://developers.digi.me/slack/join">
+        <img src="https://img.shields.io/badge/chat-slack-blueviolet.svg" alt="Developer Chat">
+    </a>
+    <a href="../../LICENSE">
+        <img src="https://img.shields.io/badge/license-apache 2.0-blue.svg" alt="Apache 2.0 License">
+    </a>
+    <a href="#">
+        <img src="https://img.shields.io/badge/build-passing-brightgreen.svg">
+    </a>
+    <a href="https://kotlinlang.org">
+        <img src="https://img.shields.io/badge/language-kotlin/java-ff69b4.svg" alt="Kotlin/Java">
+    </a>
+    <a href="https://developers.digi.me">
+        <img src="https://img.shields.io/badge/web-digi.me-red.svg" alt="Web">
+    </a>
+    <a href="https://digime.freshdesk.com/support/home">
+        <img src="https://img.shields.io/badge/support-freshdesk-721744.svg" alt="Support">
+    </a>
+</p>
+
+<p><br></p>
+<h1 id='ongoing-access' class='heading'>Ongoing Access</h1>
+<h2 id='introduction' class='heading'>Introduction</h2>
+
+<p>Ongoing Access allows continuous access to user&rsquo;s data without the use of digi.me app <strong>after</strong> initial consent has been given.*</p>
+
+<p>From a developer&rsquo;s perspective, the authorization process is almost identical to regular authorization. Under the hood we use OAuth 2.0 with JWT, and JWS with RSA signing and verification to issue a medium lived, refreshable OAuth token, which is used to re-query user&rsquo;s data without the need to leave your app.</p>
+
+<p>Here is a simplified sequence diagram of how the OAuth flow is implemented:
+<img src="https://securedownloads.digi.me/partners/digime/OngoingAccess.png" alt=""></p>
+
+<p><em>The SDK handles all of this for you.</em></p>
+
+<p>Ongoing Access is for you if:</p>
+
+<ul>
+<li>You need regular access to user&rsquo;s data</li>
+<li>You are using an ongoing contract</li>
+</ul>
+
+<p>* <em><code>refreshTokens</code> used to refresh <code>accessTokens</code> do eventually expire (for example - 30 days). When this happens, user will need to be directed back to the digi.me app for re-authorization.</em></p>
+<h2 id='how-to-use' class='heading'>How to use</h2>
+<h3 id='requesting-consent' class='heading'>Requesting Consent</h3>
+
+<p>Simply use the new <code>authorizeOngoingAccess</code> method on an instance of <code>DMEPullClient</code>:</p>
+<pre class="highlight kotlin"><code><span class="n">pullClient</span><span class="p">.</span><span class="nf">authorizeOngoingAcess</span><span class="p">(</span><span class="n">activity</span><span class="p">)</span> <span class="p">{</span> <span class="n">session</span><span class="p">,</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">error</span> <span class="p">-&gt;</span>
+
+<span class="p">}</span>
+</code></pre>
+
+<p><em>See <a href="./getting-started.md#5-fetching-data">Fetching Data</a> for more details on post-consent steps.</em></p>
+
+<p>You may notice that upon completion of this method, the SDK supplies a <code>DMEOAuthToken</code>. This is <strong>key</strong> to access restoration and we recommend you store this - you will need it later.</p>
+
+<p>Our recommendation would be to save it into the device keychain or other secure storage.</p>
+<h3 id='access-restoration' class='heading'>Access Restoration</h3>
+
+<p>If you have previously obtained user&rsquo;s consent, and are in posession of a <code>DMEOAuthToken</code>, you can get data from your users without them having to leave your app.</p>
+
+<p>To do this, simply call the following method on a <strong>new</strong> <code>DMEPullClient</code> instance, where <code>cachedCredentials</code> is the <code>DMEOAuthToken</code> you cached:</p>
+<pre class="highlight kotlin"><code><span class="n">pullClient</span><span class="p">.</span><span class="nf">authorizeOngoingAcess</span><span class="p">(</span><span class="n">activity</span><span class="p">,</span> <span class="n">cachedCredentials</span><span class="p">)</span> <span class="p">{</span> <span class="n">session</span><span class="p">,</span> <span class="n">credentials</span><span class="p">,</span> <span class="n">error</span> <span class="p">-&gt;</span>
+
+<span class="p">}</span>
+</code></pre>
+
+<p>One important thing to note here - the <code>DMEAuthToken</code> returned in <code>completion</code> may not be the same token you have passed in. This is because the SDK will try to automatically refresh an <code>accessToken</code> using a <code>refreshToken</code> (both of these contained in <code>DMEOAuthToken</code>), generating a new <code>DMEOAuthToken</code>. This means you should replace your old token with the one you receive in <code>completion</code>.</p>
+
+<p>Under the hood the SDK will trigger data query using the <code>DMEOAuthToken</code> which, if valid, will start preparing user&rsquo;s protected resources for access. This time however, the user will remain in your app.</p>
+<h4 id='configuration-options' class='heading'>Configuration Options</h4>
+
+<p>There is a new property available on <code>DMEPullConfiguration</code> object - <code>autoRecoverExpiredCredentials</code>. This defaults to <code>true</code>, which means that if the <code>refreshToken</code> contained in <code>DMEOAuthToken</code> has expired, the user will be directed to the digi.me app, so that this can be regenerated.</p>
+
+<p>If you wish to direct the user back to digi.me app manually, set this property to <code>false</code>.</p>
+<h3 id='anything-else' class='heading'>Anything else?</h3>
+
+<p>In the examples above we have used a method without a <code>scope</code> parameter. Scoping is useful when you want to only access a subset of data, such as data generated after certain date. If you would like to learn more - see <a href="./scoping.md">Scoping</a>.</p>
+
+<p>If you need help setting up the rest of the flow, or simply more detail, then head on over to <a href="./getting-started.md">Getting Started</a>.</p>
+
+          </div>
+        </section>
+
+
+      </article>
+    </div>
+    <section class="footer">
+      <p>&copy; 2020 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2020-06-30)</p>
+      <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.11.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>
