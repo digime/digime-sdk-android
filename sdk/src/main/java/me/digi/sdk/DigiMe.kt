@@ -389,6 +389,53 @@ class DigiMe(
     }
 
     /**
+     * Requests new session, and updates session manager with it.
+     *
+     * @param completion Block called upon completion with updated session, boolean value
+     * if session was in fact updated, or any error encountered.
+     */
+    fun readSession(completion: GetSessionCompletion) {
+
+        val sessionRequest = SessionRequest(
+            configuration.appId,
+            configuration.contractId,
+            SdkAgent(),
+            "gzip",
+            null
+        )
+
+        fun requestSession(): Single<SessionResponse> =
+            Single.create { emitter ->
+                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
+                    when {
+                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
+                    }
+                }
+            }
+
+        requestSession()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    val session = Session().copy(key = it.key, expiry = it.expiry)
+                    sessionManager.updatedSession = session
+                    completion.invoke(true, null)
+                },
+                onError = {
+                    completion.invoke(
+                        false,
+                        AuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+    }
+
+    /**
      * Once a user has granted consent, adds an additional service
      *
      * @param serviceId Identifier of service to add

@@ -2,11 +2,13 @@ package me.digi.ongoingpostbox.framework.datasource
 
 import android.app.Activity
 import android.content.Context
+import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.DigiMe
+import me.digi.sdk.Error
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.response.AuthorizationResponse
@@ -57,6 +59,12 @@ class MainRemoteDataAccessImpl(
         ) { response, error ->
             error?.let(emitter::onError)
                 ?: emitter.onSuccess(response as DataWriteResponse)
+        }
+    }
+
+    override fun updateSession(): Single<Boolean> = Single.create { emitter ->
+        writeClient.readSession { isSessionUpdated: Boolean?, error: Error? ->
+            error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
         }
     }
 }

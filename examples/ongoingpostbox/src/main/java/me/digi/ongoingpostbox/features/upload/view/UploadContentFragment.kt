@@ -15,18 +15,16 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import kotlinx.android.synthetic.main.fragment_upload_content.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
-import me.digi.ongoingpostbox.features.viewmodel.MainViewModel
+import me.digi.ongoingpostbox.features.upload.viewmodel.UploadDataViewModel
 import me.digi.ongoingpostbox.utils.*
 import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
@@ -36,13 +34,13 @@ import java.io.File
 
 class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.OnClickListener {
 
-    private val viewModel: MainViewModel by viewModel()
+    private val viewModel: UploadDataViewModel by viewModel()
     private val localAccess: MainLocalDataAccess by inject()
-    private var firstExecution = true
+    private var writePayload: WriteDataPayload? = null
     private val pickImage = 100
 
     companion object {
-        fun newInstance() = UploadContentFragment()
+        fun newInstance(): UploadContentFragment = UploadContentFragment()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -60,37 +58,6 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.authState.collect { resource: Resource<AuthorizationResponse> ->
-                when (resource) {
-                    is Resource.Idle -> {
-                        /**
-                         * Do nothing
-                         */
-                    }
-                    is Resource.Loading -> {
-                        pbUploadContent?.isVisible = true
-                        ivImageToUpload?.isClickable = false
-                        snackBarLong(getString(R.string.label_postbox_creation_started))
-                    }
-                    is Resource.Success -> {
-                        pbUploadContent?.isVisible = false
-                        ivImageToUpload?.isClickable = true
-
-                        val data = resource.data as AuthorizationResponse
-                        Timber.d("Data: $data")
-
-                        snackBarLong(getString(R.string.label_postbox_created))
-                    }
-                    is Resource.Failure -> {
-                        pbUploadContent?.isVisible = false
-                        ivImageToUpload?.isClickable = true
-                        snackBarLong(resource.message ?: getString(R.string.label_unknown_error))
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launchWhenResumed {
             viewModel.uploadState.collectLatest { result: Resource<DataWriteResponse> ->
                 when (result) {
                     is Resource.Idle -> {
@@ -98,22 +65,16 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     }
                     is Resource.Loading -> {
                         pbUploadContent?.isVisible = true
-                        btnUploadImage?.isEnabled = false
-                        ivImageToUpload?.isClickable = false
                         snackBarLong(getString(R.string.label_update_ongoing))
                     }
                     is Resource.Success -> {
                         pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
-                        ivImageToUpload?.isClickable = true
                         snackBarLong(getString(R.string.label_update_successful))
 
                         Timber.d("Result: ${result.data}")
                     }
                     is Resource.Failure -> {
                         pbUploadContent?.isVisible = false
-                        btnUploadImage?.isEnabled = true
-                        ivImageToUpload?.isClickable = true
                         result.message?.let { snackBarIndefiniteWithAction(it) }
                     }
                 }
@@ -128,14 +89,10 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
                 startActivityForResult(gallery, pickImage)
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (firstExecution) {
-            viewModel.createPostbox(requireActivity())
-            firstExecution = false
+            R.id.btnUploadImage -> writePayload?.let {
+                val accessToken = localAccess.getCachedCredential()?.accessToken?.value!!
+                viewModel.pushDataToPostbox(it, accessToken)
+            } ?: snackBarLong("Payload must not be empty!")
         }
     }
 
@@ -166,7 +123,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             }
 
             //You can get File object from intent
-            val file = File(data.path)
+            val file = File(it.path)
 
             // Update UI based on the file existence
             btnUploadImage?.isEnabled = true
@@ -179,7 +136,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             val session: Session = localAccess.getCachedSession()!!
             val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
 
-            val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
+            val fileContent: ByteArray = getFileContent(requireActivity(), file.name.toString())
             val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
 
             val postbox: Data =
@@ -188,11 +145,7 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
                     postboxId = postboxData.postboxId,
                     publicKey = postboxData.publicKey
                 )
-            val payload = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
-
-            btnUploadImage?.setOnClickListener {
-                viewModel.pushDataToPostbox(payload, credentials.accessToken.value!!)
-            }
+            writePayload = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
         } ?: snackBarLong(getString(R.string.label_image_picker_cancelled))
     }
 }

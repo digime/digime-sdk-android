@@ -1,6 +1,5 @@
-package me.digi.ongoingpostbox.features.viewmodel
+package me.digi.ongoingpostbox.features.upload.viewmodel
 
-import android.app.Activity
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModel
@@ -17,55 +16,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import me.digi.ongoingpostbox.OngoingPostboxApp
 import me.digi.ongoingpostbox.R
-import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCase
 import me.digi.ongoingpostbox.usecases.WriteDataUseCase
 import me.digi.ongoingpostbox.utils.Resource
 import me.digi.sdk.entities.WriteDataPayload
-import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 
-/**
- * Our [MainViewModel] contains 2 use cases since it's rather simple and small example
- * Each Use-Case is being handled individually in terms of both functionality and
- * corresponding Live/MutableLiveData
- *
- * Since our calls are Rx-based, ideally we'd dispose of them.
- * Simplest way is to pass disposable into the constructor and initialize it immediately
- * @see disposable
- * and dispose of all calls via convenience method provided by ViewModel class
- * @see onCleared
- */
-class MainViewModel(
-    private val createPostbox: AuthorizeAccessUseCase,
+class UploadDataViewModel(
     private val uploadData: WriteDataUseCase,
     private val disposable: CompositeDisposable = CompositeDisposable()
 ) : ViewModel() {
 
     private var job: Job? = null
 
-    private val _authState: MutableStateFlow<Resource<AuthorizationResponse>> =
-        MutableStateFlow(Resource.Idle())
-    val authState: StateFlow<Resource<AuthorizationResponse>>
-        get() = _authState
-
     private val _uploadState: MutableStateFlow<Resource<DataWriteResponse>> =
         MutableStateFlow(Resource.Idle())
     val uploadState: StateFlow<Resource<DataWriteResponse>>
         get() = _uploadState
-
-    fun createPostbox(activity: Activity) {
-        _authState.value = Resource.Loading()
-
-        createPostbox
-            .invoke(activity)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { result -> _authState.value = Resource.Success(result) },
-                onError = { _authState.value = Resource.Failure(it.localizedMessage) }
-            )
-            .addTo(disposable)
-    }
 
     fun pushDataToPostbox(payload: WriteDataPayload, accessToken: String) {
         _uploadState.value = Resource.Loading()
