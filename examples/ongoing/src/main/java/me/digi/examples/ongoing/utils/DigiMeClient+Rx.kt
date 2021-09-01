@@ -1,10 +1,12 @@
 package me.digi.examples.ongoing.utils
 
 import android.app.Activity
+import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.AuthError
 import me.digi.sdk.DigiMe
+import me.digi.sdk.Error
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
@@ -34,3 +36,9 @@ fun DigiMe.getSessionData(accessToken: String, scope: DataRequest? = null): Obse
             } ?: run { emitter.onComplete() }
         }
     }
+
+fun DigiMe.updateCurrentSession(): Single<Boolean> = Single.create { emitter ->
+    readSession { isSessionUpdated: Boolean?, error: Error? ->
+        error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
+    }
+}

@@ -6,13 +6,14 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.examples.ongoing.model.Song
 import me.digi.examples.ongoing.utils.FileUtils
 import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
+import me.digi.examples.ongoing.utils.updateCurrentSession
 import me.digi.ongoing.R
 import me.digi.sdk.DigiMe
 import me.digi.sdk.entities.*
@@ -46,15 +47,17 @@ class DigiMeService(private val context: Application) {
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
 
-    fun obtainAccessRights(activity: Activity): Completable = client.authorizeOngoingAccess(
-        activity,
-        scope = createScopeForDailyPlayHistory(),
-        credentials = getCachedCredential(),
-        serviceId = "16" // Spotify
-    )
-        .map { it }
-        .compose(cacheCredentials())
-        .flatMapCompletable { Completable.complete() }
+    fun updateCurrentSessionProceedToGetData(): Single<Boolean> = client.updateCurrentSession()
+
+    fun obtainAccessRights(activity: Activity): Single<AuthorizationResponse> =
+        client.authorizeOngoingAccess(
+            activity,
+            scope = createScopeForDailyPlayHistory(),
+            credentials = getCachedCredential(),
+            serviceId = "16" // Spotify
+        )
+            .map { it }
+            .compose(cacheCredentials())
 
     fun fetchData(): Observable<Song> = client.getSessionData(
         scope = createScopeForDailyPlayHistory(),

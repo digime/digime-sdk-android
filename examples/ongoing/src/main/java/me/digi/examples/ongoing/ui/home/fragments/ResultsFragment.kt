@@ -2,6 +2,7 @@ package me.digi.examples.ongoing.ui.home.fragments
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
@@ -27,14 +28,36 @@ class ResultsFragment(private val digiMeService: DigiMeService) :
         super.onViewCreated(view, savedInstanceState)
 
         breakdownRecyclerView.adapter = resultsAdapter
+        resultsAdapter.submitList(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
     }
 
     override fun onResume() {
         super.onResume()
         if (firstExecution) {
-            loadData()
+            handleFlow()
             firstExecution = false
         }
+    }
+
+    private fun handleFlow() {
+        digiMeService.getCachedCredential()?.let {
+            digiMeService.updateCurrentSessionProceedToGetData()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { handleDataFlow() }, onError = {
+                    Toast.makeText(
+                        requireContext(),
+                        it.localizedMessage,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                })
+        } ?: loadData()
+    }
+
+    private fun handleDataFlow() {
+        resultsAdapter.submitList(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
+        val songs: MutableList<Song> = mutableListOf()
+        getData(songs)
     }
 
     private fun loadData() {
@@ -46,7 +69,7 @@ class ResultsFragment(private val digiMeService: DigiMeService) :
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onComplete = { getData(songs) },
+                onSuccess = { getData(songs) },
                 onError = ::handleError
             )
     }
@@ -61,7 +84,6 @@ class ResultsFragment(private val digiMeService: DigiMeService) :
             .subscribe(resultsAdapter::submitList, ::handleError) {
                 digiMeService.cacheSongs(songs)
                 dismissLoadingState()
-                resultsAdapter.submitList(GenreInsightGenerator.generateInsights(digiMeService.getCachedSongs()))
             }
     }
 
