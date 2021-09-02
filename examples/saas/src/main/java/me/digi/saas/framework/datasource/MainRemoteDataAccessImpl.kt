@@ -8,7 +8,7 @@ import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
-import me.digi.sdk.DigiMe
+import me.digi.sdk.Init
 import me.digi.sdk.Error
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.WriteDataPayload
@@ -25,43 +25,40 @@ class MainRemoteDataAccessImpl(
     private val localAccess: MainLocalDataAccess
 ) : MainRemoteDataAccess {
 
-    private val readClient: DigiMe by lazy {
+    private val readClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadContract()?.contractId!!,
-            localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n")
+            localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n"),
+            localAccess.getCachedBaseUrl()!!
         )
 
-        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
-
-        DigiMe(context, configuration)
+        Init(context, configuration)
     }
 
-    private val writeClient: DigiMe by lazy {
+    private val writeClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedPushContract()?.contractId!!,
-            localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n")
+            localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n"),
+            localAccess.getCachedBaseUrl()!!
         )
 
-        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
-
-        DigiMe(context, configuration)
+        Init(context, configuration)
     }
 
-    private val readRawClient: DigiMe by lazy {
+    private val readRawClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadRawContract()?.contractId!!,
-            localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n")
+            localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n"),
+            localAccess.getCachedBaseUrl()!!
         )
 
-        configuration.baseUrl = localAccess.getCachedBaseUrl()!!
-
-        DigiMe(context, configuration)
+        Init(context, configuration)
     }
 
     override fun onboardService(
@@ -93,7 +90,7 @@ class MainRemoteDataAccessImpl(
 
     override fun getServicesForContract(contractId: String): Single<List<Service>> =
         Single.create { emitter ->
-            readClient.availableServices { servicesResponse, error ->
+            readClient.getAvailableServices(null) { servicesResponse, error ->
                 error?.let(emitter::onError)
                     ?: emitter.onSuccess(servicesResponse?.data?.services as List<Service>)
             }

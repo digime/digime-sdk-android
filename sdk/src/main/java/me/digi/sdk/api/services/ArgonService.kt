@@ -21,33 +21,12 @@ internal interface ArgonService {
     @GET("/v1.6/permission-access/query/{sessionKey}")
     fun getFileList(@Path("sessionKey") sessionKey: String): Call<FileList>
 
-    // TODO: Probably needs to be removed
-    @GET("/v1.4/permission-access/query/{sessionKey}/{fileName}")
-    fun getFile(
-        @Path("sessionKey") sessionKey: String,
-        @Path("fileName") fileName: String
-    ): Call<FileItem>
-
     @Headers("Accept: application/octet-stream")
     @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
     fun getFileBytes(
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
     ): Single<Response<ResponseBody>>
-
-    // TODO: Remove
-    @Multipart
-    @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.4/permission-access/postbox/{id}")
-    fun pushData(
-        @Header("sessionKey") sessionKey: String,
-        @Header("symmetricalKey") symmetricalKey: String,
-        @Header("iv") iv: String,
-        @Header("metadata") metadata: String,
-        @Path("id") id: String,
-        @Part file: MultipartBody.Part,
-        @Part("file") description: RequestBody
-    ): Call<Unit>
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
@@ -82,7 +61,7 @@ internal interface ArgonService {
     ): Call<PreAuthorizationResponse>
 
     @GET("v1.5/discovery/services")
-    fun getServicesForContract(@Header("contractId") contractId: String): Single<ServicesResponse>
+    fun getServicesForContract(@Header("contractId") contractId: String?): Single<ServicesResponse>
 
     @POST("v1.6/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>

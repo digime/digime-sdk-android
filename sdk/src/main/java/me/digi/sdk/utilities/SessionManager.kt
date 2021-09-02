@@ -1,37 +1,17 @@
 package me.digi.sdk.utilities
 
 import me.digi.sdk.api.APIClient
-import me.digi.sdk.callbacks.DMEAuthorizationCompletion
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.SessionResponse
 import java.util.*
 
-class SessionManager(
-    private val apiClient: APIClient,
-    private val clientConfig: ClientConfiguration
-) {
+class SessionManager {
 
     var currentSession: SessionResponse? = null
     var updatedSession: Session? = null
     var currentScope: SessionRequest? = null
-
-    fun getSession(sessionRequest: SessionRequest, completion: DMEAuthorizationCompletion) {
-
-        currentSession = null
-        currentScope = null
-
-        apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { session, error ->
-
-            session?.scope = sessionRequest.scope
-            session?.createdDate = Date()
-            session?.metadata = emptyMap<String, Any>().toMutableMap()
-            currentSession = session
-            currentScope = sessionRequest
-            completion(session, error)
-        }
-    }
 
     fun isSessionValid() = updatedSession?.let {
         Date(it.expiry).after(Date())

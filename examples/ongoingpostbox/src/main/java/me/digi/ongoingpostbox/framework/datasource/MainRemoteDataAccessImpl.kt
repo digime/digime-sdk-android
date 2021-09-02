@@ -7,8 +7,7 @@ import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.data.remoteaccess.MainRemoteDataAccess
-import me.digi.sdk.DigiMe
-import me.digi.sdk.Error
+import me.digi.sdk.Init
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.response.AuthorizationResponse
@@ -25,17 +24,18 @@ class MainRemoteDataAccessImpl(
     private val localDataAccess: MainLocalDataAccess
 ) : MainRemoteDataAccess {
 
-    private val writeClient: DigiMe by lazy {
+    private val writeClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
             context.getString(R.string.digime_application_id),
             context.getString(R.string.digime_contract_id),
-            context.getString(R.string.digime_private_key)
+            context.getString(R.string.digime_private_key),
+            null
         )
 
         configuration.baseUrl = "https://api.stagingdigi.me/"
 
-        DigiMe(context, configuration)
+        Init(context, configuration)
     }
 
     override fun authorizeAccess(activity: Activity): Single<AuthorizationResponse> =
@@ -63,7 +63,7 @@ class MainRemoteDataAccessImpl(
     }
 
     override fun updateSession(): Single<Boolean> = Single.create { emitter ->
-        writeClient.readSession { isSessionUpdated: Boolean?, error: Error? ->
+        writeClient.updateSession { isSessionUpdated: Boolean?, error: me.digi.sdk.Error? ->
             error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
         }
     }

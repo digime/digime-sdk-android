@@ -1,13 +1,10 @@
 package me.digi.sdk.interapp
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.annotation.StringRes
 import me.digi.sdk.R
 import me.digi.sdk.SDKError
-import me.digi.sdk.entities.SdkAgent
 
 class AppCommunicator(val context: Context) {
 
@@ -33,64 +30,10 @@ class AppCommunicator(val context: Context) {
 
     private var callbackHandlers = emptyList<AppCallbackHandler>().toMutableList()
 
-    fun canOpenApp(): Boolean {
-        val packageManager = context.packageManager
-        val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
-
-        return try {
-            packageManager.getApplicationInfo(digiMeAppPackageName, 0).enabled
-        } catch (error: Throwable) {
-            return false
-        }
-    }
-
-    fun requestInstallOfDMEApp(from: Activity, installCallback: () -> Unit) {
-
-        InstallHandler.registerNewInstallHandler(installCallback)
-
-        val digiMeAppPackageName = context.getString(R.string.const_digime_app_package_name)
-
-        try {
-            val playStoreIntent =
-                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$digiMeAppPackageName"))
-            from.startActivity(playStoreIntent)
-        } catch (e: Throwable) {
-            val playStoreIntent = Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=$digiMeAppPackageName")
-            )
-            from.startActivity(playStoreIntent)
-        }
-    }
-
     fun buildActionFor(@StringRes deeplinkResId: Int): String {
         val intentPrefix = "android.intent.action.me.digi."
         val deeplinkSuffix = context.getString(deeplinkResId)
         return intentPrefix + deeplinkSuffix
-    }
-
-    fun buildIntentFor(@StringRes deeplinkResId: Int, params: Map<String, String>): Intent {
-        val action = buildActionFor(deeplinkResId)
-        val intent = Intent()
-        intent.action = action
-        intent.`package` = context.getString(R.string.const_digime_app_package_name)
-        intent.type = "text/plain"
-
-        // Dynamic params
-        params.forEach { intent.putExtra(it.key, it.value) }
-
-        // Static params
-        intent.putExtra(context.getString(R.string.key_sdk_version), SdkAgent().version)
-        intent.putExtra(context.getString(R.string.key_app_name), embeddingAppName())
-
-        return intent
-    }
-
-    fun openDigiMeApp(fromActivity: Activity, intent: Intent) {
-        fromActivity.startActivityForResult(
-            intent,
-            requestCodeForDeeplinkIntentAction(intent.action.orEmpty())
-        )
     }
 
     fun onActivityResult(requestCode: Int, responseCode: Int, data: Intent?) {
@@ -124,15 +67,4 @@ class AppCommunicator(val context: Context) {
     fun requestCodeForDeeplinkIntentActionId(@StringRes deeplinkIntentActionId: Int) =
         requestCodeForDeeplinkIntentAction(buildActionFor(deeplinkIntentActionId))
 
-    private fun embeddingAppName(): String {
-        val pkgName = context.packageName
-        val pkgInfo = context.packageManager.getPackageInfo(pkgName, 0)
-        val appLabelId = pkgInfo.applicationInfo.labelRes
-
-        return try {
-            context.getString(appLabelId)
-        } catch (e: Throwable) {
-            "unknown"
-        }
-    }
 }

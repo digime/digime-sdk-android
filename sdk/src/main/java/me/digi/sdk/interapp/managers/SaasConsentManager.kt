@@ -10,11 +10,11 @@ import me.digi.sdk.callbacks.ServiceOnboardingCompletion
 import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.interapp.AppCallbackHandler
 import me.digi.sdk.interapp.AppCommunicator
-import me.digi.sdk.ui.GuestConsentBrowserActivity
+import me.digi.sdk.ui.ConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
 
-class SaasConsentManager(private val baseURL: String, private val type: String) :
+class SaasConsentManager(private val baseURL: String?, private val type: String) :
     AppCallbackHandler() {
 
     private var authorizationCallbackHandler: AuthorizationCompletion? = null
@@ -59,7 +59,7 @@ class SaasConsentManager(private val baseURL: String, private val type: String) 
         val guestRequestCode = AppCommunicator.getSharedInstance()
             .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
-        val proxyLaunchIntent = Intent(fromActivity, GuestConsentBrowserActivity::class.java)
+        val proxyLaunchIntent = Intent(fromActivity, ConsentBrowserActivity::class.java)
 
         proxyLaunchIntent.data = buildSaaSClientURI(serviceId, codeValue)
 

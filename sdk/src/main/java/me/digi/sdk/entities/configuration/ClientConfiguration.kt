@@ -5,7 +5,8 @@ import me.digi.sdk.utilities.DMELog
 abstract class ClientConfiguration(
     var appId: String,
     var contractId: String,
-    var privateKeyHex: String
+    var privateKeyHex: String,
+    var baseUrl: String? = "https://api.digi.me/"
 ) {
 
     var globalTimeout: Int = 62
@@ -23,8 +24,4 @@ abstract class ClientConfiguration(
             field = value
             DMELog.debugLogEnabled = value
         }
-
-    var baseUrl: String = "https://api.digi.me/"
-//    var baseUrl: String = "https://api.development.devdigi.me/"
-//    var baseUrl: String = "https://api.stagingdigi.me/"
 }

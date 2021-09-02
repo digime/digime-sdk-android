@@ -6,7 +6,7 @@
 
     <application android:label="@string/app_name">
         <activity
-            android:name=".ui.GuestConsentBrowserActivity"
+            android:name=".ui.ConsentBrowserActivity"
             android:launchMode="singleTop">
 
             <intent-filter>

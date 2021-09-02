@@ -1,9 +1,13 @@
 package me.digi.sdk.entities.configuration
 
-class DigiMeConfiguration(appId: String, contractId: String, privateKeyHex: String) :
-    ClientConfiguration(appId, contractId, privateKeyHex) {
+class DigiMeConfiguration(
+    appId: String,
+    contractId: String,
+    privateKeyHex: String,
+    baseUrl: String?
+) :
+    ClientConfiguration(appId, contractId, privateKeyHex, baseUrl) {
 
-    var guestEnabled = true
     var pollInterval = 3
     var maxStalePolls = 100
 }

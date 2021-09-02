@@ -1,7 +1,7 @@
 package me.digi.sdk.api.interceptors
 
 import me.digi.sdk.entities.configuration.ClientConfiguration
-import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import me.digi.sdk.utilities.crypto.KeyTransformer
@@ -62,7 +62,7 @@ class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
 
     private fun Request.withRegeneratedJwtNonce(): Request {
         val authHeader = header("Authorization") ?: return this
-        val signingKey = (config as? ReadConfiguration)?.privateKeyHex?.let {
+        val signingKey = (config as? DigiMeConfiguration)?.privateKeyHex?.let {
             KeyTransformer.javaPrivateKeyFromHex(it)
         } ?: return this
         val tokenisedJwt = authHeader.split(" ").last()

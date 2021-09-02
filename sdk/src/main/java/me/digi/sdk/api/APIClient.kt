@@ -16,7 +16,7 @@ import me.digi.sdk.api.interceptors.DefaultHeaderAppender
 import me.digi.sdk.api.interceptors.RetryInterceptor
 import me.digi.sdk.api.services.ArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
-import me.digi.sdk.entities.configuration.ReadConfiguration
+import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.FileItem
 import okhttp3.Dispatcher
@@ -82,7 +82,7 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
                     return Date(json?.asLong ?: 0)
                 }
             })
-        if (clientConfig is ReadConfiguration) {
+        if (clientConfig is DigiMeConfiguration) {
             gsonBuilder.registerTypeAdapter(
                 FileItem::class.java,
                 FileUnpackAdapter(clientConfig.privateKeyHex)

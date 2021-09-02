@@ -16,15 +16,3 @@ data class Data(
     val postboxId: String? = null,
     val publicKey: String? = null
 )
-
-data class WriteDataInfo(
-    val postboxId: String? = null,
-    val publicKey: String? = null
-)
-
-// TODO: Can be removed
-data class OngoingData(
-    val session: Session? = null,
-    val data: WriteDataInfo? = null,
-    val credentials: CredentialsPayload? = null
-)
