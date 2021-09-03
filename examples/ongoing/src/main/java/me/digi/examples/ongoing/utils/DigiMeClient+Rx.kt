@@ -5,14 +5,13 @@ import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.AuthError
-import me.digi.sdk.DigiMe
-import me.digi.sdk.Error
+import me.digi.sdk.Init
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.FileItem
 
-fun DigiMe.authorizeOngoingAccess(
+fun Init.authorizeOngoingAccess(
     activity: Activity,
     scope: DataRequest? = null,
     credentials: CredentialsPayload? = null,
@@ -25,7 +24,7 @@ fun DigiMe.authorizeOngoingAccess(
     }
 }
 
-fun DigiMe.getSessionData(accessToken: String, scope: DataRequest? = null): Observable<FileItem> =
+fun Init.getSessionData(accessToken: String, scope: DataRequest? = null): Observable<FileItem> =
     Observable.create { emitter ->
         readAllFiles(
             scope,
@@ -37,8 +36,8 @@ fun DigiMe.getSessionData(accessToken: String, scope: DataRequest? = null): Obse
         }
     }
 
-fun DigiMe.updateCurrentSession(): Single<Boolean> = Single.create { emitter ->
-    readSession { isSessionUpdated: Boolean?, error: Error? ->
+fun Init.updateCurrentSession(): Single<Boolean> = Single.create { emitter ->
+    updateSession { isSessionUpdated, error ->
         error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
     }
 }

@@ -15,7 +15,7 @@ import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
 import me.digi.examples.ongoing.utils.updateCurrentSession
 import me.digi.ongoing.R
-import me.digi.sdk.DigiMe
+import me.digi.sdk.Init
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
@@ -32,17 +32,16 @@ class DigiMeService(private val context: Application) {
         private const val CACHED_CREDENTIAL_KEY = "CachedCredential"
     }
 
-    private val client: DigiMe by lazy {
+    private val client: Init by lazy {
 
         val configuration = DigiMeConfiguration(
             context.getString(R.string.staging_app_id),
             context.getString(R.string.staging_contract_id),
-            context.getString(R.string.staging_private_key)
+            context.getString(R.string.staging_private_key),
+            "https://api.stagingdigi.me/"
         )
 
-        configuration.baseUrl = "https://api.stagingdigi.me/"
-
-        DigiMe(context, configuration)
+        Init(context, configuration)
     }
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }

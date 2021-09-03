@@ -30,10 +30,8 @@ class MainRemoteDataAccessImpl(
             context.getString(R.string.digime_application_id),
             context.getString(R.string.digime_contract_id),
             context.getString(R.string.digime_private_key),
-            null
+            "https://api.stagingdigi.me/"
         )
-
-        configuration.baseUrl = "https://api.stagingdigi.me/"
 
         Init(context, configuration)
     }
