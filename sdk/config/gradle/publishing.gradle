@@ -43,9 +43,9 @@ publishing {
                 developers {
 
                     developer {
-                        id = 'JacobKingDev'
-                        name = 'Jacob King'
-                        email = 'jacob@digi.me'
+                        id = 'Ramcilovic'
+                        name = 'Melisa Ramcilovic'
+                        email = 'melisa@digi.me'
                     }
 
                 }
@@ -69,7 +69,7 @@ publishing {
         maven {
 
             name = 'DigiMeSnapshot'
-            url = 'https://repository.sysdigi.net/m2/libs-snapshot-local/'
+            url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
 
             credentials {
                 username = project.ext.DIGIME_REPO_USER
@@ -81,11 +81,11 @@ publishing {
         maven {
 
             name = 'DigiMeRelease'
-            url = 'https://repository.sysdigi.net/m2/libs-release-local/'
+            url = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
 
             credentials {
-                username = project.ext.DIGIME_REPO_USER
-                password = project.ext.DIGIME_REPO_PASS
+                username = ""
+                password = ""
             }
 
         }
