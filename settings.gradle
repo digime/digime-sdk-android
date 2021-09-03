@@ -1,6 +1,4 @@
 include ':sdk'
-include ':examples:barebonesapp'
 include ':examples:ongoing'
 include ':examples:ongoingpostbox'
 include ':examples:saas'
-include 'testapp'

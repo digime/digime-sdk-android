@@ -1,7 +1,6 @@
 package me.digi.sdk.callbacks
 
 import me.digi.sdk.Error
-import me.digi.sdk.entities.Account
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 
@@ -13,7 +12,7 @@ typealias FileListCompletion = (fileList: FileList?, error: Error?) -> Unit
 
 typealias FileContentCompletion = (fileItem: FileItem?, error: Error?) -> Unit
 
-typealias AccountsCompletion = (accounts: FileItem?, error: Error?) -> Unit
+typealias AccountsCompletion = (accounts: ReadAccountsResponse?, error: Error?) -> Unit
 
 typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<String>) -> Unit
 
