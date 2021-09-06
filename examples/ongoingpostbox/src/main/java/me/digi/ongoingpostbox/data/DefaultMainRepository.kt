@@ -31,6 +31,4 @@ class DefaultMainRepository(
         payload: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse> = remoteAccess.writeData(payload, accessToken)
-
-    override fun updateSession(): Single<Boolean> = remoteAccess.updateSession()
 }

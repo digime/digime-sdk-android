@@ -35,9 +35,3 @@ fun Init.getSessionData(accessToken: String, scope: DataRequest? = null): Observ
             } ?: run { emitter.onComplete() }
         }
     }
-
-fun Init.updateCurrentSession(): Single<Boolean> = Single.create { emitter ->
-    updateSession { isSessionUpdated, error ->
-        error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
-    }
-}

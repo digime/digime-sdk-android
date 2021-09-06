@@ -6,7 +6,7 @@ abstract class ClientConfiguration(
     var appId: String,
     var contractId: String,
     var privateKeyHex: String,
-    var baseUrl: String? = "https://api.digi.me/"
+    var baseUrl: String?
 ) {
 
     var globalTimeout: Int = 62

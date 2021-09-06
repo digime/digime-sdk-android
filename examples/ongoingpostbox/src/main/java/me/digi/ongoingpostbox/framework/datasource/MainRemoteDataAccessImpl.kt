@@ -2,7 +2,6 @@ package me.digi.ongoingpostbox.framework.datasource
 
 import android.app.Activity
 import android.content.Context
-import io.reactivex.rxjava3.annotations.NonNull
 import io.reactivex.rxjava3.core.Single
 import me.digi.ongoingpostbox.R
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
@@ -27,10 +26,9 @@ class MainRemoteDataAccessImpl(
     private val writeClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
-            context.getString(R.string.digime_application_id),
-            context.getString(R.string.digime_contract_id),
-            context.getString(R.string.digime_private_key),
-            "https://api.stagingdigi.me/"
+            context.getString(R.string.app_id),
+            context.getString(R.string.contract_id),
+            context.getString(R.string.private_key)
         )
 
         Init(context, configuration)
@@ -57,12 +55,6 @@ class MainRemoteDataAccessImpl(
         ) { response, error ->
             error?.let(emitter::onError)
                 ?: emitter.onSuccess(response as DataWriteResponse)
-        }
-    }
-
-    override fun updateSession(): Single<Boolean> = Single.create { emitter ->
-        writeClient.updateSession { isSessionUpdated: Boolean?, error: me.digi.sdk.Error? ->
-            error?.let(emitter::onError) ?: emitter.onSuccess(isSessionUpdated as @NonNull Boolean)
         }
     }
 }
