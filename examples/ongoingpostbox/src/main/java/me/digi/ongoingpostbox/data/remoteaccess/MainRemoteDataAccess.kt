@@ -15,6 +15,4 @@ interface MainRemoteDataAccess {
         payloadWrite: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse>
-
-    fun updateSession(): Single<Boolean>
 }

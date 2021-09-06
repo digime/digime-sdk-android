@@ -2,7 +2,6 @@ package me.digi.examples.ongoing.ui.home.fragments
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
@@ -40,18 +39,7 @@ class ResultsFragment(private val digiMeService: DigiMeService) :
     }
 
     private fun handleFlow() {
-        digiMeService.getCachedCredential()?.let {
-            digiMeService.updateCurrentSessionProceedToGetData()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(onSuccess = { handleDataFlow() }, onError = {
-                    Toast.makeText(
-                        requireContext(),
-                        it.localizedMessage,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                })
-        } ?: loadData()
+        digiMeService.getCachedCredential()?.let { handleDataFlow() } ?: loadData()
     }
 
     private fun handleDataFlow() {

@@ -13,7 +13,6 @@ import me.digi.examples.ongoing.model.Song
 import me.digi.examples.ongoing.utils.FileUtils
 import me.digi.examples.ongoing.utils.authorizeOngoingAccess
 import me.digi.examples.ongoing.utils.getSessionData
-import me.digi.examples.ongoing.utils.updateCurrentSession
 import me.digi.ongoing.R
 import me.digi.sdk.Init
 import me.digi.sdk.entities.*
@@ -35,18 +34,15 @@ class DigiMeService(private val context: Application) {
     private val client: Init by lazy {
 
         val configuration = DigiMeConfiguration(
-            context.getString(R.string.staging_app_id),
-            context.getString(R.string.staging_contract_id),
-            context.getString(R.string.staging_private_key),
-            "https://api.stagingdigi.me/"
+            context.getString(R.string.app_id),
+            context.getString(R.string.contract_id),
+            context.getString(R.string.private_key)
         )
 
         Init(context, configuration)
     }
 
     private val gsonAgent: Gson by lazy { GsonBuilder().create() }
-
-    fun updateCurrentSessionProceedToGetData(): Single<Boolean> = client.updateCurrentSession()
 
     fun obtainAccessRights(activity: Activity): Single<AuthorizationResponse> =
         client.authorizeOngoingAccess(

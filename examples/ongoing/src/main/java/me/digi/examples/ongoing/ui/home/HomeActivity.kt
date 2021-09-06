@@ -33,7 +33,7 @@ class HomeActivity : BaseActivity(R.layout.activity_home) {
         super.onResume()
 
         // Check that an Application ID has been configured.
-        if (getString(R.string.digime_application_id).isEmpty()) {
+        if (getString(R.string.app_id).isEmpty()) {
 
             val msg = AlertDialog.Builder(this)
             msg.setTitle("Missing Application ID")

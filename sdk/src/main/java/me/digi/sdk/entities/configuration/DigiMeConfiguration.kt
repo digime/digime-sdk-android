@@ -4,7 +4,7 @@ class DigiMeConfiguration(
     appId: String,
     contractId: String,
     privateKeyHex: String,
-    baseUrl: String?
+    baseUrl: String? = "https://api.digi.me/"
 ) :
     ClientConfiguration(appId, contractId, privateKeyHex, baseUrl) {
 

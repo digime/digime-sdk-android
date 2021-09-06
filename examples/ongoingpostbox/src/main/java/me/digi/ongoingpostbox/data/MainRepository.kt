@@ -12,6 +12,4 @@ interface MainRepository {
         payload: WriteDataPayload,
         accessToken: String
     ): Single<DataWriteResponse>
-
-    fun updateSession(): Single<Boolean>
 }
