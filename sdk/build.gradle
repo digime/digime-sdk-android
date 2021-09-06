@@ -40,17 +40,6 @@ android {
     lintOptions {
         abortOnError false
     }
-
-    task sourcesJar(type: Jar) {
-        archiveName = 'sources.jar'
-        archiveClassifier = 'sources'
-        from sourceSets.main.kotlin
-    }
-
-    artifacts {
-        archives sourcesJar
-    }
-
 }
 
 dependencies {
@@ -93,7 +82,5 @@ dependencies {
 repositories {
     mavenCentral()
 }
-
-
 
 apply from: project.file('../sdk/config/gradle/publishing.gradle')
