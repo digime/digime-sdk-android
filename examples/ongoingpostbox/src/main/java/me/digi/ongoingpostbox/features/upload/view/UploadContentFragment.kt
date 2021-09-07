@@ -24,7 +24,6 @@ import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.WriteDataPayload
-import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.ConsentAuthResponse
 import me.digi.sdk.entities.response.DataWriteResponse
 import org.koin.android.ext.android.inject
@@ -132,7 +131,6 @@ class UploadContentFragment : Fragment(R.layout.fragment_upload_content), View.O
             tvMimeType?.text = getMimeType(requireContext(), data).toString()
             btnUploadImage?.isEnabled = true
 
-            val credentials: CredentialsPayload = localAccess.getCachedCredential()!!
             val session: Session = localAccess.getCachedSession()!!
             val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
 

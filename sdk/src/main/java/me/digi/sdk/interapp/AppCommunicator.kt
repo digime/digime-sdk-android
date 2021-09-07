@@ -22,6 +22,14 @@ class AppCommunicator(val context: Context) {
             }
         }
 
+        /**
+         * If your application is working with 'startActivityForResult' method,
+         * use this override
+         */
+        fun getSharedInstance(context: Context): AppCommunicator =
+            if (::_sharedInstance.isInitialized) _sharedInstance
+            else initializeSharedInstance(context)
+
         fun initializeSharedInstance(context: Context): AppCommunicator {
             _sharedInstance = AppCommunicator(context)
             return _sharedInstance
