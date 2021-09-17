@@ -65,7 +65,7 @@ You can check out an [example applications](https://github.com/digime/digime-sdk
 
 ## Getting started
 
-Please check out the [getting started guide](start.md) to start using digi.me.
+Please check out the [getting started guide](https://digime.github.io/digime-sdk-android/#/start) to start using digi.me.
 
 ## Contributions
 
