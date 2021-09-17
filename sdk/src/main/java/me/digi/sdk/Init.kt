@@ -85,6 +85,7 @@ class Init(
         }
 
     private var stalePollCount = 0
+    private var isFirstRun: Boolean = false
 
     /**
      * Authorizes the contract configured with this digi.me instance to access to a library.
@@ -134,6 +135,7 @@ class Init(
             .subscribeBy(
                 onSuccess = { result: GetTokenExchangeDone ->
                     sessionManager.updatedSession = result.consentData.session
+                    isFirstRun = true
 
                     val response = AuthorizationResponse().copy(
                         session = result.consentData.session,
@@ -214,23 +216,42 @@ class Init(
      * @param completion Block called upon completion with either list of accounts in the library;
      * or any errors encountered.
      */
-    fun readAccounts(completion: AccountsCompletion) {
+    fun readAccounts(userAccessToken: String, completion: AccountsCompletion) {
         DMELog.i(context.getString(R.string.labelReadAccounts))
 
         val currentSession = sessionManager.updatedSession
 
-        if (currentSession != null && sessionManager.isSessionValid())
-            handleReadAccounts(currentSession.key, completion)
-        else
-            updateSession { isSessionUpdated, error ->
-                error?.let {
-                    DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
+        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+            apiClient.argonService.getFileBytes(currentSession?.key!!, "accounts.json")
+                .map { response: Response<ResponseBody> ->
+
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray =
+                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val decompressedContentBytes: ByteArray =
+                        Compressor.decompressData(contentBytes, Compressor.COMPRESSION_NONE)
+
+                    Gson().fromJson(
+                        String(decompressedContentBytes),
+                        ReadAccountsResponse::class.java
+                    )
                 }
-                    ?: run {
-                        handleReadAccounts(currentSession?.key!!, completion)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            AuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
+                        )
                     }
-            }
+                )
+        } else handleReadAccounts(userAccessToken, completion)
     }
 
     /**
@@ -477,83 +498,12 @@ class Init(
         downloadHandler: FileContentCompletion,
         completion: FileListCompletion
     ) {
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+        val currentSession = sessionManager.updatedSession
 
-            val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
-
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, dataQueryScope)
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
-                    }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
-                }
-            }
-        }
-
-        requestDataQuery()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    DMELog.i(context.getString(R.string.labelReadingFiles))
-
-                    activeFileDownloadHandler = downloadHandler
-                    activeSessionDataFetchCompletionHandler = completion
-
-                    getSessionFileList({ _, updatedFileIds ->
-
-                        updatedFileIds.forEach {
-
-                            activeDownloadCount++
-                            DMELog.d("Downloading file with ID: $it.")
-
-                            getSessionData(it) { file, error ->
-
-                                when {
-                                    file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                                    else -> DMELog.e("Failed to download updates for file with ID: $it.")
-                                }
-
-                                downloadHandler.invoke(file, error)
-                                activeDownloadCount--
-                            }
-                        }
-
-                    }) { fileList, error ->
-                        if (error != null) {
-                            completion(
-                                fileList,
-                                error
-                            ) // We only want to push this if the error exists, else
-                            // it'll cause a premature loop exit.
-                        }
-                    }
-                },
-                onError = {
-                    completion.invoke(
-                        null,
-                        APIError.ErrorWithMessage(
-                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
-                        )
-                    )
-                }
-            )
+        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid()))
+            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+        else handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
     }
 
     /**
@@ -566,16 +516,12 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (currentSession != null && sessionManager.isSessionValid())
-            handleFileList(currentSession.key, userAccessToken, completion)
-        else
-            updateSession { isSessionUpdated, error ->
-                error?.let {
-                    DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
-                }
-                    ?: run { handleFileList(currentSession?.key!!, userAccessToken, completion) }
-            }
+        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid()))
+            apiClient.makeCall(
+                apiClient.argonService.getFileList(currentSession?.key!!),
+                completion
+            )
+        else handleFileList(userAccessToken, completion)
     }
 
     /**
@@ -584,39 +530,94 @@ class Init(
      * @param fileId ID for specific file
      * @param completion Block called upon completion with either file or any errors encountered.
      */
-    fun readFile(fileId: String, completion: FileContentCompletion) {
+    fun readFile(userAccessToken: String, fileId: String, completion: FileContentCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
-        if (currentSession != null && sessionManager.isSessionValid())
-            handleFileItem(currentSession.key, fileId, completion)
-        else
-            updateSession { isSessionUpdated, error ->
-                error?.let {
-                    DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
+        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader =
+                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray =
+                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try {
+                        payloadHeader.compression
+                    } catch (e: Throwable) {
+                        Compressor.COMPRESSION_NONE
+                    }
+                    val decompressedContentBytes: ByteArray =
+                        Compressor.decompressData(contentBytes, compression)
+
+                    FileItem().copy(fileContent = String(decompressedContentBytes))
                 }
-                    ?: run { handleFileItem(currentSession?.key!!, fileId, completion) }
-            }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            AuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
+                        )
+                    }
+                )
+        } else handleFileItem(userAccessToken, fileId, completion)
     }
 
     private fun getSessionData(fileId: String, completion: FileContentCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
-        if (currentSession != null && sessionManager.isSessionValid())
-            handleGetSessionData(currentSession.key, fileId, completion)
-        else
-            updateSession { isSessionUpdated, error ->
-                error?.let {
-                    DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
+        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+                .map { response ->
+                    val headers = response.headers()["X-Metadata"]
+                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                    val payloadHeader =
+                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+
+                    val contentBytes: ByteArray =
+                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+
+                    val compression: String = try {
+                        payloadHeader.compression
+                    } catch (e: Throwable) {
+                        Compressor.COMPRESSION_NONE
+                    }
+                    val decompressedContentBytes: ByteArray =
+                        Compressor.decompressData(contentBytes, compression)
+
+                    FileItem().copy(fileContent = String(decompressedContentBytes))
                 }
-                    ?: run { handleGetSessionData(currentSession?.key!!, fileId, completion) }
-            }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { completion.invoke(it, null) },
+                    onError = {
+                        completion.invoke(
+                            null,
+                            AuthError.ErrorWithMessage(
+                                it.localizedMessage ?: "Unknown error occurred"
+                            )
+                        )
+                    }
+                )
+        } else handleGetSessionData(currentSession?.key!!, fileId, completion)
     }
 
     private fun getSessionFileList(
+        userAccessToken: String,
         updateHandler: IncrementalFileListUpdate,
         completion: FileListCompletion
     ) {
@@ -633,32 +634,11 @@ class Init(
         if (activeSyncStatus == null) {
             // Init syncStatus.
             fileListItemCache = FileListItemCache()
-            scheduleNextPoll(true)
+            scheduleNextPoll(userAccessToken, true)
         }
     }
 
-    private fun readFileList(completion: FileListCompletion) {
-
-        val currentSession = sessionManager.updatedSession
-
-        if (currentSession != null && sessionManager.isSessionValid())
-            apiClient.makeCall(apiClient.argonService.getFileList(currentSession.key), completion)
-        else
-            updateSession { isSessionUpdated, error ->
-                error?.let {
-                    DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
-                }
-                    ?: run {
-                        apiClient.makeCall(
-                            apiClient.argonService.getFileList(currentSession?.key!!),
-                            completion
-                        )
-                    }
-            }
-    }
-
-    private fun scheduleNextPoll(immediately: Boolean = false) {
+    private fun scheduleNextPoll(userAccessToken: String, immediately: Boolean = false) {
 
         DMELog.d("Session data poll scheduled.")
 
@@ -666,7 +646,7 @@ class Init(
         Handler(Looper.getMainLooper()).postDelayed({
 
             DMELog.d("Fetching file list.")
-            readFileList { fileList, listFetchError ->
+            readFileList(userAccessToken) { fileList, listFetchError ->
 
                 when {
                     fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
@@ -701,7 +681,7 @@ class Init(
                     FileList.SyncStatus.PENDING(),
                     FileList.SyncStatus.RUNNING() -> {
                         DMELog.i("Sync still in progress, continuing to poll for updates.")
-                        scheduleNextPoll()
+                        scheduleNextPoll(userAccessToken)
                     }
                     FileList.SyncStatus.COMPLETED(),
                     FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
@@ -1027,32 +1007,82 @@ class Init(
     ////////////////
     /// Handlers ///
     ///////////////
-    private fun handleReadAccounts(sessionKey: String, completion: AccountsCompletion) {
-        apiClient.argonService.getFileBytes(sessionKey, "accounts.json")
-            .map { response: Response<ResponseBody> ->
+    private fun handleReadAccounts(userAccessToken: String, completion: AccountsCompletion) {
 
-                val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                userAccessToken
+            )
 
-                val contentBytes: ByteArray =
-                    DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                val decompressedContentBytes: ByteArray =
-                    Compressor.decompressData(contentBytes, Compressor.COMPRESSION_NONE)
-
-                Gson().fromJson(
-                    String(decompressedContentBytes),
-                    ReadAccountsResponse::class.java
-                )
+            apiClient.makeCall(
+                apiClient
+                    .argonService
+                    .triggerDataQuery(authHeader, Pull())
+            ) { response: DataQueryResponse?, error: Error? ->
+                when {
+                    response != null -> {
+                        sessionManager.updatedSession = response.session
+                        emitter.onSuccess(response)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
             }
+        }
+
+        requestDataQuery()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { completion.invoke(it, null) },
+                onSuccess = {
+                    DMELog.i(context.getString(R.string.labelReadingFiles))
+                    sessionManager.updatedSession = it.session
+
+                    apiClient.argonService.getFileBytes(it.session.key, "accounts.json")
+                        .map { response: Response<ResponseBody> ->
+
+                            val result: ByteArray =
+                                response.body()?.byteStream()?.readBytes() as ByteArray
+
+                            val contentBytes: ByteArray =
+                                DataDecryptor.dataFromEncryptedBytes(
+                                    result,
+                                    configuration.privateKeyHex
+                                )
+
+                            val decompressedContentBytes: ByteArray =
+                                Compressor.decompressData(contentBytes, Compressor.COMPRESSION_NONE)
+
+                            Gson().fromJson(
+                                String(decompressedContentBytes),
+                                ReadAccountsResponse::class.java
+                            )
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { completion.invoke(it, null) },
+                            onError = {
+                                completion.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        it.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
+                },
                 onError = {
                     completion.invoke(
                         null,
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
+                        APIError.ErrorWithMessage(
+                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
                         )
                     )
                 }
@@ -1130,7 +1160,6 @@ class Init(
     }
 
     private fun handleFileList(
-        sessionKey: String,
         userAccessToken: String,
         completion: FileListCompletion
     ) {
@@ -1167,9 +1196,10 @@ class Init(
             .subscribeBy(
                 onSuccess = {
                     DMELog.i(context.getString(R.string.labelReadingFiles))
+                    sessionManager.updatedSession = it.session
 
                     apiClient.makeCall(
-                        apiClient.argonService.getFileList(sessionKey),
+                        apiClient.argonService.getFileList(it.session.key),
                         completion
                     )
                 },
@@ -1185,41 +1215,91 @@ class Init(
     }
 
     private fun handleFileItem(
-        sessionKey: String,
+        userAccessToken: String,
         fileId: String,
         completion: FileContentCompletion
     ) {
-        apiClient.argonService.getFileBytes(sessionKey, fileId)
-            .map { response ->
-                val headers = response.headers()["X-Metadata"]
-                val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                val payloadHeader =
-                    Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
 
-                val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                userAccessToken
+            )
 
-                val contentBytes: ByteArray =
-                    DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                val compression: String = try {
-                    payloadHeader.compression
-                } catch (e: Throwable) {
-                    Compressor.COMPRESSION_NONE
+            apiClient.makeCall(
+                apiClient
+                    .argonService
+                    .triggerDataQuery(authHeader, Pull())
+            ) { response: DataQueryResponse?, error: Error? ->
+                when {
+                    response != null -> {
+                        sessionManager.updatedSession = response.session
+                        emitter.onSuccess(response)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
                 }
-                val decompressedContentBytes: ByteArray =
-                    Compressor.decompressData(contentBytes, compression)
-
-                FileItem().copy(fileContent = String(decompressedContentBytes))
             }
+        }
+
+        requestDataQuery()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { completion.invoke(it, null) },
+                onSuccess = {
+                    DMELog.i(context.getString(R.string.labelReadingFiles))
+                    sessionManager.updatedSession = it.session
+
+                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                        .map { response ->
+                            val headers = response.headers()["X-Metadata"]
+                            val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                            val payloadHeader =
+                                Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                            val result: ByteArray =
+                                response.body()?.byteStream()?.readBytes() as ByteArray
+
+                            val contentBytes: ByteArray =
+                                DataDecryptor.dataFromEncryptedBytes(
+                                    result,
+                                    configuration.privateKeyHex
+                                )
+
+                            val compression: String = try {
+                                payloadHeader.compression
+                            } catch (e: Throwable) {
+                                Compressor.COMPRESSION_NONE
+                            }
+                            val decompressedContentBytes: ByteArray =
+                                Compressor.decompressData(contentBytes, compression)
+
+                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { completion.invoke(it, null) },
+                            onError = {
+                                completion.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        it.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
+                },
                 onError = {
                     completion.invoke(
                         null,
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
+                        APIError.ErrorWithMessage(
+                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
                         )
                     )
                 }
@@ -1227,44 +1307,188 @@ class Init(
     }
 
     private fun handleGetSessionData(
-        sessionKey: String,
+        userAccessToken: String,
         fileId: String,
         completion: FileContentCompletion
     ) {
-        apiClient.argonService.getFileBytes(sessionKey, fileId)
-            .map { response ->
-                val headers = response.headers()["X-Metadata"]
-                val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                val payloadHeader =
-                    Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
 
-                val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
+        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                userAccessToken
+            )
 
-                val contentBytes: ByteArray =
-                    DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                val compression: String = try {
-                    payloadHeader.compression
-                } catch (e: Throwable) {
-                    Compressor.COMPRESSION_NONE
+            apiClient.makeCall(
+                apiClient
+                    .argonService
+                    .triggerDataQuery(authHeader, Pull())
+            ) { response: DataQueryResponse?, error: Error? ->
+                when {
+                    response != null -> {
+                        sessionManager.updatedSession = response.session
+                        emitter.onSuccess(response)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
                 }
-                val decompressedContentBytes: ByteArray =
-                    Compressor.decompressData(contentBytes, compression)
-
-                FileItem().copy(fileContent = String(decompressedContentBytes))
             }
+        }
+
+        requestDataQuery()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { completion.invoke(it, null) },
+                onSuccess = {
+                    DMELog.i(context.getString(R.string.labelReadingFiles))
+                    sessionManager.updatedSession = it.session
+
+                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                        .map { response ->
+                            val headers = response.headers()["X-Metadata"]
+                            val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                            val payloadHeader =
+                                Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                            val result: ByteArray =
+                                response.body()?.byteStream()?.readBytes() as ByteArray
+
+                            val contentBytes: ByteArray =
+                                DataDecryptor.dataFromEncryptedBytes(
+                                    result,
+                                    configuration.privateKeyHex
+                                )
+
+                            val compression: String = try {
+                                payloadHeader.compression
+                            } catch (e: Throwable) {
+                                Compressor.COMPRESSION_NONE
+                            }
+                            val decompressedContentBytes: ByteArray =
+                                Compressor.decompressData(contentBytes, compression)
+
+                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { completion.invoke(it, null) },
+                            onError = {
+                                completion.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        it.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
+                },
                 onError = {
                     completion.invoke(
                         null,
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
+                        APIError.ErrorWithMessage(
+                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
                         )
                     )
                 }
             )
+    }
+
+    private fun handleCyclicDataDownload(
+        scope: DataRequest?, userAccessToken: String,
+        downloadHandler: FileContentCompletion,
+        completion: FileListCompletion
+    ) {
+
+        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val jwt = TriggerDataQueryRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                userAccessToken
+            )
+
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
+
+            val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+
+            apiClient.makeCall(
+                apiClient
+                    .argonService
+                    .triggerDataQuery(authHeader, dataQueryScope)
+            ) { response: DataQueryResponse?, error: Error? ->
+                when {
+                    response != null -> {
+                        sessionManager.updatedSession = response.session
+                        emitter.onSuccess(response)
+                    }
+                    error != null -> emitter.onError(error)
+                    else -> emitter.onError(IllegalArgumentException())
+                }
+            }
+        }
+
+        requestDataQuery()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = {
+                    sessionManager.updatedSession = it.session
+                    handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+                },
+                onError = {
+                    completion.invoke(
+                        null,
+                        APIError.ErrorWithMessage(
+                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
+                        )
+                    )
+                }
+            )
+    }
+
+    private fun handleContinuousDataDownload(
+        userAccessToken: String,
+        downloadHandler: FileContentCompletion,
+        completion: FileListCompletion
+    ) {
+        DMELog.i(context.getString(R.string.labelReadingFiles))
+
+        activeFileDownloadHandler = downloadHandler
+        activeSessionDataFetchCompletionHandler = completion
+
+        getSessionFileList(userAccessToken, { _, updatedFileIds ->
+
+            updatedFileIds.forEach {
+
+                activeDownloadCount++
+                DMELog.d("Downloading file with ID: $it.")
+
+                getSessionData(it) { file, error ->
+
+                    when {
+                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                    }
+
+                    downloadHandler.invoke(file, error)
+                    activeDownloadCount--
+                }
+            }
+
+        }) { fileList, error ->
+            if (error != null) {
+                completion(
+                    fileList,
+                    error
+                ) // We only want to push this if the error exists, else
+                // it'll cause a premature loop exit.
+            }
+        }
     }
 }

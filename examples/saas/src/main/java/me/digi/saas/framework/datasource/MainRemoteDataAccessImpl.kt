@@ -8,8 +8,8 @@ import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
-import me.digi.sdk.Init
 import me.digi.sdk.Error
+import me.digi.sdk.Init
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
@@ -156,7 +156,10 @@ class MainRemoteDataAccessImpl(
 
     override fun getFile(fileName: String): Single<FileItem> =
         Single.create { emitter ->
-            readClient.readFile(fileId = fileName) { file, error ->
+            readClient.readFile(
+                userAccessToken = localAccess.getCachedCredential()?.accessToken?.value!!,
+                fileId = fileName,
+            ) { file, error ->
                 error?.let(emitter::onError)
                     ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(AuthError.General()))
             }
