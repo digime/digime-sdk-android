@@ -5,10 +5,13 @@ import com.google.gson.Gson
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_CREDENTIAL_KEY
-import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_KEY
-import me.digi.ongoingpostbox.framework.utils.AppConst.SHAREDPREFS_KEY
-import me.digi.sdk.entities.DMEOAuthToken
-import me.digi.sdk.entities.DMEPostbox
+import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_POSTBOX_DATA
+import me.digi.ongoingpostbox.framework.utils.AppConst.CACHED_SESSION_DATA
+import me.digi.ongoingpostbox.framework.utils.AppConst.SHARED_PREFS_KEY
+import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.response.AuthorizationResponse
+import me.digi.sdk.entities.response.ConsentAuthResponse
 
 /**
  * Idea behind local main data access is to isolate
@@ -21,32 +24,56 @@ import me.digi.sdk.entities.DMEPostbox
  */
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 
-    override fun getCachedCredential(): DMEOAuthToken? =
-        context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
-            getString(CACHED_CREDENTIAL_KEY, null)?.let {
-                Gson().fromJson(it, DMEOAuthToken::class.java)
-            }
-        }
+    override fun cacheAuthorizationData(): SingleTransformer<in AuthorizationResponse, out AuthorizationResponse> =
+        SingleTransformer<AuthorizationResponse, AuthorizationResponse> {
+            it.map { response ->
+                response?.apply {
+                    context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).edit()
+                        .run {
 
-    override fun getCachedPostbox(): DMEPostbox? =
-        context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).run {
-            getString(CACHED_POSTBOX_KEY, null)?.let {
-                Gson().fromJson(it, DMEPostbox::class.java)
-            }
-        }
+                            /**
+                             * Save session
+                             */
+                            val encodedLocalSession = Gson().toJson(response.session)
+                            putString(CACHED_SESSION_DATA, encodedLocalSession)
 
-    override fun cacheCredentials(): SingleTransformer<Pair<DMEPostbox?, DMEOAuthToken?>, Pair<DMEPostbox?, DMEOAuthToken?>> =
-        SingleTransformer {
-            it.map { credential ->
-                credential?.apply {
-                    context.getSharedPreferences(SHAREDPREFS_KEY, Context.MODE_PRIVATE).edit().run {
-                        val encodedPostbox = Gson().toJson(credential.first)
-                        val encodedCredential = Gson().toJson(credential.second)
-                        putString(CACHED_CREDENTIAL_KEY, encodedCredential)
-                        putString(CACHED_POSTBOX_KEY, encodedPostbox)
-                        apply()
-                    }
+                            /**
+                             * Save postbox data
+                             */
+
+                            val encodedLocalPostbox = Gson().toJson(response.authResponse)
+                            putString(CACHED_POSTBOX_DATA, encodedLocalPostbox)
+
+                            /**
+                             * Save credentials data
+                             */
+                            val encodedAccessToken = Gson().toJson(response.credentials)
+                            putString(CACHED_CREDENTIAL_KEY, encodedAccessToken)
+
+                            apply()
+                        }
                 }
+            }
+        }
+
+    override fun getCachedSession(): Session? =
+        context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
+            getString(CACHED_SESSION_DATA, null)?.let {
+                Gson().fromJson(it, Session::class.java)
+            }
+        }
+
+    override fun getCachedPostbox(): ConsentAuthResponse? =
+        context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
+            getString(CACHED_POSTBOX_DATA, null)?.let {
+                Gson().fromJson(it, ConsentAuthResponse::class.java)
+            }
+        }
+
+    override fun getCachedCredential(): CredentialsPayload? =
+        context.getSharedPreferences(SHARED_PREFS_KEY, Context.MODE_PRIVATE).run {
+            getString(CACHED_CREDENTIAL_KEY, null)?.let {
+                Gson().fromJson(it, CredentialsPayload::class.java)
             }
         }
 }

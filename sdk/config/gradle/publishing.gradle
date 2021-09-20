@@ -1,174 +1,57 @@
-apply plugin: 'digital.wup.android-maven-publish'
 apply plugin: 'signing'
 apply plugin: 'maven'
 apply from: 'config/gradle/versioning.gradle'
 apply from: 'config/properties/publishing.properties'
 
+apply from: 'config/gradle/maven-publish-helper.gradle'
+
 publishing {
-
     publications {
+        release(MavenPublication) {
 
-        sdk(MavenPublication) {
+            // Specify own groupId as package name of your library,
+            groupId 'me.digi'
 
-            // Include components.
-            if (components.hasWithName("java")) {
-                from components.java
-            } else if (components.hasWithName("android")) {
-                from components.android
-            }
-
-            // Configure core metadata.
-            groupId = 'me.digi'
+            // Specify custom artifactId if needed,
             artifactId = 'sdk'
+
+            // You can specify custom version,
             version = android.defaultConfig.versionName
-
-            // Configure extra POM metadata.
-            pom {
-
-                name = 'DigiMeSDK'
-                description = 'digi.me Private Sharing SDK for Android'
-                packaging = 'aar'
-
-                licenses {
-
-                    license {
-
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-
-                    }
-
-                }
-
-                developers {
-
-                    developer {
-                        id = 'JacobKingDev'
-                        name = 'Jacob King'
-                        email = 'jacob@digi.me'
-                    }
-
-                }
-
-                scm {
-
-                    connection = 'scm:git:git://github.com/digime/digime-sdk-android.git'
-                    developerConnection = 'scm:git:git://github.com/digime/digime-sdk-android.git'
-                    url = 'https://github.com/digime/digime-sdk-android/'
-
-                }
-
-            }
-
-        }
-
-    }
-
-    repositories {
-
-        maven {
-
-            name = 'DigiMeSnapshot'
-            url = 'https://repository.sysdigi.net/m2/libs-snapshot-local/'
-
-            credentials {
-                username = project.ext.DIGIME_REPO_USER
-                password = project.ext.DIGIME_REPO_PASS
-            }
-
-        }
-
-        maven {
-
-            name = 'DigiMeRelease'
-            url = 'https://repository.sysdigi.net/m2/libs-release-local/'
-
-            credentials {
-                username = project.ext.DIGIME_REPO_USER
-                password = project.ext.DIGIME_REPO_PASS
-            }
-
         }
     }
-}
 
-signing {
-    sign publishing.publications.sdk
-}
-
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign }) {
-        allprojects {
-            ext."signing.keyId" = project.ext.SIGNING_KEY_ID
-            ext."signing.secretKeyRingFile" = project.ext.SIGNING_KEYRING_PATH
-            ext."signing.password" = project.ext.SIGNING_KEY_PASS
-        }
+    signing {
+        sign publishing.publications.release
     }
-}
 
-tasks.register("updateInstallationGuideVersion") {
-
-    group = 'publishing'
-
-    doLast {
-        def appVersionName = android.defaultConfig.versionName
-        def gettingStartedFile = new File('./docs/guides/Getting Started.md')
-        StringBuilder outContent = new StringBuilder()
-        boolean shouldWrite = false
-
-        gettingStartedFile.eachLine {
-            def regex = (it =~ /(?<=implementation "me\.digi:sdk:)((\d\.\d\.\d)(?:-SNAPSHOT)?)(?=")/)
-            if (regex.find() && regex.size() > 0 && appVersionName != regex[0][1]) {
-                shouldWrite = true
-                outContent.append(it.replace(regex[0][1], appVersionName)).append("\n")
-            } else {
-                outContent.append(it).append("\n")
+    gradle.taskGraph.whenReady { taskGraph ->
+        if (taskGraph.allTasks.any { it instanceof Sign }) {
+            allprojects {
+                ext."signing.keyId" = project.ext.SIGNING_KEY_ID
+                ext."signing.secretKeyRingFile" = project.ext.SIGNING_KEYRING_PATH
+                ext."signing.password" = project.ext.SIGNING_KEY_PASS
             }
         }
+    }
 
-        if (shouldWrite) {
-            gettingStartedFile.write(outContent.toString().trim(), "UTF-8")
+    tasks.register("artifactoryPublish", GradleBuild.class) {
+        buildName = "digime"
+
+        group = 'publishing'
+        description = 'Prepares a clean release build and publishes to the appropriate repository.'
+
+        def version = android.defaultConfig.versionName
+
+        def publishTask
+
+        if (version.endsWith('SNAPSHOT')) {
+            // Deploy to snapshot repo.
+            publishTask = 'publishAllPublicationsToDigiMeSnapshotRepository'
+        } else {
+            // Deploy to main repo.
+            publishTask = 'publishAllPublicationsToDigiMeReleaseRepository'
         }
 
-        // Ensure README is always synced with Getting Started.
-        new File('./README.md').bytes = gettingStartedFile.bytes
+        tasks = ['clean', 'assembleRelease', publishTask]
     }
-}
-
-tasks.register("generateDocs") {
-
-    group = 'publishing'
-
-    doLast {
-        './docs/generateDocs.sh'.execute()
-    }
-}
-
-tasks.register("artifactoryPublish", GradleBuild.class) {
-
-    group = 'publishing'
-    description = 'Prepares a clean release build and publishes to the appropriate repository.'
-
-    def version = android.defaultConfig.versionName
-
-    def publishTask
-
-    if (version.endsWith('SNAPSHOT')) {
-        // Deploy to snapshot repo.
-        publishTask = 'publishAllPublicationsToDigiMeSnapshotRepository'
-    }
-    else {
-        // Deploy to main repo.
-        publishTask = 'publishAllPublicationsToDigiMeReleaseRepository'
-    }
-
-    tasks = ['clean', 'assembleRelease', 'sourcesJar', 'updateInstallationGuideVersion', 'generateDocs', publishTask]
-}
-
-tasks.register("localPublish", GradleBuild.class) {
-
-    group = 'publishing'
-    description = 'Prepares a clean release build and publishes to maven local.'
-
-    tasks = ['clean', 'assembleRelease', 'publishToMavenLocal']
 }

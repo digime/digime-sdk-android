@@ -52,7 +52,7 @@ class OngoingPostboxApp : Application() {
              * Will clear out shared preferences (only it's data, not the file)
              */
             val masterPreferences = getSharedPreferences(
-                AppConst.SHAREDPREFS_KEY,
+                AppConst.SHARED_PREFS_KEY,
                 Context.MODE_PRIVATE
             ).edit()
             masterPreferences.clear().apply()

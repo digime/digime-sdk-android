@@ -17,6 +17,12 @@
     <string name="key_authorization_code">authorizationCode</string>
     <string name="key_preauthorization_code">preauthorizationCode</string>
     <string name="key_code_verifier">codeVerifier</string>
+    <string name="key_success">success</string>
+    <string name="key_error">errorCode</string>
+    <string name="key_code">code</string>
+    <string name="key_state">state</string>
+    <string name="key_s_postbox_id">postboxId</string>
+    <string name="key_s_public_key">publicKey</string>
 
     <string name="key_timing_get_all_files">timingGetAllFiles</string>
     <string name="key_timing_get_file">timingGetFile</string>
@@ -45,13 +51,20 @@
     <string name="deeplink_create_postbox">postbox-create</string>
     <string name="deeplink_import_postbox">postbox-import</string>
     <string name="deeplink_receipt">receipt</string>
-    <string name="deeplink_guest_consent_callback">quark-callback</string>
+    <string name="deeplink_guest_consent_callback">digime-ca</string>
 
     <!-- Result Constants -->
     <string name="const_result_success">SUCCESS</string>
     <string name="const_result_error">ERROR</string>
     <string name="const_result_cancel">CANCEL</string>
     <string name="const_result_data_ready">DATA_READY</string>
+
+    <!-- Error messages -->
+    <string name="error_server">SERVER_ERROR</string>
+    <string name="error_invalid_code">INVALID_CODE</string>
+    <string name="error_onboard">ONBOARD_ERROR</string>
+    <string name="error_user_cancel">USER_CANCEL</string>
+    <string name="error_check_fail">INITIALIZE_CHECK_FAIL</string>
 
     <!-- Miscellaneous Constants -->
     <string name="const_digime_app_package_name">me.digi.app3</string>
@@ -65,5 +78,25 @@
     <string name="consent_mode_selection_heading"><b>Save time! Stay in control!</b></string>
     <string name="consent_mode_selection_detail">Create your own digi.me to make sharing data faster, more secure and always under your control.</string>
     <string name="consent_mode_selection_share_as_guest"><b>Not now, I\'ll share as a guest</b></string>
+
+    <!-- Saas Client  -->
+    <string name="saas_client_code">code</string>
+    <string name="saas_errorCallback">errorCallback</string>
+    <string name="saas_successCallback">successCallback</string>
+    <string name="saas_service">service</string>
+    <string name="labelSaasAuthorize">authorize</string>
+    <string name="labelSaasOnboarding">onboard</string>
+
+    <!-- Pull client -->
+    <string name="labelReferenceOnboardingCode">Fetching reference code for onboarding</string>
+    <string name="labelUserOnboardingRequest">Launching user onboarding request</string>
+    <string name="labelTriggeringDataQuery">Triggering data query</string>
+    <string name="labelUnknownError">Unknown error occurred</string>
+    <string name="labelDeleteLibrary">Requesting library deletion</string>
+    <string name="labelReadAccounts">Read all accounts</string>
+    <string name="labelWriteDataToLibrary">Initializing data write to library</string>
+    <string name="labelReadingFiles">Starting fetch of session data.</string>
+    <string name="labelAvailableServices">Fetching available services for contract</string>
+    <string name="labelAccessTokenInvalidOrMissing">Access token is invalid or is missing</string>
 
 </resources>

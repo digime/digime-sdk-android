@@ -7,16 +7,18 @@
     <color name="black">#000</color>
     <color name="white">#FFF</color>
 
-    <color name="breakdownBarOne">#D71EB9</color>
-    <color name="breakdownBarTwo">#20DEDE</color>
-    <color name="breakdownBarThree">#D3D71E</color>
-    <color name="breakdownBarFour">#0FDA48</color>
-    <color name="breakdownBarFive">#1E7ED7</color>
-    <color name="breakdownBarSix">#DE4E20</color>
-    <color name="breakdownBarSeven">#861ED7</color>
-    <color name="breakdownBarEight">#DA340F</color>
-    <color name="breakdownBarNine">#BFF22B</color>
-    <color name="breakdownBarTen">#FFEAA0</color>
-    <color name="breakdownBarEleven">#FF80CC</color>
-    <color name="breakdownBarTwelve">#2DEDB3</color>
+    <array name="colors">
+        <item>#D71EB9</item>
+        <item>#20DEDE</item>
+        <item>#D3D71E</item>
+        <item>#0FDA48</item>
+        <item>#1E7ED7</item>
+        <item>#DE4E20</item>
+        <item>#861ED7</item>
+        <item>#DA340F</item>
+        <item>#BFF22B</item>
+        <item>#FFEAA0</item>
+        <item>#FF80CC</item>
+        <item>#2DEDB3</item>
+    </array>
 </resources>

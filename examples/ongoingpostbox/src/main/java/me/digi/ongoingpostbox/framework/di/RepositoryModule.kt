@@ -5,5 +5,5 @@ import me.digi.ongoingpostbox.data.MainRepository
 import org.koin.dsl.module
 
 val repositoriesModule = module {
-    single<MainRepository> { DefaultMainRepository(get()) }
+    single<MainRepository> { DefaultMainRepository(get(), get()) }
 }

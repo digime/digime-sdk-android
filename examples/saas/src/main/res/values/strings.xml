@@ -1,0 +1,61 @@
+<resources>
+    <string name="app_name">Hive</string>
+
+    <!-- Endpoints -->
+    <string name="labelProductionUrl">https://api.digi.me/</string>
+    <string name="labelStagingUrl">https://api.stagingdigi.me/</string>
+    <string name="labelDevelopmentUrl">https://api.development.devdigi.me/</string>
+    <string name="labelIntegrationUrl">https://api.integration.devdigi.me/</string>
+
+    <string-array name="endpoints">
+        <item>@string/labelProductionUrl</item>
+        <item>@string/labelStagingUrl</item>
+        <item>@string/labelDevelopmentUrl</item>
+        <item>@string/labelIntegrationUrl</item>
+    </string-array>
+
+    <!-- Menu -->
+    <string name="read">Read</string>
+    <string name="push">Push</string>
+    <string name="read_raw">Read Raw</string>
+
+    <!-- Empty state -->
+    <string name="labelEmptyTitle">Oops!</string>
+    <string name="labelEmptySubtitle">List seems to be empty. Try to pull down to refresh or reload the app</string>
+
+    <!-- Actions -->
+    <string name="actionYes">Yes</string>
+    <string name="actionNo">No</string>
+
+    <!-- Delete library dialog -->
+    <string name="dialogDeleteLibraryTitle">Delete library</string>
+    <string name="dialogDeleteLibrarySubtitle">Are you sure you want to delete current library?</string>
+
+    <!-- Auth screen -->
+    <string name="labelAuthDisclaimer">Begin your authentication for <b>%s</b> contract. You can always go back to change the type</string>
+
+    <!-- Home screen -->
+    <string name="homeAppTitle">Hive</string>
+    <string name="homeAppSubtitle">Welcome to Saas client app. Select the contract bellow to get going</string>
+    <string name="homeLabelRead">Read contract</string>
+    <string name="homeLabelPush">Push contract</string>
+    <string name="homeLabelReadRaw">Read raw contract</string>
+    <string name="homeLabelConfiguration">Configuration</string>
+
+    <!-- Settings screen -->
+    <string name="settingsTitle">Disclaimer</string>
+    <string name="settingsSubtitle">If contract data is changed, we recommend to firstly delete the library and start fresh due to locally stored credentials, etc. which might cause problems if not correct.</string>
+    <string name="settingsSelectTarget">Select target</string>
+    <string name="settingsSelectEndpoint">Select endpoint</string>
+    <string name="settingsAppId">App ID</string>
+    <string name="settingsContractInfo">Specify contract information</string>
+    <string name="settingsContractId">Contract ID</string>
+    <string name="settingsPrivateKey">Private key</string>
+    <string name="settingsContractRead">Contract - Read</string>
+    <string name="settingsContractPush">Contract - Write</string>
+    <string name="settingsContractReadRaw">Contract - Read Raw</string>
+    <string name="settingsSaveConfiguration">Save configuration</string>
+    <string name="errorBaseUrl">Base URl must not be empty</string>
+    <string name="errorAppId">App ID must not be empty</string>
+
+</resources>

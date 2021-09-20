@@ -8,7 +8,10 @@ import me.digi.ongoingpostbox.data.localaccess.MainLocalDataAccess
 import me.digi.ongoingpostbox.features.create.view.CreatePostboxFragment
 import me.digi.ongoingpostbox.features.upload.view.UploadContentFragment
 import me.digi.ongoingpostbox.utils.replaceFragment
-import me.digi.sdk.interapp.DMEAppCommunicator
+import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.response.ConsentAuthResponse
+import me.digi.sdk.interapp.AppCommunicator
 import org.koin.android.ext.android.inject
 import kotlin.system.exitProcess
 
@@ -21,8 +24,16 @@ class MainActivity : AppCompatActivity() {
         setTheme(R.style.Theme_Digimesdkandroid)
         setContentView(R.layout.activity_main)
 
+        handleFlow()
+    }
+
+    private fun handleFlow() {
+        val credentials: CredentialsPayload? = localAccess.getCachedCredential()
+        val postbox: ConsentAuthResponse? = localAccess.getCachedPostbox()
+        val session: Session? = localAccess.getCachedSession()
+
         // User has all needed information to push their data
-        if (localAccess.getCachedCredential() != null && localAccess.getCachedPostbox() != null)
+        if (credentials != null && postbox != null && session != null)
             UploadContentFragment.newInstance().replaceFragment(supportFragmentManager)
         else CreatePostboxFragment.newInstance().replaceFragment(supportFragmentManager)
     }
@@ -31,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
 
         // Check that an Application ID has been configured.
-        if (getString(R.string.digime_application_id).isEmpty()) {
+        if (getString(R.string.app_id).isEmpty()) {
 
             val msg = AlertDialog.Builder(this)
             msg.setTitle("Missing Application ID")
@@ -50,6 +61,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        DMEAppCommunicator.getSharedInstance().onActivityResult(requestCode, resultCode, data)
+        AppCommunicator.getSharedInstance(this).onActivityResult(requestCode, resultCode, data)
     }
 }

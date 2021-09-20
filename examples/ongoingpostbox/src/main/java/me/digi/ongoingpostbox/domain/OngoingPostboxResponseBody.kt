@@ -14,3 +14,12 @@ data class OngoingPostboxResponseBody(
     val refreshToken: String? = "",
     val tokenType: String? = ""
 ): Parcelable
+
+@Parcelize
+data class OngoingPostboxPayload(
+    val sessionKey: String? = null,
+    val postboxId: String? = null,
+    val publicKey: String? = null,
+    val accessToken: String? = null,
+    val refreshToken: String? = null
+) : Parcelable

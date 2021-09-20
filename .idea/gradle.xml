@@ -11,15 +11,14 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/examples" />
-            <option value="$PROJECT_DIR$/examples/barebonesapp" />
             <option value="$PROJECT_DIR$/examples/ongoing" />
             <option value="$PROJECT_DIR$/examples/ongoingpostbox" />
+            <option value="$PROJECT_DIR$/examples/saas" />
             <option value="$PROJECT_DIR$/sdk" />
             <option value="$PROJECT_DIR$/testapp" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
-        <option name="useQualifiedModuleNames" value="true" />
       </GradleProjectSettings>
     </option>
   </component>

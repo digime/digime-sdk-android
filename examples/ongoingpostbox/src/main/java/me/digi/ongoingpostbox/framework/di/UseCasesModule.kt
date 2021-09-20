@@ -1,12 +1,12 @@
 package me.digi.ongoingpostbox.framework.di
 
-import me.digi.ongoingpostbox.usecases.CreatePostboxUseCase
-import me.digi.ongoingpostbox.usecases.CreatePostboxUseCaseImpl
-import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCase
-import me.digi.ongoingpostbox.usecases.PushDataToOngoingPostboxUseCaseImpl
+import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCase
+import me.digi.ongoingpostbox.usecases.AuthorizeAccessUseCaseImpl
+import me.digi.ongoingpostbox.usecases.WriteDataUseCase
+import me.digi.ongoingpostbox.usecases.WriteDataUseCaseImpl
 import org.koin.dsl.module
 
 val useCasesModule = module {
-    single<CreatePostboxUseCase> { CreatePostboxUseCaseImpl(get()) }
-    single<PushDataToOngoingPostboxUseCase> { PushDataToOngoingPostboxUseCaseImpl(get()) }
+    single<AuthorizeAccessUseCase> { AuthorizeAccessUseCaseImpl(get()) }
+    single<WriteDataUseCase> { WriteDataUseCaseImpl(get()) }
 }
