@@ -33,13 +33,3 @@ Genrefy application is example application demonstrating data read. It will use 
 
 See example application [here](https://github.com/digime/digime-sdk-android/tree/master/examples/ongoing)
 
-### CPU
-
-CPU application is example application demonstrating data write. It will use `Write` contract to authorize and give you the ability to choose image from your gallery to upload to your library.
-
-**Note**: Max upload size of the image is 6mb.
-
-**Note**: Contract is preconfigured
-
-See example application [here](https://github.com/digime/digime-sdk-android/tree/master/examples/ongoingpostbox)
-

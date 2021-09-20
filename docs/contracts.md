@@ -47,7 +47,3 @@ Some example read contracts may be:
 ### Write contracts
 
 These are contracts that allow you to write data in to a users digi.me library.
-
-### Read Raw contracts
-
-If you have written something to the user, then you can use a read raw contract to request this data back out.

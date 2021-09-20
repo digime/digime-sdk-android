@@ -88,7 +88,7 @@ val client: DigiMe by lazy {
          "your_private_key"
      )
 
-     DigiMe(requireContext().applicationContext, configuration)
+     Init(requireContext().applicationContext, configuration)
 }
 ```
 
