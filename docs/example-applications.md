@@ -33,3 +33,11 @@ Genrefy application is example application demonstrating data read. It will use 
 
 See example application [here](https://github.com/digime/digime-sdk-android/tree/master/examples/ongoing)
 
+### Hive
+
+Hive application is example application demonstrating data write and read. Depending on the selected contract the use can either read data after onboarding a service, or write data into the library. Data written into the library is a hardcoded png files, but can be changed to either a json or pdf file.
+
+**Note**: Contract is preconfigured
+
+See example application [here](https://github.com/digime/digime-sdk-android/tree/master/examples/saas)
+
