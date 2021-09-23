@@ -31,7 +31,7 @@ class MainRemoteDataAccessImpl(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadContract()?.contractId!!,
             localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n"),
-            localAccess.getCachedBaseUrl()!!
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
@@ -43,7 +43,7 @@ class MainRemoteDataAccessImpl(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedPushContract()?.contractId!!,
             localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n"),
-            localAccess.getCachedBaseUrl()!!
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
@@ -55,7 +55,7 @@ class MainRemoteDataAccessImpl(
             localAccess.getCachedAppId()!!,
             localAccess.getCachedReadRawContract()?.contractId!!,
             localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n"),
-            localAccess.getCachedBaseUrl()!!
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
