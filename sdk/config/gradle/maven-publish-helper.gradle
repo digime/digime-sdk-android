@@ -21,6 +21,7 @@ afterEvaluate {
                 pom {
                     name = 'DigiMeSDK'
                     description = 'digi.me Private Sharing SDK for Android'
+                    url = 'https://github.com/digime/digime-sdk-android/'
                     packaging = 'aar'
 
                     licenses {
@@ -39,7 +40,7 @@ afterEvaluate {
                     }
 
                     scm {
-                        connection = 'scm:git:git://github.com/digime/digime-sdk-android.git'
+                        connection = 'scm:git://github.com/digime/digime-sdk-android.git'
                         developerConnection = 'scm:git:git://github.com/digime/digime-sdk-android.git'
                         url = 'https://github.com/digime/digime-sdk-android/'
                     }
@@ -50,7 +51,6 @@ afterEvaluate {
                     maven {
                         name = 'DigiMeSnapshot'
                         url = 'https://oss.sonatype.org/content/repositories/snapshots/'
-
                         credentials {
                             username = project.ext.DIGIME_REPO_USER
                             password = project.ext.DIGIME_REPO_PASS
@@ -59,7 +59,7 @@ afterEvaluate {
 
                     maven {
                         name = 'DigiMeRelease'
-                        url = 'https://oss.sonatype.org/content/repositories/releases/'
+                        url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 
                         credentials {
                             username = project.ext.DIGIME_REPO_USER
