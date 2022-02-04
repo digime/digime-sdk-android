@@ -12,6 +12,8 @@ typealias FileListCompletion = (fileList: FileList?, error: Error?) -> Unit
 
 typealias FileContentCompletion = (fileItem: FileItem?, error: Error?) -> Unit
 
+typealias FileContentBytesCompletion = (fileItem: FileItemBytes?, error: Error?) -> Unit
+
 typealias AccountsCompletion = (accounts: ReadAccountsResponse?, error: Error?) -> Unit
 
 typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<String>) -> Unit

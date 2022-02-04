@@ -9,7 +9,7 @@ import me.digi.sdk.utilities.jwt.JsonWebToken
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.waitMillis
+import okhttp3.internal.wait
 
 class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -42,7 +42,7 @@ class RetryInterceptor(private val config: ClientConfiguration) : Interceptor {
 
                 // TODO: Implement error based filtering to avoid non-recoverable retries.
                 synchronized(request) {
-                    request.waitMillis(waitTime)
+                    request.wait()
                 }
 
                 response.close()
