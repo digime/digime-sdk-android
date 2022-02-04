@@ -11,7 +11,6 @@ import me.digi.sdk.ArgonCode
 import me.digi.sdk.Error
 import me.digi.sdk.api.adapters.FileUnpackAdapter
 import me.digi.sdk.api.adapters.SessionRequestAdapter
-import me.digi.sdk.api.helpers.CertificatePinnerBuilder
 import me.digi.sdk.api.interceptors.DefaultHeaderAppender
 import me.digi.sdk.api.interceptors.RetryInterceptor
 import me.digi.sdk.api.services.ArgonService
@@ -29,11 +28,11 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
-import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
+
 
 class APIClient(private val context: Context, private val clientConfig: ClientConfiguration) {
 
@@ -99,7 +98,6 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
             .addInterceptor(DefaultHeaderAppender())
             .addInterceptor(RetryInterceptor(clientConfig))
             .addInterceptor(logging)
-            .configureCertificatePinningIfNecessary()
             .callTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
             .readTimeout(clientConfig.globalTimeout.toLong(), TimeUnit.SECONDS)
             .dispatcher(requestDispatcher)
@@ -114,15 +112,6 @@ class APIClient(private val context: Context, private val clientConfig: ClientCo
         httpClient = retrofitBuilder.build()
         argonService = httpClient.create(ArgonService::class.java)
     }
-
-    private fun OkHttpClient.Builder.configureCertificatePinningIfNecessary(): OkHttpClient.Builder {
-        val certPinnerBuilder = CertificatePinnerBuilder(context, domainForBaseUrl())
-        if (certPinnerBuilder.shouldPinCommunicationsWithDomain())
-            this.certificatePinner(certPinnerBuilder.buildCertificatePinner())
-        return this
-    }
-
-    private fun domainForBaseUrl() = URL(clientConfig.baseUrl).host
 
     // Rx Overload
     fun <ResponseType> makeCall(call: Call<ResponseType>): Single<ResponseType> =

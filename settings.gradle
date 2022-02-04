@@ -1,4 +1,3 @@
 include ':sdk'
 include ':examples:ongoing'
-include ':examples:ongoingpostbox'
 include ':examples:saas'
