@@ -14,10 +14,7 @@ import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DataWriteResponse
-import me.digi.sdk.entities.response.FileItem
-import me.digi.sdk.entities.response.FileList
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.Service
 
 class MainRemoteDataAccessImpl(
@@ -154,7 +151,7 @@ class MainRemoteDataAccessImpl(
         ?: (if (response != null) emitter.onSuccess(response)
         else emitter.onError(AuthError.General())))
 
-    override fun getFile(fileName: String): Single<FileItem> =
+    override fun getFile(fileName: String): Single<FileItemBytes> =
         Single.create { emitter ->
             readClient.readFile(
                 userAccessToken = localAccess.getCachedCredential()?.accessToken?.value!!,

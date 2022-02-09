@@ -4,10 +4,7 @@ import android.app.Activity
 import io.reactivex.rxjava3.core.Single
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.DataRequest
-import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DataWriteResponse
-import me.digi.sdk.entities.response.FileItem
-import me.digi.sdk.entities.response.FileList
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.Service
 
 interface MainRepository {
@@ -34,5 +31,5 @@ interface MainRepository {
         serviceId: String?,
     ): Single<AuthorizationResponse>
 
-    fun getFile(fileName: String): Single<FileItem>
+    fun getFile(fileName: String): Single<FileItemBytes>
 }

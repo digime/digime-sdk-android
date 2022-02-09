@@ -6,10 +6,7 @@ import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.WriteDataPayload
-import me.digi.sdk.entities.response.AuthorizationResponse
-import me.digi.sdk.entities.response.DataWriteResponse
-import me.digi.sdk.entities.response.FileItem
-import me.digi.sdk.entities.response.FileList
+import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.Service
 
 class DefaultMainRepository(
@@ -55,6 +52,6 @@ class DefaultMainRepository(
             )
             .compose(localAccess.cacheAuthorizationData())
 
-    override fun getFile(fileName: String): Single<FileItem> =
+    override fun getFile(fileName: String): Single<FileItemBytes> =
         remoteAccess.getFile(fileName)
 }
