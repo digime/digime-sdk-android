@@ -1,7 +1,7 @@
 ext.versions = [
 
         // Main SDK
-        'sdk': '4.0.0',
+        'sdk': '4.0.1',
 
         // Build time plugins
         'androidgradleplugin': '3.4.2',
@@ -14,7 +14,7 @@ ext.versions = [
         'supportlibrary': '28.0.0',
         'constraintlayout': '1.1.0',
         'gson': '2.8.7',
-        'okhttp': '4.0.1',
+        'okhttp': '4.9.2',
         'retrofit': '2.9.0',
         'brotli': '0.1.2',
         'spongycastleprovider': '1.58.0.0',
