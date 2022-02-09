@@ -43,7 +43,8 @@ For contract that only asks for Twitter data, the response might be:
     "publishedDate": 1518428711000,
     "publishedStatus": "approved",
     "reference": "twitter",
-    "id": 2,
+    "serviceId": 3, ---> use serviceId for data scoping
+    "id": 2, ---> use id for onboarding
     "serviceGroups": [
         {
             "id": 1
