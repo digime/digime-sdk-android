@@ -13,6 +13,7 @@ import me.digi.saas.features.details.viewmodel.DetailsViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
 import me.digi.sdk.entities.response.FileItem
+import me.digi.sdk.entities.response.FileItemBytes
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
@@ -34,7 +35,7 @@ class DetailsFragment : Fragment(R.layout.fragment_details) {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collect { resource: Resource<FileItem> ->
+            viewModel.state.collect { resource: Resource<FileItemBytes> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /**
@@ -44,7 +45,7 @@ class DetailsFragment : Fragment(R.layout.fragment_details) {
                     is Resource.Loading -> binding.pbDetails.isVisible = true
                     is Resource.Success -> {
                         binding.pbDetails.isVisible = false
-                        binding.jsonLayoutDetails.bindJson(resource.data?.fileContent)
+                        binding.jsonLayoutDetails.bindJson(String(resource.data?.fileContent!!))
                     }
                     is Resource.Failure -> {
                         binding.pbDetails.isVisible = false

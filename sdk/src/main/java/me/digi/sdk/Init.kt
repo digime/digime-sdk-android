@@ -530,56 +530,7 @@ class Init(
      * @param fileId ID for specific file
      * @param completion Block called upon completion with either file or any errors encountered.
      */
-    fun readFile(userAccessToken: String, fileId: String, completion: FileContentCompletion) {
-
-        val currentSession = sessionManager.updatedSession
-
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
-                .map { response ->
-                    val headers = response.headers()["X-Metadata"]
-                    val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                    val payloadHeader =
-                        Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
-
-                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
-
-                    val contentBytes: ByteArray =
-                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
-
-                    val compression: String = try {
-                        payloadHeader.compression
-                    } catch (e: Throwable) {
-                        Compressor.COMPRESSION_NONE
-                    }
-                    val decompressedContentBytes: ByteArray =
-                        Compressor.decompressData(contentBytes, compression)
-
-                    FileItem().copy(fileContent = String(decompressedContentBytes))
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { completion.invoke(it, null) },
-                    onError = {
-                        completion.invoke(
-                            null,
-                            AuthError.ErrorWithMessage(
-                                it.localizedMessage ?: "Unknown error occurred"
-                            )
-                        )
-                    }
-                )
-        } else handleFileItem(userAccessToken, fileId, completion)
-    }
-
-    /**
-     * Get file content bytes by file ID.
-     *
-     * @param fileId ID for specific file
-     * @param completion Block called upon completion with either file or any errors encountered.
-     */
-    fun readFileBytes(userAccessToken: String, fileId: String, completion: FileContentBytesCompletion) {
+    fun readFile(userAccessToken: String, fileId: String, completion: FileContentBytesCompletion) {
 
         val currentSession = sessionManager.updatedSession
 
