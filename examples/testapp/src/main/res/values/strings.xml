@@ -1,0 +1,141 @@
+<resources>
+    <string name="app_name">Hive</string>
+
+    <!-- Menu -->
+    <string name="read">Read</string>
+    <string name="push">Push</string>
+    <string name="read_raw">Read Raw</string>
+
+    <!-- Empty state -->
+    <string name="labelEmptyTitle">Oops!</string>
+    <string name="labelEmptySubtitle">List seems to be empty. Try to pull down to refresh or reload the app</string>
+
+    <!-- Actions -->
+    <string name="actionYes">Yes</string>
+    <string name="actionNo">No</string>
+
+    <!-- Delete library dialog -->
+    <string name="dialogDeleteLibraryTitle">Delete library</string>
+    <string name="dialogDeleteLibrarySubtitle">Are you sure you want to delete current library?</string>
+
+    <!-- Auth screen -->
+    <string name="labelAuthDisclaimer">Begin your authentication for <b>%s</b> contract. You can always go back to change the type</string>
+
+    <!-- Home screen -->
+    <string name="homeAppTitle">Hive</string>
+    <string name="homeAppSubtitle">Welcome to Saas client app. Select the contract bellow to get going</string>
+    <string name="homeLabelRead">Read contract</string>
+    <string name="homeLabelPush">Push contract</string>
+    <string name="homeLabelReadRaw">Read raw contract</string>
+    <string name="homeLabelConfiguration">Configuration</string>
+
+    <!-- Settings screen -->
+    <string name="settingsTitle">Disclaimer</string>
+    <string name="settingsSubtitle">If contract data is changed, we recommend to firstly delete the library and start fresh due to locally stored credentials, etc. which might cause problems if not correct.</string>
+    <string name="settingsSelectTarget">Select target</string>
+    <string name="settingsSelectEndpoint">Select endpoint</string>
+    <string name="settingsAppId">8YcZRyfgKeimmlCUC3cBaVJLLmqEodgh</string>
+    <string name="settingsContractInfo">Specify contract information</string>
+    <string name="settingsContractId">Contract ID</string>
+    <string name="settingsPrivateKey">Private key</string>
+    <string name="settingsContractRead">Contract - Read</string>
+    <string name="settingsContractPush">Contract - Write</string>
+    <string name="settingsContractReadRaw">Contract - Read Raw</string>
+    <string name="settingsSaveConfiguration">Save configuration</string>
+    <string name="errorBaseUrl">Base URl must not be empty</string>
+    <string name="errorAppId">App ID must not be empty</string>
+
+    <!--// This contract id and private key allow the user to read social,
+    financial and music data from the past 3 months.-->
+    <string name="readAppId">8YcZRyfgKeimmlCUC3cBaVJLLmqEodgh</string>
+    <string name="readContractId">Fi59RMAhq4szT5o6IjWfWv0YqWIRwWXu</string>
+    <string name="readPrivateKey">-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAwskYKd+yNuv4dzDapy86WEgXIqsFlxPtmtTEG/jN5fCtNhqO
+JMjAtn4OfpGSc49C5b6wNUo6INXPOy2AN/UME/N6ldRCeX+tYrnxEjTDlIVVdmZ+
+rNSy1/T4JK62aGJb5p2Ng0zztHvNWaHjt6s1RlVdR1px3ufQSQbOewbDYMyOXVIc
+OlAuMdaUqe/PAr0K9eIHQoOAIU10zeChxsE4gyV859iqpAyw0werfgypy2o+EnP5
+gVnIYR8DltXD1pjvs0y8exDI+4PTZeMZvkgYyGgIHNZDXm6gHjwGW8M8ykxqxVsp
+w5Uv/ZpHm56qRpbtbSMkoFj/JzK4XqddFIJugQIDAQABAoIBAErswV+yDUI1CHEI
+mMLAVugIauXJ9S+E2du5xemgjcrKBkaOdmjN09seqAKlijjrPWdUL0GAWNWyiLER
+soVTvB6chGXHrP5BT3dvYLyJEUY694HAsS9X7adGMoEht0Z1tzYBGqML4Z5mFLpK
+nGZU8/wm7+d3cd+1OZgthxUpp9O+jqPNyxP06H9SJxjswvz66GjCk0Wu/tHJNRt7
+jCczRYpv+ggjUmTHbiEnmMv9BBazrl4//+jWxGIAOlxpVKbMY67ZR2fSohJEhZLo
++eda+OfXLCUTU0/ToKdUNnISXHSjO17wSK2Toz4BQmXiI6i+smWDDPrBgc22pn9l
+1NX6drECgYEA+NPfksOWYCVTh3OyhlX8/d6V1GBi0MhKw9v2QD7XT3UHlx7W2beg
+4s9XAnNddpeF4T0idTkLHns40G2Ay+qMvmkh1IylW0k7ZsVlChPIs1BtoNqL36yb
+TLkP+1Ku/kdaCzQFFzW33I7WqyZPNOHXKBub8eDzSn/eIyhtSez8C+0CgYEAyGZw
+OQmzZHQrKkPMQisCeMI/so+QYDYRCAIBNp41wu+TPCxpbFiqiKOTJmu9FM0au3rC
++mNQH63l1KGaF/XJNF/b+loF0U8PwBPB5jBvP0HE96RFvAWtQnJgAlHKpRFiqxmC
+bxGNf5xqlmJQnFmGK2pvHZDplZZBS9IF6nRlYmUCgYAyQPhCd+YC/QblsGQ55Vv3
+GeFAx0atzAXtkJsnVom9rnEeAEh8KC4CIMX95LbXoLqVRveSnTa1rUVIMxV0Gabb
+PfhrKQysZxnsI6nIYz6BmJjLh9gAEKg80pN7urNE/7wbzyHIEj1T+jU407/jekkt
+/IV+UGRSg4ilqSCJcadl8QKBgCxHvkpMI3Bx3svS+UIxoLUwLsT0xfEMYU0ErGH2
+KWjuaPkl0xGWse/JPQ2DRt9exqZgZM7QvPaTBTKrlpHuxEunVsMFuz1Zm+BUPUbw
+stQmYzBZAvOdyX/iJ+a7TeyVX9jwpQqHtV1aIY8jIC679VKIjQ7aY1KjRcBMIvSA
+TZqlAoGAP7Zfa0JbaZ/C+NKvixNd8EXITEoRqqYwE5Bcw19qvhrTiouxCzlBRAyM
+GTl63cOBuxMjEiqLhXqyDcEpQy82ufkGcEix1RBq5YImDYAceduUuBUC2IeE9+Hc
+lbpnXFCyqnWxz2wwTugcgwsiVaE2me8Yv6zvxCGjTL4dVeoiDNg=
+-----END RSA PRIVATE KEY-----</string>
+
+    <!--Contract id and private key which allows user to write data into the library-->
+    <string name="writeRawAppId">jDlT16D0AR8vGOOddajfZGfUsDxY7wNL</string>
+    <string name="writeContractId">V5cRNEhdXHWqDEM54tZNqBaElDQcfl4v</string>
+    <string name="writePrivateKey">-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAhMYMWNIeMK34g6uUjUyZlOFSfopWiAvpGH/YL3Gh41LR74MP
+3ikGrxS7BSxU7e8GfoJdk1DP1zl7oj0JV7F7P1GFY/R+SCuynp5TmQ9Ll0pCIkNj
+O2Za1jKV5EWMBOBeiZBWNOUFxaDXKdyuQHLEzxn6R3DYKWI9+a3WbHJH4zNj4o13
+BJsOlIk3N7dHxL73Ao0WlCzkd9b3Czlee4heRUm+oEht+5Ur+jmslotVJmRGOApv
+ffWkyez7uLefSk0p87E4H0I1bTtlLJAKRHj3Jgc6UdTgi6YageZRIBY5Gh50AWyK
+2aYBtTPHqbyAfa8O1HP71d4GcX6dwskRINae+wIDAQABAoIBAGSw4Uo2xwh51v7c
+D4N89PgQTQSEGw1/ot2ejq+kSHZiJ62xQkZj7Jq4aQCKVzo+TDmC2j5PSd/ZyyYF
+jeFASsyBIVzlXSOUaBicz59DFzt76F2dp1Kz0+2fXUdJat+D3I4MtSPWD6OJz8MC
+he+AWjsJY2HsdTIlPATuza9el5/4EIQpbMryKWlisY42jDz59bOHQv5brIgM839Z
+kBXa7FTJuhJ9m8CLMVVxS0Y7SOwVlN7LC0tJRvc9/v+Dc7OaALyufzc6e6ipm3iR
+6znGDzvtyYT36LQnXkeTRQP+bxKqpy1r2+JU3VkMRu3+4hfNnECiuWSXPgMTX3Od
+bzPfA/ECgYEAuPzH8xMSshxoRE4QpJAwYiAxhZsCP8NR5DSE2TfvPdTgXldjfMQt
+3YUbGimky7+47L1QWJM1IIiAt4XbcJthDBul+0UwbJCMN+/hDeSdncHsl/Mz3OiI
+NDtibFTw1iI5dfeAc2Z9K1pzk3tCfnZoLckDO9IlSRdy881fTR4mNHMCgYEAt74T
+GieHXDAzzmd/+8vgTkzdvBPBuNyV3hZ4xjAQ9t0CxdovQw00C9wIy7xUAtWewt43
+EB8TeWEpj/GY3DqeZkgBc6Md+3fJ/GbA1u4AhcFEODKKgcO4k2uBZH2pA9ZxAzW0
+MDlmVElyL0wUR3UrtqWtGMGOauVks/4Sfc2yUVkCgYBOl/dLqtrSmYcjHhesEya7
+SfpATW9TL+TnE/ktYLpghsUcz/wQ0ji6WQb+wpqlhjtHOdedCk4UGGq3jkOBQEKn
+JkgKzYaZWYB5c40mne7pS679j/KE9LaJmoFijWQVVk0bdaA5Z13ewXtBOakymZQB
+f9nD3LDCsRfBxYur9Bc/SQKBgAweCuB0ruaTfzcjeDtAzMAdLZpTqzjnwzJsRPa9
+AMFm/eHSa79+RWpqzmGxP9EYCWpMgVEc24nrsHP/uNb9Pqj8Iqxfm4CT+8wbcqg5
+9ercPgV+v8ejAq8mLdhUuSq5n6ZYilOL1YXFejRITiYQQhu/fVTenufJzQRZwxps
+0E+xAoGBAJvIS8Qpg6s1XJDgNvvbFP0ZkkAoQgCLHYIzvMusXN1PI9ZQUQXec0KZ
+9B/Nk99HD/jCHlONpL+pyGMH5KFP5D9Rx4uTMtv6dpX+4czdOxstonsq68WtgFkU
+xpt9yk2orvtaK/ZtMxiyhRzxW5EPrZkL9xSlfnIxd+M2f4Rqy/po
+-----END RSA PRIVATE KEY-----</string>
+
+    <!--This contract id and private key allow the user to read written data-->
+    <string name="readRawAppId">GezzLqFrHUCNQSjFAREiVwOVLRBBCYBA</string>
+    <string name="readRawContractId">slA5X9HyO2TnAxBIcRwf1VfpovcD1aQX</string>
+    <string name="readRawPrivateKey">-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAnHxDWyjjKXizE6Llo6yMI3xtHSjaPwF7hFQwChwSweqyvBpR
+rozDYKA9OX5yW5AsJYX2AJsPRiD16PdsMwgh/6hgDpPAaAWvwaPVc5oUG0V6I6L6
+apewv5dhE7HbSykIoDZqCpdmHaY4r0H8W8Gck8I3y0ocDuLTbSTfTMDj+9ZPACrw
+kfdh49ZsLDXCobNZvXh5LF1q00G4SD8cyhHTs9MpXCvWIZspawWlC6i8+UmbICw3
+YKcbYSRYTM90/impDWAYPHiyzJNwemgrnJ/M/GyOVLM7tlHuzU/K6ypu9oAjHANl
+L2DuDDjSZg9azTABSXVC1RbjXg+eOodHAqdblQIDAQABAoIBAGnbrf0HBdTSL+JC
+ujIk0ZBX5cBqGGmy6Qm1oeHU5+OCj3KsI0F/O9Qr0f8IyPej6hlgK/Bw9L4uIex9
+JBbJk6ZNEt4JmYlE/4Zw/D59pshkEaH16I0fHJQfJa6bDIwlsA4hgU606IF6JrJ4
+Yuz3ZqKWKgQ9mAmB7CDTZrOXcSK04dEe1t59ba8V56++iRu72avVhjvW87ZxgATN
+UJaQcVLxss0kA6ySP5j1w8VRf8jvNxWY0lPFSmJjaJrB2ovbS1u3vReTkdMbeErK
+cbfl2woGORyCELUEwTG7iI4usFGbgZuU1IVEGvm2zHLE0Jy92sH8N7Spw3/DYxnj
+Fax62AECgYEA1aEEaOjXOA12VlTG0G8OQffZyQzK634amwAQ0f4xpeVBb1Mcilo2
+G+Hf9V+ThSwYGndxtEN4YjFBuxUhjhig8od8ZFiSUPIBzFdtw3w1OHLg68kzTDPC
++ftQoEgSkE1G3X0csKmr2nL9ibgdBtQCHcFoM5eMXzCmYaFeLCkhLpUCgYEAu4XJ
+5dsPfHE5AAQ6wKn15BflvynVCyf9iVF7O64KGfJaTlPPTMqyt4aNbIiKStTPStZk
+hV/GRqwI8ENjFPpDznIxTiZwkN1YPG2FT8HEAgf8H8826u4yBdEyGDrnvlKtxKli
+h5vdnHCsgaPhYMuDVDaI3/pgfVrWqszXBO7LOQECgYEAqyYiG06Xxk96xDWNRsYC
+fTVtZNZ75+kStaV61FI7QnaGUwMZ9XnKqdHvlGzrCiFGekXBcbMwSjK+P3zxch8n
+KscDEH2pU3JfoG9W/+uN09itfBmooF9D0PTYJmE3hiZzJNWsW5jDlvLTTzeTAbpu
+q5ocumCq1ERsuAEJKoYVEHUCgYANvLpSpV6YDi9Pyf+H16uUvw9slqLtw0s2gQqX
+D6PbzL5C2K7qADthaHD5z3LaEobxA42vm5mJ2dZ5y2X5xm+rMwBbqkM6yYxKOPe4
+JQi34V/d8K8kPLjbZjzWO5J4hdQHASWfq5JrgHGSua+sCJyhUbFrPwtMg5gQQRtL
+WDb5AQKBgEycWssIPCULSSEinr1AD3FMczrZsLlGJWITp3af7IqeI2UQ9Bm8XSxX
+Pbx/llXLPRze9YT857XcrM/8w/F14iQDq+6wOu1tCoriT006QnIjMKGoJftXipTO
+AFUT+vgwhNxAy5/JN536S0Atg3TCcOzppsFg0i0GCoyhBqY5OWyn
+-----END RSA PRIVATE KEY-----</string>
+</resources>

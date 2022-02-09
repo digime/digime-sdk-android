@@ -1,3 +1,4 @@
 include ':sdk'
 include ':examples:ongoing'
 include ':examples:saas'
+include ':examples:testapp'
