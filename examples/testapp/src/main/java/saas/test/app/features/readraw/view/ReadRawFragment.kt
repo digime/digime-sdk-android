@@ -10,6 +10,7 @@ import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.kotlin.subscribeBy
@@ -50,6 +51,10 @@ class ReadRawFragment : Fragment(R.layout.fragment_read_raw) {
         binding.swipeRefresh.setOnRefreshListener {
             viewModel.getData()
             binding.swipeRefresh.isRefreshing = false
+        }
+
+        binding.btnGoToHome.setOnClickListener {
+            findNavController().navigate(R.id.homeFragment)
         }
     }
 
