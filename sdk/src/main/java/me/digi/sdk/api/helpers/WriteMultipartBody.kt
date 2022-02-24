@@ -1,5 +1,6 @@
 package me.digi.sdk.api.helpers
 
+import android.content.Context
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.WriteDataPayload
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -34,8 +35,9 @@ internal class WriteMultipartBody(description: RequestBody, requestBody: Multipa
             return this
         }
 
-        fun dataContent(dataContent: ByteArray, mimetype: MimeType): Builder {
-            val file = File.createTempFile(REQUEST_BODY_NAME, "json")
+        fun dataContent(context: Context, dataContent: ByteArray, mimetype: MimeType): Builder {
+            val outputDir = context.cacheDir
+            val file = File.createTempFile(REQUEST_BODY_NAME, "json", outputDir)
             val bos = BufferedOutputStream(FileOutputStream(file, false))
             bos.write(dataContent)
             bos.flush()
