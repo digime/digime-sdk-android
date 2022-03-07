@@ -223,7 +223,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             apiClient.argonService.getFileBytes(currentSession?.key!!, "accounts.json")
                 .map { response: Response<ResponseBody> ->
 
@@ -503,7 +503,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
         } else {
             handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
@@ -520,7 +520,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid()))
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()))
             apiClient.makeCall(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
@@ -538,7 +538,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
@@ -580,7 +580,7 @@ class Init(
     private fun getSessionData(fileId: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun or (currentSession != null && sessionManager.isSessionValid())) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
