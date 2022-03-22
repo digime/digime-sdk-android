@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import saas.test.app.R
@@ -114,6 +115,7 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     private fun setupClickListeners() {
         binding.btnPushData.setOnClickListener(this)
         binding.clear.setOnClickListener(this)
+        binding.btnGoToHome.setOnClickListener(this)
     }
 
     private fun subscribeToObservers() {
@@ -141,52 +143,61 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnPushData -> {
-                if (binding.writePdf.isChecked)
-                    payloadWritePdf?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
 
-                if (binding.write9MBPdf.isChecked)
-                    payloadWrite9MBPdf?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
+                if (binding.writePdf.isChecked || binding.write9MBPdf.isChecked || binding.writePng.isChecked ||
+                    binding.write9MBPng.isChecked || binding.writeJson.isChecked || binding.write8MBJson.isChecked
+                ) {
 
-                if (binding.writePng.isChecked)
-                    payloadWriteImage?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
+                    if (binding.writePdf.isChecked)
+                        payloadWritePdf?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
 
-                if (binding.write9MBPng.isChecked)
-                    payloadWrite9MBImage?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
+                    if (binding.write9MBPdf.isChecked)
+                        payloadWrite9MBPdf?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
 
-                if (binding.writeJson.isChecked)
-                    payloadWriteJson?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
-                if (binding.write8MBJson.isChecked)
-                    payloadWrite8MBJson?.let {
-                        viewModel.pushDataToPostbox(
-                            it,
-                            localAccess.getCachedCredential()?.accessToken?.value!!
-                        )
-                    } ?: snackBar("Payload must not be empty")
+                    if (binding.writePng.isChecked)
+                        payloadWriteImage?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
+
+                    if (binding.write9MBPng.isChecked)
+                        payloadWrite9MBImage?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
+
+                    if (binding.writeJson.isChecked)
+                        payloadWriteJson?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
+                    if (binding.write8MBJson.isChecked)
+                        payloadWrite8MBJson?.let {
+                            viewModel.pushDataToPostbox(
+                                it,
+                                localAccess.getCachedCredential()?.accessToken?.value!!
+                            )
+                        } ?: snackBar("Payload must not be empty")
+                } else {
+                    snackBar("Please select at least one file to push to library")
+                }
+
             }
 
             R.id.clear -> {
@@ -196,6 +207,10 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
                 binding.write8MBJson.isChecked = false
                 binding.write9MBPdf.isChecked = false
                 binding.write9MBPng.isChecked = false
+            }
+
+            R.id.btnGoToHome -> {
+                findNavController().navigate(R.id.homeFragment)
             }
         }
     }

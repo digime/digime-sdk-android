@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import saas.test.app.usecases.GetFileListUseCase
 import saas.test.app.utils.Resource
 import me.digi.sdk.entities.FileListItem
+import me.digi.sdk.entities.response.FileList
 
 class ReadViewModel(private val getFileList: GetFileListUseCase) : ViewModel() {
 
-    private val _state: MutableStateFlow<Resource<List<FileListItem>>> =
+    private val _state: MutableStateFlow<Resource<FileList>> =
         MutableStateFlow(Resource.Loading())
-    val state: StateFlow<Resource<List<FileListItem>>>
+    val state: StateFlow<Resource<FileList>>
         get() = _state
 
     init {
@@ -27,8 +28,12 @@ class ReadViewModel(private val getFileList: GetFileListUseCase) : ViewModel() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { _state.value = Resource.Success(it.fileList) },
-                onError = { _state.value = Resource.Failure(it.localizedMessage) }
+                onSuccess = {
+                    _state.value = Resource.Success(it)
+                            },
+                onError = {
+                    _state.value = Resource.Failure(it.localizedMessage)
+                }
             )
     }
 }

@@ -46,7 +46,9 @@ class OnboardViewModel(
             )
     }
 
-    fun fetchServicesForContract(contractId: String) {
+    fun fetchServicesForContract(
+        contractId: String
+    ) {
         _servicesStatus.value = Resource.Loading()
 
         viewModelScope.launch {
@@ -55,7 +57,10 @@ class OnboardViewModel(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onSuccess = { _servicesStatus.value = Resource.Success(it) },
+                    onSuccess = {
+                        _servicesStatus.value =
+                            Resource.Success(it)
+                    },
                     onError = { _servicesStatus.value = Resource.Failure(it.localizedMessage) }
                 )
         }

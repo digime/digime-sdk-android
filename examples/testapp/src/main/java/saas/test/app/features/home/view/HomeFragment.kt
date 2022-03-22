@@ -20,6 +20,7 @@ import saas.test.app.utils.Resource
 import saas.test.app.utils.snackBar
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import saas.test.app.TestApp
 
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
 
@@ -29,6 +30,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         setHasOptionsMenu(true)
 
         subscribeToObservers()
@@ -58,6 +60,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
                     }
                     is Resource.Failure -> {
                         binding.pbHome.isVisible = false
+                        viewModel.deleteDataAndStartOver(requireContext(), lifecycleScope)
                         snackBar(resource.message ?: "Unknown error occurred!")
                     }
                 }

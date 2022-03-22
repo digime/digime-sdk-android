@@ -1,6 +1,7 @@
 package saas.test.app.features.read.view
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
@@ -16,7 +17,9 @@ import saas.test.app.features.read.viewmodel.ReadViewModel
 import saas.test.app.utils.Resource
 import saas.test.app.utils.snackBar
 import me.digi.sdk.entities.FileListItem
+import me.digi.sdk.entities.response.FileList
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import saas.test.app.features.utils.ContractType
 
 class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
 
@@ -30,6 +33,8 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
         subscribeToObservers()
         setupAdapter()
         setupViews()
+
+        viewModel.getData()
     }
 
     private fun setupViews() {
@@ -38,6 +43,7 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
             binding.swipeRefresh.isRefreshing = false
         }
         binding.btnGoToOnboard.setOnClickListener(this)
+        binding.btnGoToHome.setOnClickListener(this)
     }
 
     private fun setupAdapter() {
@@ -51,19 +57,29 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.state.collect { result: Resource<List<FileListItem>> ->
+            viewModel.state.collect { result: Resource<FileList> ->
                 when (result) {
                     is Resource.Idle -> {
                         /** Do nothing */
                     }
                     is Resource.Loading -> binding.pbPull.isVisible = true
                     is Resource.Success -> {
-                        binding.pbPull.isVisible = false
+                        if(result.data?.accounts?.first()?.error == null) {
+                            binding.pbPull.isVisible = false
 
-                        val data = result.data as List<FileListItem>
-                        readAdapter.submitList(data)
+                            val data = result.data as FileList
+                            readAdapter.submitList(data.fileList)
 
-                        binding.incEmptyState.root.isVisible = data.isEmpty()
+                            binding.numOfFiles.isVisible = true
+                            binding.numOfFiles.text =
+                                "Number of files: " + data.fileList.size.toString() + ", Sync status: " + data.syncStatus.rawValue
+
+                            binding.incEmptyState.root.isVisible = data.fileList.isEmpty()
+                        } else {
+                            binding.pbPull.isVisible = false
+                            binding.numOfFiles.text = "Number of files: " + result.data?.fileList?.size.toString() + ", Sync status: " + result.data?.syncStatus?.rawValue +
+                                    ", sync stoped due to " + result.data?.accounts?.first()?.error!!.get("code")
+                        }
                     }
                     is Resource.Failure -> {
                         binding.pbPull.isVisible = false
@@ -76,7 +92,15 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.btnGoToOnboard -> findNavController().navigate(R.id.readToOnboard)
+            R.id.btnGoToOnboard -> {
+                val args = Bundle()
+                args.putString(ContractType.key, ContractType.pull)
+                findNavController().navigate(R.id.authFragment, args)
+            }
+
+            R.id.btnGoToHome -> {
+                findNavController().navigate(R.id.homeFragment)
+            }
         }
     }
 }

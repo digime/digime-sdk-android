@@ -1,6 +1,8 @@
 package me.digi.sdk.entities
 
+import me.digi.sdk.BuildConfig
+
 data class SdkAgent(
     val name: String = "android",
-    val version: String = "4.0.0" //TODO: Change this to be dynamic
+    val version: String = BuildConfig.SDK_VERSION
 )

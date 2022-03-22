@@ -28,7 +28,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/authProgressBar"
-        app:layout_constraintVertical_bias="0.016">
+        app:layout_constraintVertical_bias="0.0">
 
         <CheckBox
             android:id="@+id/useScoping"
@@ -41,30 +41,38 @@
             android:text="Use scoping"
             android:visibility="visible" />
 
+
+        <TextView
+            android:id="@+id/scopeExplanation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:textSize="18sp"
+            android:text="Please select Service and Object type in order for scope to work properly">
+        </TextView>
+
         <View
             android:id="@+id/separator"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:visibility="visible"
-            android:background="@android:color/darker_gray"/>
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/socialDataText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Social data">
+        </TextView>
 
         <LinearLayout
             android:id="@+id/socialData"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="visible"
-            android:orientation="horizontal">
-
-            <CheckBox
-                android:id="@+id/social"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/secondaryYellow"
-                android:text="Social"
-                android:visibility="visible" />
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -163,26 +171,23 @@
             android:id="@+id/separator1"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:visibility="visible"
-            android:background="@android:color/darker_gray"/>
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/helathDataText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Health and Fitness data">
+        </TextView>
 
         <LinearLayout
             android:id="@+id/healthFitnessData"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="visible"
-            android:orientation="horizontal">
-
-            <CheckBox
-                android:id="@+id/healthfitness"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/secondaryYellow"
-                android:text="Health &amp; Fitness"
-                android:visibility="visible" />
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -269,26 +274,23 @@
             android:id="@+id/separator2"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:visibility="visible"
-            android:background="@android:color/darker_gray"/>
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/entertainmentDataText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Entertainment data">
+        </TextView>
 
         <LinearLayout
             android:id="@+id/entertainmentData"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="visible"
-            android:orientation="horizontal">
-
-            <CheckBox
-                android:id="@+id/entertainment"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/secondaryYellow"
-                android:text="Entertainment"
-                android:visibility="visible" />
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -319,7 +321,6 @@
             </LinearLayout>
 
         </LinearLayout>
-
 
 
     </LinearLayout>
