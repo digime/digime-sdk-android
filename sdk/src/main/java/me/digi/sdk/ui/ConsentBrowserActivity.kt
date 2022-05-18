@@ -6,7 +6,9 @@ import android.net.Uri
 import android.os.Bundle
 import me.digi.sdk.R
 
+
 class ConsentBrowserActivity : Activity() {
+    var intentRead = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,8 +18,10 @@ class ConsentBrowserActivity : Activity() {
             ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
 
         if (intentUri.scheme.orEmpty() == getString(R.string.deeplink_guest_consent_callback)) {
+            intentRead = true
             handleWebOnboardingCallback(intentUri)
         } else {
+            intentRead = true
             startActivity(Intent(Intent.ACTION_VIEW, intentUri))
         }
     }
@@ -28,6 +32,19 @@ class ConsentBrowserActivity : Activity() {
         val intentUri = intent?.data
             ?: throw IllegalStateException("GuestConsentBrowserActivity must be started with an intent.")
         handleWebOnboardingCallback(intentUri)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if(intentRead) {
+            intentRead = false
+        } else {
+            if (intent.action == null && intent.extras == null) {
+                intent?.putExtra(getString(R.string.key_error), "USER_CANCEL")
+                setResult(RESULT_CANCELED, intent)
+                finish()
+            }
+        }
     }
 
     private fun handleSaasCallback(intentUri: Uri) {
@@ -56,4 +73,6 @@ class ConsentBrowserActivity : Activity() {
         handleSaasCallback(intentUri)
         finish()
     }
+
+
 }
