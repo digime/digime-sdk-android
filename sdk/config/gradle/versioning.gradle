@@ -1,7 +1,7 @@
 ext.versions = [
 
         // Main SDK
-        'sdk': '4.0.2',
+        'sdk': '4.0.3',
 
         // Build time plugins
         'androidgradleplugin': '3.4.2',
@@ -13,7 +13,7 @@ ext.versions = [
         'supportannotations': '28.0.0',
         'supportlibrary': '28.0.0',
         'constraintlayout': '1.1.0',
-        'gson': '2.8.7',
+        'gson': '2.8.8',
         'okhttp': '4.9.2',
         'retrofit': '2.9.0',
         'brotli': '0.1.2',
@@ -23,7 +23,7 @@ ext.versions = [
         "rxandroid": '3.0.0',
 
         // Test
-        'testcore': '1.3.0',
+        'testcore': '1.4.1-alpha05',
         'testrunner': '1.0.2',
         'espresso': '3.0.2',
         'junit': '4.13.2',
