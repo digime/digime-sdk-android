@@ -31,7 +31,7 @@ class MainRemoteDataAccessImpl(
             context.resources.getString(R.string.readAppId),
             context.resources.getString(R.string.readContractId),
             context.resources.getString(R.string.readPrivateKey),
-            "https://api.stagingdigi.me/"
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
@@ -43,7 +43,7 @@ class MainRemoteDataAccessImpl(
             context.resources.getString(R.string.writeRawAppId),
             context.resources.getString(R.string.writeContractId),
             context.resources.getString(R.string.writePrivateKey),
-            "https://api.stagingdigi.me/"
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
@@ -55,7 +55,7 @@ class MainRemoteDataAccessImpl(
             context.resources.getString(R.string.readRawAppId),
             context.resources.getString(R.string.readRawContractId),
             context.resources.getString(R.string.readRawPrivateKey),
-            "https://api.stagingdigi.me/"
+            "https://api.digi.me/"
         )
 
         Init(context, configuration)
