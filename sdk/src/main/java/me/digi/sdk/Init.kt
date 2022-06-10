@@ -1558,43 +1558,45 @@ class Init(
         downloadHandler: FileContentCompletion,
         completion: FileListCompletion
     ) {
-        DMELog.i(context.getString(R.string.labelReadingFiles))
+        Handler(Looper.getMainLooper()).postDelayed({
+            DMELog.i(context.getString(R.string.labelReadingFiles))
 
-        activeFileDownloadHandler = downloadHandler
-        activeSessionDataFetchCompletionHandler = completion
+            activeFileDownloadHandler = downloadHandler
+            activeSessionDataFetchCompletionHandler = completion
 
-        getSessionFileList(userAccessToken, { _, updatedFileIds ->
+            getSessionFileList(userAccessToken, { _, updatedFileIds ->
 
-            updatedFileIds.forEach {
+                updatedFileIds.forEach {
 
-                activeDownloadCount++
-                DMELog.i("Downloading file with ID: $it.")
+                    activeDownloadCount++
+                    DMELog.i("Downloading file with ID: $it.")
 
-                getSessionData(it) { file, error ->
+                    getSessionData(it) { file, error ->
 
-                    when {
-                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                        when {
+                            file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                            else -> DMELog.e("Failed to download updates for file with ID: $it.")
+                        }
+
+                        downloadHandler.invoke(file, error)
+                        activeDownloadCount--
                     }
+                }
 
-                    downloadHandler.invoke(file, error)
-                    activeDownloadCount--
+            }) { fileList, error ->
+                if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null) {
+                    completion(
+                        fileList,
+                        null
+                    ) // We only want to push this if the error exists, else
+                    // it'll cause a premature loop exit.
+                } else if (fileList?.syncStatus == FileList.SyncStatus.PARTIAL()) {
+                    completion(
+                        fileList,
+                        error
+                    )
                 }
             }
-
-        }) { fileList, error ->
-            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null) {
-                completion(
-                    fileList,
-                    null
-                ) // We only want to push this if the error exists, else
-                // it'll cause a premature loop exit.
-            } else if (fileList?.syncStatus == FileList.SyncStatus.PARTIAL()) {
-                completion(
-                    fileList,
-                    error
-                )
-            }
-        }
+        }, 3000)
     }
 }
