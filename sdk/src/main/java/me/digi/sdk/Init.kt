@@ -602,7 +602,7 @@ class Init(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    FileItem().copy(fileContent = String(decompressedContentBytes))
+                    FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -1380,7 +1380,7 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                            FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -1472,7 +1472,7 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                            FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
