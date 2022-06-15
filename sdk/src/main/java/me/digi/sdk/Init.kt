@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import android.util.Log
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -57,7 +56,7 @@ class Init(
     private var fileListItemCache: FileListItemCache? = null
     private var latestFileList: FileList? = null
 
-    private var activeSyncStatus: FileList.SyncStatus? = null
+    var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -73,7 +72,7 @@ class Init(
 
             field = value
         }
-    private var activeDownloadCount = 0
+    var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
@@ -525,8 +524,7 @@ class Init(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
             )
-        }
-        else handleFileList(userAccessToken, completion)
+        } else handleFileList(userAccessToken, completion)
     }
 
     /**
@@ -602,13 +600,15 @@ class Init(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
+                    FileItem().copy(
+                        fileContent = String(decompressedContentBytes)
+                    )
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = { fileItem ->
-                            completion.invoke(fileItem, null)
+                        completion.invoke(fileItem, null)
                     },
                     onError = {
                         completion.invoke(
@@ -1380,7 +1380,8 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
+                            FileItem().copy(
+                                fileContent = String(decompressedContentBytes))
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -1472,7 +1473,8 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes), Status(activeSyncStatus?.rawValue!!))
+                            FileItem().copy(
+                                fileContent = String(decompressedContentBytes))
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())

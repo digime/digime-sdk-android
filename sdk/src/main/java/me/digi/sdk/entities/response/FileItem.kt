@@ -3,11 +3,8 @@ package me.digi.sdk.entities.response
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 
-data class Status(val state: String = "")
-
 data class FileItem(
-    val fileContent: String? = "",
-    val status: Status = Status()
+    val fileContent: String? = ""
 ) {
     lateinit var identifier: String
 
