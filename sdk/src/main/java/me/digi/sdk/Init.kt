@@ -648,60 +648,56 @@ class Init(
 
         DMELog.d("Session data poll scheduled.")
 
-        Handler(Looper.getMainLooper()).postDelayed({
+        DMELog.d("Fetching file list.")
+        if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
+            readFileList(userAccessToken) { fileList, listFetchError ->
 
-            DMELog.d("Fetching file list.")
-            if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
-                readFileList(userAccessToken) { fileList, listFetchError ->
-
-                    when {
-                        fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
-                        listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
-                    }
-
-                    val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
-
-                    latestFileList = fileList
-                    val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
-                        fileList?.fileList.orEmpty()
-                    ).orEmpty()
-
-                    DMELog.i(
-                        "${
-                            fileList?.fileList.orEmpty().count()
-                        } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
-                    )
-
-                    if (updatedFileIds.count() > 0 && fileList != null) {
-                        fileListUpdateHandler?.invoke(fileList, updatedFileIds)
-                        stalePollCount = 0
-                    } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                        fileListCompletionHandler?.invoke(
-                            fileList,
-                            SDKError.FileListPollingTimeout()
-                        )
-                        return@readFileList
-                    }
-
-                    when (syncStatus) {
-                        FileList.SyncStatus.PENDING(),
-                        FileList.SyncStatus.RUNNING() -> {
-                            DMELog.i("Sync still in progress, continuing to poll for updates.")
-                            scheduleNextPoll(userAccessToken)
-                        }
-                        FileList.SyncStatus.COMPLETED(),
-                        FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
-                            fileList,
-                            listFetchError
-                        )
-                        else -> Unit
-                    }
-
-                    activeSyncStatus = syncStatus
+                when {
+                    fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
+                    listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
-            }
 
-        }, 3000)
+                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+
+                latestFileList = fileList
+                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
+                    fileList?.fileList.orEmpty()
+                ).orEmpty()
+
+                DMELog.i(
+                    "${
+                        fileList?.fileList.orEmpty().count()
+                    } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
+                )
+
+                if (updatedFileIds.count() > 0 && fileList != null) {
+                    fileListUpdateHandler?.invoke(fileList, updatedFileIds)
+                    stalePollCount = 0
+                } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                    fileListCompletionHandler?.invoke(
+                        fileList,
+                        SDKError.FileListPollingTimeout()
+                    )
+                    return@readFileList
+                }
+
+                when (syncStatus) {
+                    FileList.SyncStatus.PENDING(),
+                    FileList.SyncStatus.RUNNING() -> {
+                        DMELog.i("Sync still in progress, continuing to poll for updates.")
+                        scheduleNextPoll(userAccessToken)
+                    }
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                        fileList,
+                        listFetchError
+                    )
+                    else -> Unit
+                }
+
+                activeSyncStatus = syncStatus
+            }
+        }
     }
 
     private fun completeDeliveryOfSessionData(error: Error?) {
@@ -1381,7 +1377,8 @@ class Init(
                                 Compressor.decompressData(contentBytes, compression)
 
                             FileItem().copy(
-                                fileContent = String(decompressedContentBytes))
+                                fileContent = String(decompressedContentBytes)
+                            )
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -1474,7 +1471,8 @@ class Init(
                                 Compressor.decompressData(contentBytes, compression)
 
                             FileItem().copy(
-                                fileContent = String(decompressedContentBytes))
+                                fileContent = String(decompressedContentBytes)
+                            )
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -1560,45 +1558,43 @@ class Init(
         downloadHandler: FileContentCompletion,
         completion: FileListCompletion
     ) {
-        Handler(Looper.getMainLooper()).postDelayed({
-            DMELog.i(context.getString(R.string.labelReadingFiles))
+        DMELog.i(context.getString(R.string.labelReadingFiles))
 
-            activeFileDownloadHandler = downloadHandler
-            activeSessionDataFetchCompletionHandler = completion
+        activeFileDownloadHandler = downloadHandler
+        activeSessionDataFetchCompletionHandler = completion
 
-            getSessionFileList(userAccessToken, { _, updatedFileIds ->
+        getSessionFileList(userAccessToken, { _, updatedFileIds ->
 
-                updatedFileIds.forEach {
+            updatedFileIds.forEach {
 
-                    activeDownloadCount++
-                    DMELog.i("Downloading file with ID: $it.")
+                activeDownloadCount++
+                DMELog.i("Downloading file with ID: $it.")
 
-                    getSessionData(it) { file, error ->
+                getSessionData(it) { file, error ->
 
-                        when {
-                            file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
-                            else -> DMELog.e("Failed to download updates for file with ID: $it.")
-                        }
-
-                        downloadHandler.invoke(file, error)
-                        activeDownloadCount--
+                    when {
+                        file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
+                        else -> DMELog.e("Failed to download updates for file with ID: $it.")
                     }
-                }
 
-            }) { fileList, error ->
-                if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null) {
-                    completion(
-                        fileList,
-                        null
-                    ) // We only want to push this if the error exists, else
-                    // it'll cause a premature loop exit.
-                } else if (fileList?.syncStatus == FileList.SyncStatus.PARTIAL()) {
-                    completion(
-                        fileList,
-                        error
-                    )
+                    downloadHandler.invoke(file, error)
+                    activeDownloadCount--
                 }
             }
-        }, 3000)
+
+        }) { fileList, error ->
+            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null) {
+                completion(
+                    fileList,
+                    null
+                ) // We only want to push this if the error exists, else
+                // it'll cause a premature loop exit.
+            } else if (fileList?.syncStatus == FileList.SyncStatus.PARTIAL()) {
+                completion(
+                    fileList,
+                    error
+                )
+            }
+        }
     }
 }
