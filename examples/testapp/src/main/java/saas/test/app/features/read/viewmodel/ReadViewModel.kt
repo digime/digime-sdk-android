@@ -29,7 +29,9 @@ class ReadViewModel(private val getFileList: GetFileListUseCase) : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
-                    _state.value = Resource.Success(it)
+                        if(it.fileList.isNotEmpty()) {
+                            _state.value = Resource.Success(it)
+                        }
                             },
                 onError = {
                     _state.value = Resource.Failure(it.localizedMessage)

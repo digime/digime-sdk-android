@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import android.util.Log
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -57,7 +56,7 @@ class Init(
     private var fileListItemCache: FileListItemCache? = null
     private var latestFileList: FileList? = null
 
-    private var activeSyncStatus: FileList.SyncStatus? = null
+    var activeSyncStatus: FileList.SyncStatus? = null
         set(value) {
             val previousValue = field
             if (previousValue != value && previousValue != null && value != null)
@@ -73,7 +72,7 @@ class Init(
 
             field = value
         }
-    private var activeDownloadCount = 0
+    var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
@@ -520,12 +519,12 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()))
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL() && activeSyncStatus != null)) {
             apiClient.makeCall(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
             )
-        else handleFileList(userAccessToken, completion)
+        } else handleFileList(userAccessToken, completion)
     }
 
     /**
@@ -601,13 +600,15 @@ class Init(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    FileItem().copy(fileContent = String(decompressedContentBytes))
+                    FileItem().copy(
+                        fileContent = String(decompressedContentBytes)
+                    )
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = { fileItem ->
-                            completion.invoke(fileItem, null)
+                        completion.invoke(fileItem, null)
                     },
                     onError = {
                         completion.invoke(
@@ -647,60 +648,56 @@ class Init(
 
         DMELog.d("Session data poll scheduled.")
 
-        Handler(Looper.getMainLooper()).postDelayed({
+        DMELog.d("Fetching file list.")
+        if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
+            readFileList(userAccessToken) { fileList, listFetchError ->
 
-            DMELog.d("Fetching file list.")
-            if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
-                readFileList(userAccessToken) { fileList, listFetchError ->
-
-                    when {
-                        fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
-                        listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
-                    }
-
-                    val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
-
-                    latestFileList = fileList
-                    val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
-                        fileList?.fileList.orEmpty()
-                    ).orEmpty()
-
-                    DMELog.i(
-                        "${
-                            fileList?.fileList.orEmpty().count()
-                        } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
-                    )
-
-                    if (updatedFileIds.count() > 0 && fileList != null) {
-                        fileListUpdateHandler?.invoke(fileList, updatedFileIds)
-                        stalePollCount = 0
-                    } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                        fileListCompletionHandler?.invoke(
-                            fileList,
-                            SDKError.FileListPollingTimeout()
-                        )
-                        return@readFileList
-                    }
-
-                    when (syncStatus) {
-                        FileList.SyncStatus.PENDING(),
-                        FileList.SyncStatus.RUNNING() -> {
-                            DMELog.i("Sync still in progress, continuing to poll for updates.")
-                            scheduleNextPoll(userAccessToken)
-                        }
-                        FileList.SyncStatus.COMPLETED(),
-                        FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
-                            fileList,
-                            listFetchError
-                        )
-                        else -> Unit
-                    }
-
-                    activeSyncStatus = syncStatus
+                when {
+                    fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
+                    listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
-            }
 
-        }, 3000)
+                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+
+                latestFileList = fileList
+                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
+                    fileList?.fileList.orEmpty()
+                ).orEmpty()
+
+                DMELog.i(
+                    "${
+                        fileList?.fileList.orEmpty().count()
+                    } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
+                )
+
+                if (updatedFileIds.count() > 0 && fileList != null) {
+                    fileListUpdateHandler?.invoke(fileList, updatedFileIds)
+                    stalePollCount = 0
+                } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                    fileListCompletionHandler?.invoke(
+                        fileList,
+                        SDKError.FileListPollingTimeout()
+                    )
+                    return@readFileList
+                }
+
+                when (syncStatus) {
+                    FileList.SyncStatus.PENDING(),
+                    FileList.SyncStatus.RUNNING() -> {
+                        DMELog.i("Sync still in progress, continuing to poll for updates.")
+                        scheduleNextPoll(userAccessToken)
+                    }
+                    FileList.SyncStatus.COMPLETED(),
+                    FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                        fileList,
+                        listFetchError
+                    )
+                    else -> Unit
+                }
+
+                activeSyncStatus = syncStatus
+            }
+        }
     }
 
     private fun completeDeliveryOfSessionData(error: Error?) {
@@ -1379,7 +1376,9 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                            FileItem().copy(
+                                fileContent = String(decompressedContentBytes)
+                            )
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -1471,7 +1470,9 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(fileContent = String(decompressedContentBytes))
+                            FileItem().copy(
+                                fileContent = String(decompressedContentBytes)
+                            )
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
