@@ -12,7 +12,6 @@ import me.digi.saas.databinding.FragmentDetailsBinding
 import me.digi.saas.features.details.viewmodel.DetailsViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileItemBytes
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber

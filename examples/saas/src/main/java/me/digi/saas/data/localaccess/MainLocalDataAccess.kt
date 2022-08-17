@@ -2,15 +2,12 @@ package me.digi.saas.data.localaccess
 
 import io.reactivex.rxjava3.core.SingleTransformer
 import me.digi.saas.entities.ContractHandler
-import me.digi.saas.framework.datasource.MainLocalDataAccessImpl
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.ConsentAuthResponse
 
-/**
- * Check [MainLocalDataAccessImpl] for more information
- */
+
 interface MainLocalDataAccess {
     fun getCachedBaseUrl(): String?
     fun getCachedAppId(): String?

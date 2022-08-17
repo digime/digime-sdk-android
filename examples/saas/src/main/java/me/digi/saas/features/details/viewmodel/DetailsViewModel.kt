@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.digi.saas.usecases.GetFileUseCase
 import me.digi.saas.utils.Resource
-import me.digi.sdk.entities.response.FileItem
 import me.digi.sdk.entities.response.FileItemBytes
 
 class DetailsViewModel(private val getFile: GetFileUseCase) : ViewModel() {

@@ -32,4 +32,6 @@ interface MainRepository {
     ): Single<AuthorizationResponse>
 
     fun getFile(fileName: String): Single<FileItemBytes>
+
+    fun getFileBytes(fileName: String): Single<FileItemBytes>
 }

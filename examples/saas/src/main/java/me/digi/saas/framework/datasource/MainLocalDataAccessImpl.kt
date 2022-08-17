@@ -3,7 +3,6 @@ package me.digi.saas.framework.datasource
 import android.content.Context
 import com.google.gson.Gson
 import io.reactivex.rxjava3.core.SingleTransformer
-import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.entities.ContractHandler
 import me.digi.saas.framework.utils.AppConst.CACHED_APP_ID
 import me.digi.saas.framework.utils.AppConst.CACHED_BASE_URL
@@ -19,6 +18,7 @@ import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.response.ConsentAuthResponse
+import me.digi.saas.data.localaccess.MainLocalDataAccess
 
 class MainLocalDataAccessImpl(private val context: Context) : MainLocalDataAccess {
 

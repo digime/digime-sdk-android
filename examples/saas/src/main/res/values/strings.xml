@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Hive</string>
+    <string name="emptyString"></string>
 
     <!-- Endpoints -->
     <string name="labelProductionUrl">https://api.digi.me/</string>
@@ -26,6 +27,7 @@
     <!-- Actions -->
     <string name="actionYes">Yes</string>
     <string name="actionNo">No</string>
+    <string name="actionClear">Clear</string>
 
     <!-- Delete library dialog -->
     <string name="dialogDeleteLibraryTitle">Delete library</string>
@@ -41,6 +43,13 @@
     <string name="homeLabelPush">Push contract</string>
     <string name="homeLabelReadRaw">Read raw contract</string>
     <string name="homeLabelConfiguration">Configuration</string>
+
+    <!-- Write data -->
+    <string name="pushDataTitle">Tap the button bellow to begin the process of pushing data to your cloud storage</string>
+    <string name="pushImage">Push image (png)</string>
+    <string name="pushPdf">Push pdf</string>
+    <string name="pushJson">Push json</string>
+    <string name="pushData">Push Data</string>
 
     <!-- Settings screen -->
     <string name="settingsTitle">Disclaimer</string>
@@ -60,33 +69,34 @@
 
     <!--// This contract id and private key allow the user to read social,
     financial and music data from the past 3 months.-->
-    <string name="readContractId">DGLxRJiTjKZJvvtDB6timfzw4DHiQwek</string>
+    <string name="appId">CJfTgINN484TmpEIdXTdXzJY6AQXj1jf</string>
+    <string name="readContractId">HV1kgxS5mPmy5ck7F4zAmJOOQ0Xdoo6T</string>
     <string name="readPrivateKey">-----BEGIN RSA PRIVATE KEY-----
-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
+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
 -----END RSA PRIVATE KEY-----</string>
 
     <!--Contract id and private key which allows user to write data into the library-->

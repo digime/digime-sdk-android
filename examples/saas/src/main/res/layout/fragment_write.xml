@@ -34,6 +34,7 @@
         <ImageView
             android:layout_width="150dp"
             android:layout_height="150dp"
+            android:contentDescription="@string/emptyString"
             app:srcCompat="@drawable/ic_push_data" />
 
         <TextView
@@ -43,7 +44,70 @@
             android:layout_marginBottom="8dp"
             android:fontFamily="@font/roboto_regular"
             android:gravity="center"
-            android:text="Tap the button bellow to begin the process of pushing data to your cloud storage" />
+            android:text="@string/pushDataTitle" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/writePng"
+                android:layout_gravity="start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="20dp"
+                android:paddingStart="5dp"
+                android:text="@string/pushImage">
+            </RadioButton>
+
+        </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/writePdf"
+            android:layout_gravity="start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="20dp"
+            android:paddingStart="5dp"
+            android:text="@string/pushPdf">
+        </RadioButton>
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/writeJson"
+            android:layout_gravity="start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="20dp"
+            android:paddingStart="5dp"
+            android:text="@string/pushJson">
+        </RadioButton>
+
+    </LinearLayout>
+
+        <Button
+            android:id="@+id/clear"
+            android:layout_gravity="start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/actionClear">
+        </Button>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPushData"
@@ -51,9 +115,22 @@
             android:layout_height="wrap_content"
             android:backgroundTint="#F4D843"
             android:fontFamily="@font/roboto_regular"
-            android:text="Push Data"
+            android:text="@string/pushData"
             android:textAllCaps="false"
             app:cornerRadius="15dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnGoToHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            app:backgroundTint="@color/white"
+            app:srcCompat="@drawable/ic_hive"
+            android:focusable="true"
+            android:contentDescription="@string/emptyString" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

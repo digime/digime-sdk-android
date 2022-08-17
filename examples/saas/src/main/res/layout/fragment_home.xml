@@ -91,17 +91,17 @@
         android:layout_marginBottom="16dp"
         android:background="?android:attr/listDivider" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSettings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#F4D843"
-        android:fontFamily="@font/roboto_regular"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:text="@string/homeLabelConfiguration"
-        android:textAllCaps="false"
-        app:cornerRadius="15dp"
-        app:icon="@drawable/ic_settings" />
+<!--    <com.google.android.material.button.MaterialButton-->
+<!--        android:id="@+id/btnSettings"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:backgroundTint="#F4D843"-->
+<!--        android:fontFamily="@font/roboto_regular"-->
+<!--        android:paddingTop="8dp"-->
+<!--        android:paddingBottom="8dp"-->
+<!--        android:text="@string/homeLabelConfiguration"-->
+<!--        android:textAllCaps="false"-->
+<!--        app:cornerRadius="15dp"-->
+<!--        app:icon="@drawable/ic_settings" />-->
 
 </LinearLayout>
