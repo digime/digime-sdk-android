@@ -519,7 +519,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL() && activeSyncStatus != null)) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
             apiClient.makeCall(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
