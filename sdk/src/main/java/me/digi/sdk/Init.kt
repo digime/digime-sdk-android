@@ -576,7 +576,7 @@ class Init(
         } else handleFileItemBytes(userAccessToken, fileId, completion)
     }
 
-    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
+    public fun getSessionData(fileId: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
