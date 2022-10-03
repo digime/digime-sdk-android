@@ -500,13 +500,18 @@ class Init(
         completion: FileListCompletion
     ) {
 
+        if (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())
+            activeSyncStatus = null
+
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
-        } else {
-            handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
-        }
+        handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+
+//        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
+//            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+//        } else {
+//            handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
+//        }
     }
 
     /**
@@ -519,7 +524,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
+        if ((currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
             apiClient.makeCall(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
@@ -601,7 +606,8 @@ class Init(
                         Compressor.decompressData(contentBytes, compression)
 
                     FileItem().copy(
-                        fileContent = String(decompressedContentBytes)
+                        fileContent = String(decompressedContentBytes),
+                        fileName = fileId
                     )
                 }
                 .subscribeOn(Schedulers.io())
@@ -657,7 +663,7 @@ class Init(
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+                var syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
 
                 latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
@@ -674,6 +680,9 @@ class Init(
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
                 } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                    stalePollCount = 0
+                    syncStatus =  FileList.SyncStatus.COMPLETED()
+                    activeSyncStatus = null
                     fileListCompletionHandler?.invoke(
                         fileList,
                         SDKError.FileListPollingTimeout()
@@ -1164,16 +1173,28 @@ class Init(
             )
     }
 
+//    {"access_token":{"expires_on":1664831686,"value":"d8e19799c75ed9db2f2eca9f1d9062fdcd549adc4fcb7538449300654ff742a3a3c5901562a67fb8136c25b7cbc906cb94866840fccfbc1074676f9f6c84a1fba77a6bd90f07465cb6b6fa89650da325"},"consentid":"df2f16318deb7d85672ec1f1e0ce652b","identifier":{"id":"3111d038abcf6e58868c4b8fcd26849b"},"refresh_token":{"expires_on":1680297286,"value":"0d54664b62de08472d1db7348638aecf0c8e266cff37278dc42718bcbe7a5cb1de870a86a4e74ffaa2f2f40228810e53be42d0f8b0dc57bb58471b567fb9a99f7b7e2318cb17a53b976a9c96cea294cd"},"token_type":"Bearer"}
+    data class UserAccessToken(
+        val accessToken: AccessToken? = null,
+    )
+
+    data class AccessToken (
+        val expires_on: Long = 0L,
+        val value: String? = null
+    )
+
+
+
     private fun handleFileList(
         userAccessToken: String,
         completion: FileListCompletion
     ) {
         fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val accessToken = Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
             val jwt = TriggerDataQueryRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                userAccessToken
-            )
+                accessToken.accessToken?.value!!)
 
             val signingKey: PrivateKey =
                 KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
@@ -1189,7 +1210,9 @@ class Init(
                         sessionManager.updatedSession = response.session
                         emitter.onSuccess(response)
                     }
-                    error != null -> emitter.onError(error)
+                    error != null -> {
+                        emitter.onError(error)
+                    }
                     else -> emitter.onError(IllegalArgumentException())
                 }
             }
@@ -1377,7 +1400,8 @@ class Init(
                                 Compressor.decompressData(contentBytes, compression)
 
                             FileItem().copy(
-                                fileContent = String(decompressedContentBytes)
+                                fileContent = String(decompressedContentBytes),
+                                fileName = fileId
                             )
                         }
                         .subscribeOn(Schedulers.io())
@@ -1471,7 +1495,8 @@ class Init(
                                 Compressor.decompressData(contentBytes, compression)
 
                             FileItem().copy(
-                                fileContent = String(decompressedContentBytes)
+                                fileContent = String(decompressedContentBytes),
+                                fileName = fileId
                             )
                         }
                         .subscribeOn(Schedulers.io())
@@ -1499,7 +1524,7 @@ class Init(
             )
     }
 
-    private fun handleCyclicDataDownload(
+    fun handleCyclicDataDownload(
         scope: DataRequest?, userAccessToken: String,
         downloadHandler: FileContentCompletion,
         completion: FileListCompletion
@@ -1583,7 +1608,7 @@ class Init(
             }
 
         }) { fileList, error ->
-            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null) {
+            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null && activeDownloadCount == 0) {
                 completion(
                     fileList,
                     null
