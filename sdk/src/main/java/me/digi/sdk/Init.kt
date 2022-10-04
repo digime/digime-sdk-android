@@ -500,18 +500,13 @@ class Init(
         completion: FileListCompletion
     ) {
 
-        if (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())
-            activeSyncStatus = null
-
         val currentSession = sessionManager.updatedSession
 
-        handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
-
-//        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-//            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
-//        } else {
-//            handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
-//        }
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
+            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+        } else {
+            handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
+        }
     }
 
     /**
@@ -581,7 +576,7 @@ class Init(
         } else handleFileItemBytes(userAccessToken, fileId, completion)
     }
 
-    public fun getSessionData(fileId: String, completion: FileContentCompletion) {
+    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
@@ -663,7 +658,7 @@ class Init(
                     listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                 }
 
-                var syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
 
                 latestFileList = fileList
                 val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
@@ -680,9 +675,6 @@ class Init(
                     fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                     stalePollCount = 0
                 } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                    stalePollCount = 0
-                    syncStatus =  FileList.SyncStatus.COMPLETED()
-                    activeSyncStatus = null
                     fileListCompletionHandler?.invoke(
                         fileList,
                         SDKError.FileListPollingTimeout()
@@ -1524,7 +1516,7 @@ class Init(
             )
     }
 
-    fun handleCyclicDataDownload(
+    private fun handleCyclicDataDownload(
         scope: DataRequest?, userAccessToken: String,
         downloadHandler: FileContentCompletion,
         completion: FileListCompletion
