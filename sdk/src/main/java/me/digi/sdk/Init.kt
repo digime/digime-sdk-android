@@ -638,8 +638,9 @@ class Init(
             }
         }
 
-        if (activeSyncStatus == null) {
+        if (activeSyncStatus == null || activeSyncStatus == FileList.SyncStatus.COMPLETED() || activeSyncStatus == FileList.SyncStatus.PARTIAL()) {
             // Init syncStatus.
+            activeSyncStatus = null
             fileListItemCache = FileListItemCache()
             scheduleNextPoll(userAccessToken)
         }
