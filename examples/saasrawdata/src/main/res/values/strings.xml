@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Saas Read Raw</string>
+
+    <string name="appId"></string>
+    <string name="writeContractId"></string>
+    <string name="readContractId"></string>
+    <string name="privateKey"></string>
+</resources>
