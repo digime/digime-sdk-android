@@ -652,53 +652,56 @@ class Init(
 
         DMELog.d("Fetching file list.")
         if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
-            readFileList(userAccessToken) { fileList, listFetchError ->
+            Handler(Looper.getMainLooper()).postDelayed({
+                readFileList(userAccessToken) { fileList, listFetchError ->
 
-                when {
-                    fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
-                    listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
-                }
-
-                val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
-
-                latestFileList = fileList
-                val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
-                    fileList?.fileList.orEmpty()
-                ).orEmpty()
-
-                DMELog.i(
-                    "${
-                        fileList?.fileList.orEmpty().count()
-                    } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
-                )
-
-                if (updatedFileIds.count() > 0 && fileList != null) {
-                    fileListUpdateHandler?.invoke(fileList, updatedFileIds)
-                    stalePollCount = 0
-                } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                    fileListCompletionHandler?.invoke(
-                        fileList,
-                        SDKError.FileListPollingTimeout()
-                    )
-                    return@readFileList
-                }
-
-                when (syncStatus) {
-                    FileList.SyncStatus.PENDING(),
-                    FileList.SyncStatus.RUNNING() -> {
-                        DMELog.i("Sync still in progress, continuing to poll for updates.")
-                        scheduleNextPoll(userAccessToken)
+                    when {
+                        fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
+                        listFetchError != null -> DMELog.d("Error fetching file list: ${listFetchError.message}.")
                     }
-                    FileList.SyncStatus.COMPLETED(),
-                    FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
-                        fileList,
-                        listFetchError
+
+                    val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+
+                    latestFileList = fileList
+                    val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
+                        fileList?.fileList.orEmpty()
+                    ).orEmpty()
+
+                    DMELog.i(
+                        "${
+                            fileList?.fileList.orEmpty().count()
+                        } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
                     )
-                    else -> Unit
+
+                    if (updatedFileIds.count() > 0 && fileList != null) {
+                        fileListUpdateHandler?.invoke(fileList, updatedFileIds)
+                        stalePollCount = 0
+                    } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                        fileListCompletionHandler?.invoke(
+                            fileList,
+                            SDKError.FileListPollingTimeout()
+                        )
+                        return@readFileList
+                    }
+
+                    when (syncStatus) {
+                        FileList.SyncStatus.PENDING(),
+                        FileList.SyncStatus.RUNNING() -> {
+                            DMELog.i("Sync still in progress, continuing to poll for updates.")
+                            scheduleNextPoll(userAccessToken)
+                        }
+                        FileList.SyncStatus.COMPLETED(),
+                        FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                            fileList,
+                            listFetchError
+                        )
+                        else -> Unit
+                    }
+
+                    activeSyncStatus = syncStatus
                 }
 
-                activeSyncStatus = syncStatus
-            }
+            }, 1000)
         }
     }
 
