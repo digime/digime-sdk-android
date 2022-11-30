@@ -701,7 +701,7 @@ class Init(
                     activeSyncStatus = syncStatus
                 }
 
-            }, 1000)
+            }, 300)
         }
     }
 
