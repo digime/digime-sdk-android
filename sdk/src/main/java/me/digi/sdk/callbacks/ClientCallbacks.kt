@@ -24,6 +24,7 @@ typealias UserDeleteCompletion = (isLibraryDeleted: Boolean?, error: Error?) -> 
 
 typealias GetAuthorizationDoneCompletion = (response: AuthorizationResponse?, error: Error?) -> Unit
 
-typealias OngoingWriteCompletion = (DataWriteResponse?, error: Error?) -> Unit
+typealias OngoingWriteCompletion = (isDataPushed: Boolean?, error: Error?) -> Unit
+//typealias OngoingWriteCompletion = (DataWriteResponse?, error: Error?) -> Unit
 
 typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: Error?) -> Unit

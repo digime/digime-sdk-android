@@ -42,6 +42,13 @@ internal interface ArgonService {
         @Part("file") description: RequestBody
     ): Single<DataWriteResponse>
 
+    @Headers("Accept: application/json", "Content-Type: application/octet-stream",  "cache-control: no-cache")
+    @POST("/v1.6/permission-access/import")
+    fun directImport(
+        @Header("Authorization") jwt: String,
+        @Header("FileDescriptor") fileDescriptor: String,
+        @Body file: RequestBody): Single<Unit>
+
     @POST("v1.6/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>
 

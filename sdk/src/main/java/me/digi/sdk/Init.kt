@@ -13,7 +13,6 @@ import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.*
-import me.digi.sdk.api.helpers.WriteMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
@@ -28,6 +27,9 @@ import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.crypto.*
 import me.digi.sdk.utilities.jwt.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import java.security.PrivateKey
@@ -264,14 +266,14 @@ class Init(
      * delivery status or any error encountered.
      */
     fun write(
-        writeDataPayload: WriteDataPayload,
         userAccessToken: String,
+        writeDataPayload: WriteDataPayload,
         completion: OngoingWriteCompletion
     ) {
         DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
         if (sessionManager.isSessionValid())
-            handleDataWrite(writeDataPayload, userAccessToken, completion)
+            handleDataWrite(userAccessToken, writeDataPayload, completion)
         else
             updateSession { isSessionUpdated, error ->
                 error?.let {
@@ -279,7 +281,7 @@ class Init(
                     completion(null, AuthError.InvalidSession())
                 }
                     ?: run {
-                        handleDataWrite(writeDataPayload, userAccessToken, completion)
+                        handleDataWrite(userAccessToken, writeDataPayload, completion)
                     }
             }
     }
@@ -1100,26 +1102,15 @@ class Init(
     }
 
     private fun handleDataWrite(
-        writeDataPayload: WriteDataPayload,
         userAccessToken: String,
+        writeDataPayload: WriteDataPayload,
         completion: OngoingWriteCompletion
     ) {
-        val encryptedData = DataEncryptor.encryptedDataFromBytes(
-            writeDataPayload.data.publicKey!!,
-            writeDataPayload.content,
-            writeDataPayload.metadata
-        )
+        val requestBody: RequestBody =
+            writeDataPayload.content.toRequestBody(writeDataPayload.metadata.mimeType.toMediaTypeOrNull(), 0, writeDataPayload.content.size)
 
-        val multipartBody: WriteMultipartBody = WriteMultipartBody.Builder()
-            .postboxPushPayload(writeDataPayload)
-            .dataContent(context, encryptedData.fileContent, writeDataPayload.mimeType)
-            .build()
-
-        val jwt = AuthTokenRequestJWT(
+        val jwt = DirectImportRequestJWT(
             userAccessToken,
-            encryptedData.iv,
-            encryptedData.metadata,
-            encryptedData.symmetricalKey,
             configuration.appId,
             configuration.contractId
         )
@@ -1128,23 +1119,25 @@ class Init(
             KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
-        apiClient.argonService.pushOngoingData(
+        val fileDescriptor = DirectImportMetadataRequestJWT(
+            writeDataPayload.metadata
+        )
+
+        val fileDescSigningKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val fileDesc: String = fileDescriptor.sign(fileDescSigningKey).tokenize()
+
+        apiClient.argonService.directImport(
             authHeader,
-            writeDataPayload.data.key!!,
-            encryptedData.symmetricalKey,
-            encryptedData.iv,
-            encryptedData.metadata,
-            writeDataPayload.data.postboxId!!,
-            multipartBody.requestBody,
-            multipartBody.description
+            fileDesc,
+            requestBody
         )
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
-                    sessionManager.updatedSession = it.session
                     completion(
-                        it,
+                        true,
                         null
                     ).also { DMELog.i("Successfully pushed data to postbox") }
                 },
@@ -1169,28 +1162,27 @@ class Init(
             )
     }
 
-//    {"access_token":{"expires_on":1664831686,"value":"d8e19799c75ed9db2f2eca9f1d9062fdcd549adc4fcb7538449300654ff742a3a3c5901562a67fb8136c25b7cbc906cb94866840fccfbc1074676f9f6c84a1fba77a6bd90f07465cb6b6fa89650da325"},"consentid":"df2f16318deb7d85672ec1f1e0ce652b","identifier":{"id":"3111d038abcf6e58868c4b8fcd26849b"},"refresh_token":{"expires_on":1680297286,"value":"0d54664b62de08472d1db7348638aecf0c8e266cff37278dc42718bcbe7a5cb1de870a86a4e74ffaa2f2f40228810e53be42d0f8b0dc57bb58471b567fb9a99f7b7e2318cb17a53b976a9c96cea294cd"},"token_type":"Bearer"}
     data class UserAccessToken(
         val accessToken: AccessToken? = null,
     )
 
-    data class AccessToken (
+    data class AccessToken(
         val expires_on: Long = 0L,
         val value: String? = null
     )
-
-
 
     private fun handleFileList(
         userAccessToken: String,
         completion: FileListCompletion
     ) {
         fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val accessToken = Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
+            val accessToken =
+                Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
             val jwt = TriggerDataQueryRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                accessToken.accessToken?.value!!)
+                accessToken.accessToken?.value!!
+            )
 
             val signingKey: PrivateKey =
                 KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
