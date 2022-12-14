@@ -20,7 +20,7 @@ internal class RefreshCredentialsRequestJWT(
     val grantType = "refresh_token"
 
     @JwtClaim
-    val redirectUri = "digime-ca://callback"
+    val redirectUri = "digime-ca://callback-${appId}"
 
     @JwtClaim
     val nonce: String

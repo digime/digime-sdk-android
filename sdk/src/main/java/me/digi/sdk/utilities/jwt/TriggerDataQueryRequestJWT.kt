@@ -14,7 +14,7 @@ internal class TriggerDataQueryRequestJWT(
 ) : JsonWebToken() {
 
     @JwtClaim
-    val redirectUri = "digime-ca://callback"
+    val redirectUri = "digime-ca://callback-${appId}"
 
     @JwtClaim
     val clientId = "${appId}_${contractId}"

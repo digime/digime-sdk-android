@@ -21,7 +21,7 @@ internal class AuthCodeExchangeRequestJWT(
     val grantType = "authorization_code"
 
     @JwtClaim
-    val redirectUri = "digime-ca://callback"
+    val redirectUri = "digime-ca://callback-${appId}"
 
     @JwtClaim
     val timestamp = Date().time

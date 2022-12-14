@@ -499,11 +499,13 @@ class Init(
         scope: DataRequest? = null,
         userAccessToken: String,
         downloadHandler: FileContentCompletion,
+        isOnboarding: Boolean,
         completion: FileListCompletion
     ) {
 
         val currentSession = sessionManager.updatedSession
 
+        isFirstRun = isOnboarding
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
         } else {
@@ -578,7 +580,7 @@ class Init(
         } else handleFileItemBytes(userAccessToken, fileId, completion)
     }
 
-    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
+    private fun getSessionData(fileId: String, accessToken: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
@@ -622,7 +624,7 @@ class Init(
                         )
                     }
                 )
-        } else handleGetSessionData(currentSession?.key!!, fileId, completion)
+        } else handleGetSessionData(accessToken, fileId, completion)
     }
 
     private fun getSessionFileList(
@@ -1162,6 +1164,10 @@ class Init(
             )
     }
 
+    data class QueryUserAccessToken (
+        val access_token: AccessToken? = null,
+    )
+
     data class UserAccessToken(
         val accessToken: AccessToken? = null,
     )
@@ -1519,10 +1525,12 @@ class Init(
     ) {
 
         fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
+            val accessToken =
+                Gson().fromJson(userAccessToken, QueryUserAccessToken::class.java)
             val jwt = TriggerDataQueryRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                userAccessToken
+                accessToken.access_token?.value!!
             )
 
             val signingKey: PrivateKey =
@@ -1553,7 +1561,9 @@ class Init(
             .subscribeBy(
                 onSuccess = {
                     sessionManager.updatedSession = it.session
-                    handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+                    val accessToken =
+                        Gson().fromJson(userAccessToken, QueryUserAccessToken::class.java)
+                    handleContinuousDataDownload(accessToken.access_token?.value!!, downloadHandler, completion)
                 },
                 onError = {
                     completion.invoke(
@@ -1583,7 +1593,7 @@ class Init(
                 activeDownloadCount++
                 DMELog.i("Downloading file with ID: $it.")
 
-                getSessionData(it) { file, error ->
+                getSessionData(it, userAccessToken) { file, error ->
 
                     when {
                         file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
