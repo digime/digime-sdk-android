@@ -101,13 +101,11 @@ class MainActivity : AppCompatActivity() {
                 credentials = response?.credentials!!
 
                 val fileContent: ByteArray = getFileContent(this, "file.pdf")
-
-                val metadata = WriteMetadata(
-                    listOf(WriteAccount("1")),
-                    listOf("file.pdf"),
-                    listOf("testTag"),
-                    "application/pdf",
-                )
+                val metadata = WriteMetadata()
+                metadata.accounts = listOf(WriteAccount("1"))
+                metadata.reference = listOf("file.pdf")
+                metadata.tags = listOf("testTag")
+                metadata.mimeType = "application/pdf"
 
                 val writeDataPayload = WriteDataPayload(
                     metadata,
@@ -118,8 +116,32 @@ class MainActivity : AppCompatActivity() {
                     writeDataPayload,
                 ) { _, error ->
                     progressBar.isVisible = false
-                    if (error == null)
+                    if (error == null) {
                         readFile.isEnabled = true
+
+                        val fileContent: ByteArray = getFileContent(this, "file.pdf")
+
+                        val metadata = WriteMetadata()
+                        metadata.accounts = listOf(WriteAccount("1"))
+                        metadata.reference = listOf("file.pdf")
+                        metadata.tags = listOf("testTag")
+                        metadata.mimeType = "application/pdf"
+
+                        val writeDataPayload = WriteDataPayload(
+                            metadata,
+                            fileContent
+                        )
+                        writeClient.write(
+                            response.credentials?.accessToken?.value!!,
+                            writeDataPayload,
+                        ) { _, error ->
+                            progressBar.isVisible = false
+                            if (error == null)
+                                readFile.isEnabled = true
+                            else
+                                Log.d("MainActivity", "Failed to write data")
+                        }
+                    }
                     else
                         Log.d("MainActivity", "Failed to write data")
                 }
