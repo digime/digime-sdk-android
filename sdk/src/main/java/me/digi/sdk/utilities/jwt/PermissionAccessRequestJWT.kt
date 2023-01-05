@@ -4,34 +4,25 @@ import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.util.*
 
-@Suppress("UNUSED")
-internal class AuthCodeExchangeRequestJWT(
-
+internal class PermissionAccessRequestJWT(
+    @JwtClaim val accessToken: String,
     appId: String,
-    contractId: String,
-    @JwtClaim val code: String,
-    @JwtClaim val codeVerifier: String
-
+    contractId: String
 ) : JsonWebToken() {
 
     @JwtClaim
     val clientId = "${appId}_${contractId}"
 
     @JwtClaim
-    val grantType = "authorization_code"
+    val nonce: String
 
     @JwtClaim
     val timestamp = Date().time
-
-    @JwtClaim
-    val nonce: String
 
     init {
         val nonceBytes = CryptoUtilities.generateSecureRandom(16)
         nonce = ByteTransformer.hexStringFromBytes(nonceBytes)
     }
 
-    override fun tokenize(): String {
-        return "Bearer " + super.tokenize()
-    }
+    override fun tokenize(): String = "Bearer ${super.tokenize()}"
 }

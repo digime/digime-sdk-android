@@ -224,8 +224,18 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            userAccessToken,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, "accounts.json")
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, "accounts.json")
                 .map { response: Response<ResponseBody> ->
 
                     val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
@@ -523,9 +533,19 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            userAccessToken,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if ((currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
             apiClient.makeCall(
-                apiClient.argonService.getFileList(currentSession?.key!!),
+                apiClient.argonService.getFileList(authHeader, currentSession?.key!!),
                 completion
             )
         } else handleFileList(userAccessToken, completion)
@@ -541,8 +561,18 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            userAccessToken,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -551,8 +581,7 @@ class Init(
 
                     val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
 
-                    val contentBytes: ByteArray =
-                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+                    val contentBytes: ByteArray = DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
 
                     val compression: String = try {
                         payloadHeader.compression
@@ -583,8 +612,18 @@ class Init(
     private fun getSessionData(fileId: String, accessToken: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            accessToken,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1058,7 +1097,17 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
-                    apiClient.argonService.getFileBytes(it.session.key, "accounts.json")
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, "accounts.json")
                         .map { response: Response<ResponseBody> ->
 
                             val result: ByteArray =
@@ -1109,7 +1158,7 @@ class Init(
         completion: OngoingWriteCompletion
     ) {
         val requestBody: RequestBody =
-            writeDataPayload.content.toRequestBody(writeDataPayload.metadata.mimeType.toMediaTypeOrNull(), 0, writeDataPayload.content.size)
+            writeDataPayload.content.toRequestBody(writeDataPayload.metadata.mimeType?.toMediaTypeOrNull(), 0, writeDataPayload.content.size)
 
         val jwt = DirectImportRequestJWT(
             userAccessToken,
@@ -1220,8 +1269,18 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
                     apiClient.makeCall(
-                        apiClient.argonService.getFileList(it.session.key),
+                        apiClient.argonService.getFileList(authHeader, it.session.key),
                         completion
                     )
                 },
@@ -1277,7 +1336,17 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1369,7 +1438,17 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1464,7 +1543,17 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
