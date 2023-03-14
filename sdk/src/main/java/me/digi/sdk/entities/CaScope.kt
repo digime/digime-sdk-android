@@ -36,8 +36,25 @@ data class ServiceObjectType(val id: Int)
 data class TimeRange(
     val from: Date? = null,
     val to: Date? = null,
-    val last: String? = null,
-    val type: String? = null
+    val last: String? = null
+)
+
+data class Criteria(
+    var from: Long? = null,
+    var to: Long? = null,
+    var last: String? = null,
+    var metadata: MetadataScope? = null
+)
+
+data class MetadataScope(
+    var accountIds: List<String>? = null,
+    var mimeTypes: List<String>? = null,
+    var references: List<String>? = null,
+    var tags: List<String>? = null
+)
+
+data class PartnersCriteria(
+    var partners: List<String>? = null
 )
 
 class CaScope @JvmOverloads constructor(

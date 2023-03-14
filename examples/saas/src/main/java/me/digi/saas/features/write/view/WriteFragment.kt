@@ -14,7 +14,7 @@ import me.digi.saas.features.write.viewmodel.WriteViewModel
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.getFileContent
 import me.digi.saas.utils.snackBar
-import me.digi.sdk.entities.Data
+//import me.digi.sdk.entities.Data
 import me.digi.sdk.entities.MimeType
 import me.digi.sdk.entities.Session
 import me.digi.sdk.entities.WriteDataPayload
@@ -34,26 +34,76 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        handlePayload()
+//        handlePayload()
         subscribeToObservers()
         setupClickListeners()
     }
 
-    private fun handlePayload() {
-
-        val session: Session = localAccess.getCachedSession()!!
-        val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
-
-        val fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
-        val metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
-        val postbox: Data = Data().copy(
-            key = session.key,
-            postboxId = postboxData.postboxId,
-            publicKey = postboxData.publicKey
-        )
-
-        payloadWrite = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
-    }
+//    private fun handlePayload() {
+//
+//        val session: Session = localAccess.getCachedSession()!!
+//        val postboxData: ConsentAuthResponse = localAccess.getCachedPostbox()!!
+//
+//        var fileContent: ByteArray = getFileContent(requireActivity(), "file.png")
+//        var metadata: ByteArray = getFileContent(requireActivity(), "metadatapng.json")
+//        var postbox: Data = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWriteImage = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
+//
+//        fileContent = getFileContent(requireActivity(), "file9MB.png")
+//        metadata= getFileContent(requireActivity(), "metadata9MBpng.json")
+//        postbox = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWrite9MBImage = WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
+//
+//        fileContent = getFileContent(requireActivity(), "file9MB.pdf")
+//        metadata = getFileContent(requireActivity(), "metadata9MBpdf.json")
+//        postbox = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWrite9MBPdf = WriteDataPayload(postbox, metadata, fileContent, MimeType.APPLICATION_PDF)
+//
+//        fileContent = getFileContent(requireActivity(), "file.pdf")
+//        metadata = getFileContent(requireActivity(), "metadatapdf.json")
+//        postbox = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWritePdf = WriteDataPayload(postbox, metadata, fileContent, MimeType.APPLICATION_PDF)
+//
+//        fileContent = getFileContent(requireActivity(), "file8MB.json")
+//        metadata = getFileContent(requireActivity(), "metadata8MBjson.json")
+//        postbox = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWrite8MBJson = WriteDataPayload(postbox, metadata, fileContent, MimeType.TEXT_JSON)
+//
+//        fileContent = getFileContent(requireActivity(), "file.json")
+//        metadata = getFileContent(requireActivity(), "metadatajson.json")
+//        postbox = Data().copy(
+//            key = session.key,
+//            postboxId = postboxData.postboxId,
+//            publicKey = postboxData.publicKey
+//        )
+//
+//        payloadWriteJson = WriteDataPayload(postbox, metadata, fileContent, MimeType.TEXT_JSON)
+//    }
 
     private fun setupClickListeners() {
         binding.btnPushData.setOnClickListener(this)
@@ -83,12 +133,49 @@ class WriteFragment : Fragment(R.layout.fragment_write), View.OnClickListener {
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.btnPushData -> payloadWrite?.let {
-                viewModel.pushDataToPostbox(
-                    it,
-                    localAccess.getCachedCredential()?.accessToken?.value!!
-                )
-            } ?: snackBar("Payload must not be empty")
+            R.id.btnPushData -> {
+
+                if (binding.writePdf.isChecked || binding.writePng.isChecked || binding.writeJson.isChecked
+                ) {
+
+                    if (binding.writePdf.isChecked)
+                        payloadWritePdf?.let {
+//                            viewModel.pushDataToPostbox(
+//                                it,
+//                                localAccess.getCachedCredential()?.accessToken?.value!!
+//                            )
+                        } ?: snackBar("Payload must not be empty")
+
+                    if (binding.writePng.isChecked)
+                        payloadWriteImage?.let {
+//                            viewModel.pushDataToPostbox(
+//                                it,
+//                                localAccess.getCachedCredential()?.accessToken?.value!!
+//                            )
+                        } ?: snackBar("Payload must not be empty")
+
+                    if (binding.writeJson.isChecked)
+                        payloadWriteJson?.let {
+//                            viewModel.pushDataToPostbox(
+//                                it,
+//                                localAccess.getCachedCredential()?.accessToken?.value!!
+//                            )
+                        } ?: snackBar("Payload must not be empty")
+                } else {
+                    snackBar("Please select at least one file to push to library")
+                }
+
+            }
+
+            R.id.clear -> {
+                binding.writeJson.isChecked = false
+                binding.writePdf.isChecked = false
+                binding.writePng.isChecked = false
+            }
+
+            R.id.btnGoToHome -> {
+                findNavController().navigate(R.id.homeFragment)
+            }
         }
     }
 }

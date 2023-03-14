@@ -25,10 +25,9 @@ class MainRemoteDataAccessImpl(
     private val readClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
-            localAccess.getCachedAppId()!!,
-            localAccess.getCachedReadContract()?.contractId!!,
-            localAccess.getCachedReadContract()?.privateKeyHex!!.replace("\\n", "\n"),
-            "https://api.digi.me/"
+            context.resources.getString(R.string.appId),
+            context.resources.getString(R.string.readContractId),
+            context.resources.getString(R.string.readPrivateKey)
         )
 
         Init(context, configuration)
@@ -93,19 +92,19 @@ class MainRemoteDataAccessImpl(
             }
         }
 
-    override fun pushDataToPostbox(
-        payloadToWrite: WriteDataPayload,
-        accessToken: String
-    ): Single<DataWriteResponse> =
-        Single.create { emitter ->
-            writeClient.write(
-                payloadToWrite,
-                accessToken
-            ) { response: DataWriteResponse?, error ->
-                error?.let(emitter::onError)
-                    ?: emitter.onSuccess(response as DataWriteResponse)
-            }
-        }
+//    override fun pushDataToPostbox(
+//        payloadToWrite: WriteDataPayload,
+//        accessToken: String
+//    ): Single<DataWriteResponse> =
+//        Single.create { emitter ->
+//            writeClient.write(
+//                payloadToWrite,
+//                accessToken
+//            ) { response: DataWriteResponse?, error ->
+//                error?.let(emitter::onError)
+//                    ?: emitter.onSuccess(response as DataWriteResponse)
+//            }
+//        }
 
     override fun deleteUsersLibrary(accessToken: String?): Single<Boolean> =
         Single.create { emitter ->

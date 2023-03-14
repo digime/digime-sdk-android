@@ -60,34 +60,35 @@
 
     <!--// This contract id and private key allow the user to read social,
     financial and music data from the past 3 months.-->
-    <string name="readContractId">DGLxRJiTjKZJvvtDB6timfzw4DHiQwek</string>
+    <string name="appId">CJfTgINN484TmpEIdXTdXzJY6AQXj1jf</string>
+    <string name="readContractId">nfSYJubenMtbAuZCWJY8MoQJFQm768Tb</string>
     <string name="readPrivateKey">-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAiM7QAmRiK322Npd0loxxxhIuLZVbc+2JRt7GRgTBG1RoaQ8e
-0DrOVI8xz7XHe6PduoVs+TqZwYPEngGLq1f4+gZuyqeMOpUC5YFGs8QYro9UwJmG
-bKf6ez4uYCMIFroKxRmnP0GrsDEjrvYksmJdQoq3Hg4wT6ZoQeQ2iNy4Z8Y5Jpb8
-9Yuh1kb4vh5y4RJPmWui6yoOclovPOvFal2VmaDz1mgUbOfT5tbkEyKavm3u95d+
-+hcEl9cOrke0G/aq9H2TSWTDqoqq0BKIDYRmGjhzsIB/xHPEqLkuTy3Or5AqRMSu
-70U0R02bF7YjgZ4Ixka3AbE9ZBel2PtmeS6h0QIDAQABAoIBABn7pXf+1sJJ0vSV
-WVhKfkVPKKQRrNfcsmjaYK/lsUNeiaICdCi6MnvO4nf/n051NeR5+NNw9MjTHOGh
-i4RUZf4egKZOogxyRqWOIv57bPCiWkdmISi70o/bpHUv0hZ26Rq8H46dC12gR5Ww
-PBIBKpM7w0GbEkPeaAizrkPaH8/dhXb2Hzkj5X5xrxsq1O8pI/VpSvGDXuJYF8U1
-LOV8d1xJJLS0eHJvfe/5GSIIqEeJsXAzgs7yVOU9YhV0tgLh//lz4jj7xsvfpVOF
-ScefjsgusJecB60+19OBTls/mfADVxG85wXkuCbO0QDPE9ZR2FLyzOcOLMLizWmF
-o617A80CgYEA8q6VfWr3GMQfENW0PAhP+odqNglc8B4/N40ExzX54p0xFz/qtVZw
-7jnPwo+EF5CRz4IwRWw/h10JqrJb85j77oLT/ADRy8+0Zhgp+bo278zxSTodiBhv
-xoa2J3GeiLoed3QCwfp+MEE/gnRclK6SZs3skhBO/0cjvfRD4ulhR9MCgYEAkFDQ
-Md/JpcFStyqpw8s+syIlSYfvyV8MLWcIqMvG9auJKNVmtAhA9lipEy0Tot6DG8d8
-7EtTFKzCa+0jJoNEY+STCRBibyGZgkCGEvHOnab7gPZCu5bnJ/BW3JFhLagAveEG
-2epF2k1xyhQ91zE1aXnsRwFSXlc1QyS4jwknrUsCgYEAw57vabW7kP8me4+IRYv9
-zFkzyHMrs3LuSn0mCN79mypS1Ab1z07qoV2Al7jQJZ6nqrmq54smepsIm8xCSs5a
-5hwXfN+8PaokJNf9ngv5FLwDE6ABBh+Mml8kng78WAKPZILjZjHhXkx6QVJC/qbp
-5GzB8curoiNaMFiiEFtHy3kCgYBmvADZ4FOuWedGWWqs5TznTMF6jPjYQ39putVh
-RF+Id+qWVQRd2RpVxFvoOMinwvtWhTabCCxGpY1qQ1AolH3VFtzNMQrBzgt3u/M1
-/Ul21W5pKeXroMtBlUhgkGW7mMOeaFj2PF4pv8PndW1oibFaOt9G1NwMKMzT1YpE
-2OGT7QKBgB7eLeoem83FmRsdSHX5LqcQL2K/9YRED1OuCCbIIzlRrgXtWFWp3fFv
-ojU7Mub4TWjHLClgifeyJ2rc35gRn7+QWcYgeUjEdncdiAgB914eP81JKeRzufe1
-wpFeXUa88GKAnNy0Rng81omO6kRDW5Bz8ppQbvnjKnUJgu2seSR0
------END RSA PRIVATE KEY-----</string>
+        MIIEpAIBAAKCAQEAhFUxeHsrjakMdNFKj+zrypk8/a3aJv4VWNaH912OuWWZYeid
+        rCzdhqTXKqpB+5Ji6vwHJWvOvuWlQwCi4FfI9RITsEOwkOhrafh4we90w4oaKWFp
+        Wr9F6onawwSuz6eV83LpcWevYCoV3b2t2BS1B1lLJ2JkPptHBJzB/CzXkIRkhjfu
+        04H7TbSSWTy2W0KI/Qn70HW1cQi+c2sfffHIss0dN/U7aiL94s2D3s1C3wxjYO/j
+        NtwhY7izbgqBc/jol7u8C+uoo5XZz+ccE/wghC9sDfkwifpDct9WJVAm47EoKKBV
+        LkvaVSUghfbj0vrYAtJxWjw+N365jjalx+KoKwIDAQABAoIBAFy0LdbgOm+f6IkB
+        gUF4UOp6FT8FhpjgUGYOy+tfkDeS1DPBuItAVuQXIGDUKysorsE9U2hEsO4MhIx+
+        qpuNA8ujIUXO9adeGrl/BmGd9WdynMc2ZY7cBge7ERSjeC8ikKqeaqk2YKZ2dSEE
+        2v9P6k2+oSZzCBTPxJ2Xj1GwvEaRX0zyHduR4no/vdqtsO1w1XvgamegoBNkfIQc
+        6/nj3mYTT8rKh+ULyc+FDDatSlvFJDFWPAT4iiWI+y67oshrffqmtzj8yl/P72Xy
+        SuiM0qHaAf3ideCrgHmvflqYJ1s86zJy0Jw9TdAqGe/WpvDV3Nx//BBI8AqC0Jev
+        oxrBrskCgYEA6j0oKMKjfo+EPAyqGmvIUs3gbl8Z/kD8csp4VQYIinD6sGlYSACz
+        9KpCazqbIz7yKb4dd3YRPrxa/Ayrim6lvNoHJ1gYaJvx49U4K414T0D3sS5QXwb6
+        GDr37qxx4ra6YQWbny/UxG4GvuVeC6IBZdaF9EZpybs43INPUn6Y9U8CgYEAkKBu
+        AmCyVhEnKfv37tPfNdQ33VMNcPafiTuBdUShI2RpW2o5+RANWF7cyUYowt+wPJPW
+        O6AdL8IkL0b4NoaO9cxG9n7/f9DkveEz5nTAUlflQZLnOIcXYYQ3oayLN7HBSOqR
+        HUoJif+KxGaqJeguROkb2I+7acQPKBwMbeMgIGUCgYEA6MYDrZXW8YNfbmlLdVwc
+        w6TR3fzmENO1y8FHGX8YZ7NkfIEDePIx4vZ7cKHZ34nDDxZdpASRmJ2HcSiKI9RX
+        IbgtGb0i7HnkRHv0CNvabi/qtYmH1xdQ21lmXynBNwJNbvMqtmPK9bU9QOEgt0C0
+        UOaBUcHTiORj2kcnQZyLFmMCgYAphMTQDe5kYtw5Y0pT16MWkuvOr88GBObbwKdz
+        gNY5kNPmGGK4K3GJUwJTDb8Z4pl3aoFv8JEwaq10nQ0YqhxUV+ZvURoMGW3xTLtX
+        h2DGwtDfuEqEodOGfSxzT1NQE8mHIz+xhtWiNigiJc7mvva5dao2y1xkCpLHUvYG
+        fdN1OQKBgQCNVgLK25pHPRREuYdF5TpIJKiWLVPIxHS1s7hUI/1WGVMQVSKwiKyS
+        z8NMGwXzaT1gw7IxEUFReGLUpn4q9R/u7p/UEp4HqyPR8FEU7C/y0XKXfJ9gSXMk
+        QqWza7DXTdfpmwyl4IqvFKuFq1MhfVLaO3KZk5EWki00fq2EhoHAsQ==
+        -----END RSA PRIVATE KEY-----</string>
 
     <!--Contract id and private key which allows user to write data into the library-->
     <string name="writeContractId">V5cRNEhdXHWqDEM54tZNqBaElDQcfl4v</string>
@@ -148,4 +149,7 @@ WDb5AQKBgEycWssIPCULSSEinr1AD3FMczrZsLlGJWITp3af7IqeI2UQ9Bm8XSxX
 Pbx/llXLPRze9YT857XcrM/8w/F14iQDq+6wOu1tCoriT006QnIjMKGoJftXipTO
 AFUT+vgwhNxAy5/JN536S0Atg3TCcOzppsFg0i0GCoyhBqY5OWyn
 -----END RSA PRIVATE KEY-----</string>
+
+<string name="protocolSchema">callback-CJfTgINN484TmpEIdXTdXzJY6AQXj1jf</string>
+
 </resources>

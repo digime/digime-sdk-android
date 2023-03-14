@@ -115,6 +115,98 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
             return JsonArray()
     }
 
+    private fun serializeCriteria(src: DataRequest): JsonArray {
+        val criteriasJSON = JsonArray()
+
+        if (src.criteriaInitialized()) {
+            src.criteria.forEach { criteria ->
+                val criteriaJson = JsonObject()
+
+                when (criteria) {
+                    is Criteria -> {
+                        val from = criteria.from
+                        val to = criteria.to
+                        val last = criteria.last
+
+                        val metadataJson = JsonObject()
+                        val metadataCriteria = criteria.metadata
+
+                        if (last != null) {
+                            criteriaJson.addProperty("last", last)
+                        } else if (from != null && to != null) {
+                            criteriaJson.addProperty("from", from)
+                            criteriaJson.addProperty("to", to)
+                        }
+
+                        if (metadataCriteria != null) {
+                            val accountsIds = metadataCriteria.accountIds
+                            val mimeTypes = metadataCriteria.mimeTypes
+                            val references = metadataCriteria.references
+                            val tags = metadataCriteria.tags
+
+                            if (!accountsIds.isNullOrEmpty()) {
+                                val accountIdsJson = JsonArray()
+                                accountsIds.forEach { id ->
+                                    accountIdsJson.add(id)
+                                }
+
+                                metadataJson.add("accounts.accountId", accountIdsJson)
+                            }
+
+                            if (!mimeTypes.isNullOrEmpty()) {
+                                val mimeTypesJson = JsonArray()
+                                mimeTypes.forEach { mimeType ->
+                                    mimeTypesJson.add(mimeType)
+                                }
+
+                                metadataJson.add("mimeType", mimeTypesJson)
+                            }
+
+                            if (!references.isNullOrEmpty()) {
+                                val referencesJson = JsonArray()
+                                references.forEach { reference ->
+                                    referencesJson.add(reference)
+                                }
+
+                                metadataJson.add("reference", referencesJson)
+                            }
+
+                            if (!tags.isNullOrEmpty()) {
+                                val tagsJson = JsonArray()
+                                tags.forEach { tag ->
+                                    tagsJson.add(tag)
+                                }
+
+                                metadataJson.add("tags", tagsJson)
+
+                            }
+
+                            criteriaJson.add("metadata", metadataJson)
+                        }
+                    }
+                    is PartnersCriteria -> {
+                        val partners = criteria.partners
+
+                        if (!partners.isNullOrEmpty()) {
+                            val partnersJson = JsonArray()
+                            partners.forEach { partner ->
+                                partnersJson.add(partner)
+                            }
+
+                            criteriaJson.add("partners", partnersJson)
+                        }
+                    }
+                }
+            }
+
+            if (criteriasJSON.count() == 0)
+                DMELog.e("Invalid unmapped scope format.")
+
+            return criteriasJSON
+        } else
+            return JsonArray()
+    }
+
     private fun serializeDataRequest(src: DataRequest): JsonObject {
 
         val json = JsonObject()

@@ -1,18 +1,16 @@
 package me.digi.sdk.utilities.jwt
 
+import me.digi.sdk.entities.Session
+import me.digi.sdk.entities.payload.TokenReferencePayload
 import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.util.*
 
 @Suppress("UNUSED")
-internal class ReferenceCodeRequestJWT(
+internal class AccountIdReferenceRequestJWT(
     appId: String,
-    contractId: String,
-    @JwtClaim val accessToken: String
+    contractId: String
 ) : JsonWebToken() {
-
-    @JwtClaim
-    val redirectUri = "digime-ca://callback-${appId}"
 
     @JwtClaim
     val clientId = "${appId}_${contractId}"
@@ -30,3 +28,10 @@ internal class ReferenceCodeRequestJWT(
 
     override fun tokenize(): String = "Bearer " + super.tokenize()
 }
+
+data class AccountIdReferencePayload(
+    val tokenReferencePayload: TokenReferencePayload? = null,
+    val session: Session? = null,
+    val code: String? = null,
+    val accountId: String? = null
+)

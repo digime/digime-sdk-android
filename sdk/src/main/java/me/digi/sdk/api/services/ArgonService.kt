@@ -1,6 +1,7 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
+import me.digi.sdk.entities.request.AccountIdRequest
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.request.Pull
@@ -66,6 +67,12 @@ internal interface ArgonService {
     @POST("v1.6/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
 
-    @DELETE("v1.6/user")
-    fun deleteUser(@Header("Authorization") jwt: String): Call<Unit>
+    @POST("v1.7/reference")
+    fun getAccountIdReference(
+        @Header("Authorization") jwt: String,
+        @Body accountIdRequest: AccountIdRequest
+    ): Call<AccountReferenceResponse>
+
+    @DELETE("v1.7/user")
+    fun  deleteUser(@Header("Authorization") jwt: String): Call<Unit>
 }
