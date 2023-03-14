@@ -697,17 +697,7 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
-        val jwt = PermissionAccessRequestJWT(
-            credentials.accessToken.value!!,
-            configuration.appId,
-            configuration.contractId
-        )
-
-        val signingKey: PrivateKey =
-            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-        val authHeader: String = jwt.sign(signingKey).tokenize()
-
-        if ((currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
+        if (isFirstRun and (currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
             apiClient.makeCall(
                 apiClient.argonService.getFileList(currentSession?.key!!),
                 completion
