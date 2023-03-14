@@ -9,36 +9,34 @@ import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import kotlinx.coroutines.flow.collectLatest
 import me.digi.saas.R
-import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.databinding.FragmentOnboardBinding
+import me.digi.saas.features.auth.viewmodel.AuthViewModel
 import me.digi.saas.features.onboard.adapter.ServicesAdapter
 import me.digi.saas.features.onboard.viewmodel.OnboardViewModel
+import me.digi.saas.features.utils.ContractType
 import me.digi.saas.utils.Resource
 import me.digi.saas.utils.snackBar
+import me.digi.sdk.entities.response.AuthorizationResponse
 import me.digi.sdk.entities.service.Service
-import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
-class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListener {
+class OnboardFragment : Fragment(R.layout.fragment_onboard) {
 
     private val viewModel: OnboardViewModel by viewModel()
+    private val viewModelAuth: AuthViewModel by viewModel()
     private val binding: FragmentOnboardBinding by viewBinding()
-    private val localAccess: MainLocalDataAccess by inject()
     private val serviceAdapter: ServicesAdapter by lazy { ServicesAdapter() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.fetchServicesForContract(localAccess.getCachedReadContract()?.contractId!!)
+        viewModel.fetchServicesForContract(
+            resources.getString(R.string.readContractId)
+        )
 
         setupAdapter()
         subscribeToObservers()
-        setupClickListeners()
-    }
-
-    private fun setupClickListeners() {
-        binding.skip.setOnClickListener(this)
     }
 
     private fun setupAdapter() {
@@ -47,16 +45,12 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
     }
 
     private fun onboardService(service: Service) {
-        localAccess
-            .getCachedCredential()
-            ?.accessToken
-            ?.value
-            ?.let { viewModel.onboard(requireActivity(), service.id.toString(), it) }
+        viewModelAuth.authorizeAccess(requireActivity(), ContractType.pull, null, service.id.toString())
     }
 
     private fun subscribeToObservers() {
         lifecycleScope.launchWhenResumed {
-            viewModel.onboardStatus.collectLatest { resource: Resource<Boolean> ->
+            viewModelAuth.state.collectLatest { resource: Resource<AuthorizationResponse> ->
                 when (resource) {
                     is Resource.Idle -> {
                         /** Do nothing */
@@ -95,12 +89,6 @@ class OnboardFragment : Fragment(R.layout.fragment_onboard), View.OnClickListene
                     }
                 }
             }
-        }
-    }
-
-    override fun onClick(view: View?) {
-        when (view?.id) {
-            R.id.skip -> findNavController().navigate(R.id.onboardToRead)
         }
     }
 }

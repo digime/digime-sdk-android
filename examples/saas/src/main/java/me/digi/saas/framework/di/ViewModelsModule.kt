@@ -13,10 +13,10 @@ import org.koin.dsl.module
 
 val viewModelsModule: Module = module {
     viewModel { AuthViewModel(get()) }
-    viewModel { OnboardViewModel(get(), get()) }
+    viewModel { OnboardViewModel(get()) }
     viewModel { ReadViewModel(get()) }
     viewModel { WriteViewModel(get()) }
-    viewModel { ReadRawViewModel(get()) }
+    viewModel { ReadRawViewModel(get(), get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { DetailsViewModel(get()) }
 }

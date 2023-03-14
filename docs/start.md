@@ -46,7 +46,7 @@
 
 2. Include the digi.me SDK as a dependency in your app `build.gradle` file:
 
-   `implementation "me.digi:sdk:5.0.0"`
+	`implementation "me.digi:sdk:4.0.10"`
 
 ### Manual
 

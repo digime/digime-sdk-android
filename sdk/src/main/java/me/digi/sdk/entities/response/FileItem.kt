@@ -4,7 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 
 data class FileItem(
-    val fileContent: String? = ""
+    val fileContent: String? = "",
+    val fileName: String? = ""
 ) {
     lateinit var identifier: String
 

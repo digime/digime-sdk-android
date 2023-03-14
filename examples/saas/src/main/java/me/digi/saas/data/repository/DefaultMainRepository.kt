@@ -2,12 +2,12 @@ package me.digi.saas.data.repository
 
 import android.app.Activity
 import io.reactivex.rxjava3.core.Single
-import me.digi.saas.data.localaccess.MainLocalDataAccess
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.sdk.entities.DataRequest
 import me.digi.sdk.entities.WriteDataPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.Service
+import me.digi.saas.data.localaccess.MainLocalDataAccess
 
 class DefaultMainRepository(
     private val remoteAccess: MainRemoteDataAccess,
@@ -54,4 +54,6 @@ class DefaultMainRepository(
 
     override fun getFile(fileName: String): Single<FileItemBytes> =
         remoteAccess.getFile(fileName)
+
+    override fun getFileBytes(fileName: String): Single<FileItemBytes> = remoteAccess.getFileBytes(fileName)
 }

@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Context
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleEmitter
-import me.digi.saas.data.localaccess.MainLocalDataAccess
+import me.digi.saas.R
 import me.digi.saas.data.remoteaccess.MainRemoteDataAccess
 import me.digi.saas.features.utils.ContractType
 import me.digi.sdk.AuthError
@@ -16,6 +16,7 @@ import me.digi.sdk.entities.configuration.DigiMeConfiguration
 import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.Service
+import me.digi.saas.data.localaccess.MainLocalDataAccess
 
 class MainRemoteDataAccessImpl(
     private val context: Context,
@@ -36,9 +37,9 @@ class MainRemoteDataAccessImpl(
     private val writeClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
-            localAccess.getCachedAppId()!!,
-            localAccess.getCachedPushContract()?.contractId!!,
-            localAccess.getCachedPushContract()?.privateKeyHex!!.replace("\\n", "\n"),
+            context.resources.getString(R.string.appId),
+            context.resources.getString(R.string.writeContractId),
+            context.resources.getString(R.string.writePrivateKey),
             "https://api.digi.me/"
         )
 
@@ -48,9 +49,9 @@ class MainRemoteDataAccessImpl(
     private val readRawClient: Init by lazy {
 
         val configuration = DigiMeConfiguration(
-            localAccess.getCachedAppId()!!,
-            localAccess.getCachedReadRawContract()?.contractId!!,
-            localAccess.getCachedReadRawContract()?.privateKeyHex!!.replace("\\n", "\n"),
+            context.resources.getString(R.string.appId),
+            context.resources.getString(R.string.readRawContractId),
+            context.resources.getString(R.string.readRawPrivateKey),
             "https://api.digi.me/"
         )
 
@@ -153,6 +154,17 @@ class MainRemoteDataAccessImpl(
     override fun getFile(fileName: String): Single<FileItemBytes> =
         Single.create { emitter ->
             readClient.readFile(
+                userAccessToken = localAccess.getCachedCredential()?.accessToken?.value!!,
+                fileId = fileName,
+            ) { file, error ->
+                error?.let(emitter::onError)
+                    ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(AuthError.General()))
+            }
+        }
+
+    override fun getFileBytes(fileName: String): Single<FileItemBytes> =
+        Single.create { emitter ->
+            readRawClient.readFile(
                 userAccessToken = localAccess.getCachedCredential()?.accessToken?.value!!,
                 fileId = fileName,
             ) { file, error ->

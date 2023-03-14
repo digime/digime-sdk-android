@@ -22,39 +22,307 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginEnd="48dp"
-        android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/authenticate"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/authProgressBar">
+        app:layout_constraintTop_toBottomOf="@+id/authProgressBar"
+        app:layout_constraintVertical_bias="0.0">
 
-        <ImageView
-            android:id="@+id/ivContractType"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_marginBottom="32dp"
-            tools:srcCompat="@tools:sample/avatars" />
+        <CheckBox
+            android:id="@+id/useScoping"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="168dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/secondaryYellow"
+            android:text="Use scoping"
+            android:visibility="visible" />
+
 
         <TextView
+            android:id="@+id/scopeExplanation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:fontFamily="@font/roboto_bold"
-            android:text="Authenticate"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="24sp" />
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:textSize="18sp"
+            android:text="Please select Service and Object type in order for scope to work properly">
+        </TextView>
+
+        <View
+            android:id="@+id/separator"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
 
         <TextView
-            android:id="@+id/tvAuthDescription"
-            android:layout_width="match_parent"
+            android:id="@+id/socialDataText"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/roboto_light"
-            android:gravity="center"
-            android:textColor="?android:attr/textColorSecondary"
-            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas rutrum pharetra convallis. Quisque euismod risus nec elementum facilisis" />
+            android:textSize="18sp"
+            android:text="Social data">
+        </TextView>
+
+        <LinearLayout
+            android:id="@+id/socialData"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <CheckBox
+                    android:id="@+id/facebook"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Facebook"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/instagram"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Instagram"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/twitter"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Twitter"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:orientation="vertical">
+
+                <CheckBox
+                    android:id="@+id/media"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Media"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/post"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Post"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/comment"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Comment"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/likes"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Likes"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/separator1"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/helathDataText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Health and Fitness data">
+        </TextView>
+
+        <LinearLayout
+            android:id="@+id/healthFitnessData"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <CheckBox
+                    android:id="@+id/fitbit"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Fitbit"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/garming"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Garmin"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/googleFit"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Google fit"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:orientation="vertical">
+
+                <CheckBox
+                    android:id="@+id/mediaFitness"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Media"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/postFitness"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Post"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/commentFitness"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Comment"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/separator2"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/entertainmentDataText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="Entertainment data">
+        </TextView>
+
+        <LinearLayout
+            android:id="@+id/entertainmentData"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <CheckBox
+                    android:id="@+id/youtube"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Youtube"
+                    android:visibility="visible" />
+
+                <CheckBox
+                    android:id="@+id/spotify"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/secondaryYellow"
+                    android:text="Spotify"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton

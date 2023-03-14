@@ -1,8 +1,7 @@
 ext.versions = [
 
         // Main SDK
-        'sdk': '5.0.0.11-SNAPSHOT',
-
+        'sdk': '4.0.11',
 
         // Build time plugins
         'androidgradleplugin': '3.4.2',

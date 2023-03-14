@@ -13,4 +13,5 @@ val useCasesModule: Module = module {
     single<WriteDataUseCase> { WriteDataUseCaseImpl(get()) }
     single<GetServicesForContractUseCase> { GetServicesForContractUseCaseImpl(get()) }
     single<DeleteLibraryUseCase> { DeleteLibraryUseCaseImpl(get()) }
+    single<GetFileBytesUseCase> { GetFileBytesUseCaseImpl(get()) }
 }
