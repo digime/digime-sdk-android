@@ -12,6 +12,7 @@ import io.reactivex.rxjava3.core.SingleSource
 import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
+import me.digi.sdk.*
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
@@ -27,6 +28,9 @@ import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.crypto.*
 import me.digi.sdk.utilities.jwt.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import java.security.PrivateKey
@@ -344,7 +348,7 @@ class Init(
         val currentSession = sessionManager.updatedSession
 
         val jwt = PermissionAccessRequestJWT(
-            credentials.accessToken.value!!,
+            userAccessToken,
             configuration.appId,
             configuration.contractId
         )
@@ -354,7 +358,7 @@ class Init(
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, "accounts.json")
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, "accounts.json")
                 .map { response: Response<ResponseBody> ->
 
                     val headers = response.headers()["X-Metadata"]
@@ -406,15 +410,14 @@ class Init(
      * delivery status or any error encountered.
      */
     fun write(
-        credentials: CredentialsPayload,
-        writeDataPayload: WriteDataPayload,
         userAccessToken: String,
+        writeDataPayload: WriteDataPayload,
         completion: OngoingWriteCompletion
     ) {
         DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
         if (sessionManager.isSessionValid())
-            handleDataWrite(credentials, writeDataPayload, completion)
+            handleDataWrite(userAccessToken, writeDataPayload, completion)
         else
             updateSession { _, error ->
                 error?.let {
@@ -422,7 +425,7 @@ class Init(
                     completion(null, AuthError.InvalidSession())
                 }
                     ?: run {
-                        handleDataWrite(credentials, writeDataPayload, completion)
+                        handleDataWrite(userAccessToken, writeDataPayload, completion)
                     }
             }
     }
@@ -674,12 +677,14 @@ class Init(
         scope: DataRequest? = null,
         credentials: CredentialsPayload,
         downloadHandler: FileContentCompletion,
+        isOnboarding: Boolean,
         completion: FileListCompletion
     ) {
 
         val currentSession = sessionManager.updatedSession
         syncRunning = true
 
+        isFirstRun = isOnboarding
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
             handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
         } else {
@@ -697,9 +702,19 @@ class Init(
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            userAccessToken,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if ((currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
             apiClient.makeCall(
-                apiClient.argonService.getFileList(currentSession?.key!!),
+                apiClient.argonService.getFileList(authHeader, currentSession?.key!!),
                 completion
             )
         } else handleFileList(credentials, completion)
@@ -720,7 +735,7 @@ class Init(
         val currentSession = sessionManager.updatedSession
 
         val jwt = PermissionAccessRequestJWT(
-            credentials.accessToken.value!!,
+            userAccessToken,
             configuration.appId,
             configuration.contractId
         )
@@ -730,7 +745,7 @@ class Init(
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -739,8 +754,7 @@ class Init(
 
                     val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
 
-                    val contentBytes: ByteArray =
-                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
+                    val contentBytes: ByteArray = DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
 
                     val compression: String = try {
                         payloadHeader.compression
@@ -768,11 +782,11 @@ class Init(
         } else handleFileItemBytes(credentials, fileId, completion)
     }
 
-    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
+    private fun getSessionData(fileId: String, accessToken: String, completion: FileContentCompletion) {
         val currentSession = sessionManager.updatedSession
 
         val jwt = PermissionAccessRequestJWT(
-            credentials.accessToken.value!!,
+            accessToken,
             configuration.appId,
             configuration.contractId
         )
@@ -782,7 +796,7 @@ class Init(
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -822,7 +836,7 @@ class Init(
                         )
                     }
                 )
-        } else handleGetSessionData(credentials, fileId, completion)
+        } else handleGetSessionData(accessToken, fileId, completion)
     }
 
     private fun getSessionFileList(
@@ -1473,7 +1487,7 @@ class Init(
                     sessionKey = sessionManager.updatedSession?.key
 
                     val jwt = PermissionAccessRequestJWT(
-                        credentials.accessToken.value!!,
+                        userAccessToken,
                         configuration.appId,
                         configuration.contractId
                     )
@@ -1541,20 +1555,15 @@ class Init(
     }
 
     private fun handleDataWrite(
-        credentials: CredentialsPayload,
-        writeDataPayload: WriteDataPayload,
         userAccessToken: String,
+        writeDataPayload: WriteDataPayload,
         completion: OngoingWriteCompletion
     ) {
         val requestBody: RequestBody =
-            writeDataPayload.content.toRequestBody(
-                writeDataPayload.metadata.mimeType?.toMediaTypeOrNull(),
-                0,
-                writeDataPayload.content.size
-            )
+            writeDataPayload.content.toRequestBody(writeDataPayload.metadata.mimeType?.toMediaTypeOrNull(), 0, writeDataPayload.content.size)
 
         val jwt = DirectImportRequestJWT(
-            credentials.accessToken.value!!,
+            userAccessToken,
             configuration.appId,
             configuration.contractId
         )
@@ -1563,23 +1572,25 @@ class Init(
             KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
         val authHeader: String = jwt.sign(signingKey).tokenize()
 
-        apiClient.argonService.pushOngoingData(
+        val fileDescriptor = DirectImportMetadataRequestJWT(
+            writeDataPayload.metadata
+        )
+
+        val fileDescSigningKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val fileDesc: String = fileDescriptor.sign(fileDescSigningKey).tokenize()
+
+        apiClient.argonService.directImport(
             authHeader,
-            writeDataPayload.data.key!!,
-            encryptedData.symmetricalKey,
-            encryptedData.iv,
-            encryptedData.metadata,
-            writeDataPayload.data.postboxId!!,
-            multipartBody.requestBody,
-            multipartBody.description
+            fileDesc,
+            requestBody
         )
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
-                    sessionManager.updatedSession = it.session
                     completion(
-                        it,
+                        true,
                         null
                     ).also { DMELog.i("Successfully pushed data to postbox") }
                 },
@@ -1612,29 +1623,31 @@ class Init(
         val value: String? = null
     )
 
-//    {"access_token":{"expires_on":1664831686,"value":"d8e19799c75ed9db2f2eca9f1d9062fdcd549adc4fcb7538449300654ff742a3a3c5901562a67fb8136c25b7cbc906cb94866840fccfbc1074676f9f6c84a1fba77a6bd90f07465cb6b6fa89650da325"},"consentid":"df2f16318deb7d85672ec1f1e0ce652b","identifier":{"id":"3111d038abcf6e58868c4b8fcd26849b"},"refresh_token":{"expires_on":1680297286,"value":"0d54664b62de08472d1db7348638aecf0c8e266cff37278dc42718bcbe7a5cb1de870a86a4e74ffaa2f2f40228810e53be42d0f8b0dc57bb58471b567fb9a99f7b7e2318cb17a53b976a9c96cea294cd"},"token_type":"Bearer"}
+    data class QueryUserAccessToken (
+        val access_token: AccessToken? = null,
+    )
+
     data class UserAccessToken(
         val accessToken: AccessToken? = null,
     )
 
-    data class AccessToken (
+    data class AccessToken(
         val expires_on: Long = 0L,
         val value: String? = null
     )
-
-
 
     private fun handleFileList(
         credentials: CredentialsPayload,
         completion: FileListCompletion
     ) {
         fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-
-            val accessToken = Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
+            val accessToken =
+                Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
             val jwt = TriggerDataQueryRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                accessToken.accessToken?.value!!)
+                accessToken.accessToken?.value!!
+            )
 
             val signingKey: PrivateKey =
                 KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
@@ -1679,8 +1692,18 @@ class Init(
                         KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
                     val authHeader: String = jwt.sign(signingKey).tokenize()
 
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
                     apiClient.makeCall(
-                        apiClient.argonService.getFileList(it.session.key),
+                        apiClient.argonService.getFileList(authHeader, it.session.key),
                         completion
                     )
                 },
@@ -1740,7 +1763,7 @@ class Init(
                     sessionKey = sessionManager.updatedSession?.key
 
                     val jwt = PermissionAccessRequestJWT(
-                        credentials.accessToken.value!!,
+                        userAccessToken,
                         configuration.appId,
                         configuration.contractId
                     )
@@ -1843,7 +1866,17 @@ class Init(
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        userAccessToken,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1942,7 +1975,7 @@ class Init(
                     sessionKey = sessionManager.updatedSession?.key
 
                     val jwt = PermissionAccessRequestJWT(
-                        credentials.accessToken.value!!,
+                        userAccessToken,
                         configuration.appId,
                         configuration.contractId
                     )
@@ -2014,12 +2047,12 @@ class Init(
     ) {
 
         fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-
-
+            val accessToken =
+                Gson().fromJson(userAccessToken, QueryUserAccessToken::class.java)
             val jwt = TriggerDataQueryRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                credentials.accessToken.value!!
+                accessToken.access_token?.value!!
             )
 
             val signingKey: PrivateKey =
@@ -2052,10 +2085,9 @@ class Init(
             .subscribeBy(
                 onSuccess = {
                     sessionManager.updatedSession = it.session
-
-                    sessionKey = sessionManager.updatedSession?.key
-
-                    handleContinuousDataDownload(credentials, downloadHandler, completion)
+                    val accessToken =
+                        Gson().fromJson(userAccessToken, QueryUserAccessToken::class.java)
+                    handleContinuousDataDownload(accessToken.access_token?.value!!, downloadHandler, completion)
                 },
                 onError = {
                     completion.invoke(
@@ -2085,8 +2117,7 @@ class Init(
                 activeDownloadCount++
                 DMELog.i("Downloading file with ID: $it.")
 
-
-                getSessionData(it, credentials) { file, error ->
+                getSessionData(it, userAccessToken) { file, error ->
 
                     when {
                         file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")

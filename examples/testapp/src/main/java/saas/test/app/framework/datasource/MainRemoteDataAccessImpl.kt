@@ -175,4 +175,16 @@ class MainRemoteDataAccessImpl(
                     ?: (if (file != null) emitter.onSuccess(file) else emitter.onError(AuthError.General()))
             }
         }
+
+    override fun getAccounts(): Single<ReadAccountsResponse> =
+        Single.create { emitter ->
+            readClient.readAccounts(
+                userAccessToken = localAccess.getCachedCredential()?.accessToken?.value!!
+            ) { accounts, error ->
+                error?.let(emitter::onError)
+                    ?: (if (accounts != null) emitter.onSuccess(accounts) else emitter.onError(
+                        AuthError.General()
+                    ))
+            }
+        }
 }

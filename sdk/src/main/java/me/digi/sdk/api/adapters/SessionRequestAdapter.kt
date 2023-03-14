@@ -1,8 +1,7 @@
 package me.digi.sdk.api.adapters
 
 import com.google.gson.*
-import me.digi.sdk.entities.DataAcceptCondition
-import me.digi.sdk.entities.DataRequest
+import me.digi.sdk.entities.*
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.utilities.DMELog
 import java.lang.reflect.Type
@@ -45,11 +44,6 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                 val timeFrom = timeRange.from
                 val timeTo = timeRange.to
                 val timeLast = timeRange.last
-                val timeType = timeRange.type
-
-                if (timeType != null) {
-                    timeRangeJSON.addProperty("type", timeType)
-                }
 
                 if (timeLast != null) {
                     timeRangeJSON.addProperty("last", timeLast)
@@ -123,7 +117,7 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                 val criteriaJson = JsonObject()
 
                 when (criteria) {
-                    is Criteria -> {
+                    is MetadataCriteria -> {
                         val from = criteria.from
                         val to = criteria.to
                         val last = criteria.last
@@ -134,14 +128,14 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                         if (last != null) {
                             criteriaJson.addProperty("last", last)
                         } else if (from != null && to != null) {
-                            criteriaJson.addProperty("from", from)
-                            criteriaJson.addProperty("to", to)
+                            criteriaJson.addProperty("from", from.time)
+                            criteriaJson.addProperty("to", to.time)
                         }
 
                         if (metadataCriteria != null) {
-                            val accountsIds = metadataCriteria.accountIds
-                            val mimeTypes = metadataCriteria.mimeTypes
-                            val references = metadataCriteria.references
+                            val accountsIds = metadataCriteria.accountId
+                            val mimeTypes = metadataCriteria.mimeType
+                            val references = metadataCriteria.reference
                             val tags = metadataCriteria.tags
 
                             if (!accountsIds.isNullOrEmpty()) {
@@ -213,6 +207,7 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
 
         val timeRangesJSON = serializeTimeRanges(src)
         val serviceGroupsJSON = serializeServiceGroups(src)
+        val criteriaJSON = serializeCriteria(src)
 
         if (serviceGroupsJSON.count() > 0) {
             json.add("serviceGroups", serviceGroupsJSON)
@@ -220,6 +215,10 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
 
         if (timeRangesJSON.count() > 0) {
             json.add("timeRanges", timeRangesJSON)
+        }
+
+        if (criteriaJSON.count() > 0) {
+            json.add("criteria", timeRangesJSON)
         }
 
         return json

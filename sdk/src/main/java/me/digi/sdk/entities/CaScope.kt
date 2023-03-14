@@ -1,5 +1,6 @@
 package me.digi.sdk.entities
 
+import com.google.gson.annotations.SerializedName
 import java.util.*
 
 /**
@@ -39,17 +40,17 @@ data class TimeRange(
     val last: String? = null
 )
 
-data class Criteria(
-    var from: Long? = null,
-    var to: Long? = null,
+data class MetadataCriteria(
+    var from: Date? = null,
+    var to: Date? = null,
     var last: String? = null,
     var metadata: MetadataScope? = null
 )
 
 data class MetadataScope(
-    var accountIds: List<String>? = null,
-    var mimeTypes: List<String>? = null,
-    var references: List<String>? = null,
+    var accountId: List<String>? = null,
+    var mimeType: List<String>? = null,
+    var reference: List<String>? = null,
     var tags: List<String>? = null
 )
 
@@ -59,7 +60,8 @@ data class PartnersCriteria(
 
 class CaScope @JvmOverloads constructor(
     serviceGroups: List<ServiceGroup>? = null,
-    timeRanges: List<TimeRange>? = null
+    timeRanges: List<TimeRange>? = null,
+    criteria: List<Any>? = null
 ) : DataRequest {
 
     /**
@@ -73,6 +75,11 @@ class CaScope @JvmOverloads constructor(
     override lateinit var timeRanges: List<TimeRange>
 
     /**
+     * Control the scope using criteria - raw data
+     */
+    override lateinit var criteria: List<Any>
+
+    /**
      * Context defaults to 'scope'
      */
     override val context: String = "scope"
@@ -80,6 +87,9 @@ class CaScope @JvmOverloads constructor(
     override fun serviceGroupsInitialized() = ::serviceGroups.isInitialized
 
     override fun timeRangesInitialized() = ::timeRanges.isInitialized
+
+    override fun criteriaInitialized() = ::criteria.isInitialized
+
 
     init {
         serviceGroups?.also(this::serviceGroups.setter)

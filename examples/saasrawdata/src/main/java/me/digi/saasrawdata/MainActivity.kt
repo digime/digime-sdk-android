@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         val configuration = DigiMeConfiguration(
             this.resources.getString(R.string.appId),
             this.resources.getString(R.string.writeContractId),
-            this.resources.getString(R.string.privateKey),
+            this.resources.getString(R.string.writePrivateKey),
             "https://api.digi.me/"
         )
 
@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
 
         val configuration = DigiMeConfiguration(
             this.resources.getString(R.string.appId),
-            this.resources.getString(R.string.readContractId),
-            this.resources.getString(R.string.privateKey),
+            this.resources.getString(R.string.readRawContractId),
+            this.resources.getString(R.string.readRawPrivateKey),
             "https://api.digi.me/"
         )
 
@@ -101,23 +101,47 @@ class MainActivity : AppCompatActivity() {
                 credentials = response?.credentials!!
 
                 val fileContent: ByteArray = getFileContent(this, "file.pdf")
-                val metadata: ByteArray = getFileContent(this, "metadatapdf.json")
-                val postbox: Data = Data().copy(
-                    key = response.session?.key,
-                    postboxId = response.authResponse?.postboxId,
-                    publicKey = response.authResponse?.publicKey
+                val metadata = WriteMetadata()
+                metadata.accounts = listOf(WriteAccount("1"))
+                metadata.reference = listOf("file.pdf")
+                metadata.tags = listOf("testTag")
+                metadata.mimeType = "application/pdf"
+
+                val writeDataPayload = WriteDataPayload(
+                    metadata,
+                    fileContent
                 )
-
-                val payloadWriteImage =
-                    WriteDataPayload(postbox, metadata, fileContent, MimeType.IMAGE_PNG)
-
                 writeClient.write(
-                    payloadWriteImage,
-                    response.credentials?.accessToken?.value!!
+                    response.credentials?.accessToken?.value!!,
+                    writeDataPayload,
                 ) { _, error ->
                     progressBar.isVisible = false
-                    if (error == null)
+                    if (error == null) {
                         readFile.isEnabled = true
+
+                        val fileContent: ByteArray = getFileContent(this, "file.pdf")
+
+                        val metadata = WriteMetadata()
+                        metadata.accounts = listOf(WriteAccount("1"))
+                        metadata.reference = listOf("file.pdf")
+                        metadata.tags = listOf("testTag")
+                        metadata.mimeType = "application/pdf"
+
+                        val writeDataPayload = WriteDataPayload(
+                            metadata,
+                            fileContent
+                        )
+                        writeClient.write(
+                            response.credentials?.accessToken?.value!!,
+                            writeDataPayload,
+                        ) { _, error ->
+                            progressBar.isVisible = false
+                            if (error == null)
+                                readFile.isEnabled = true
+                            else
+                                Log.d("MainActivity", "Failed to write data")
+                        }
+                    }
                     else
                         Log.d("MainActivity", "Failed to write data")
                 }
@@ -129,9 +153,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun readFile() {
+
+        val scope = CaScope()
+
+        val metadata = MetadataScope()
+        metadata.mimeType = listOf("application/pdf")
+
+        val metadataCriteria = MetadataCriteria()
+        metadataCriteria.metadata = metadata
+
+        val criteria = listOf(metadataCriteria)
+        scope.criteria = criteria
+
         readClient.authorizeAccess(
             this,
-            null,
+            scope,
             credentials,
             null
 

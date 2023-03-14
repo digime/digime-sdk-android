@@ -12,7 +12,12 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/examples" />
-            <option value="$PROJECT_DIR$/examples/mst" />
+            <option value="$PROJECT_DIR$/examples/ongoing" />
+            <option value="$PROJECT_DIR$/examples/saas" />
+            <option value="$PROJECT_DIR$/examples/saasrawdata" />
+            <option value="$PROJECT_DIR$/examples/saasread" />
+            <option value="$PROJECT_DIR$/examples/testSync" />
+            <option value="$PROJECT_DIR$/examples/testapp" />
             <option value="$PROJECT_DIR$/sdk" />
           </set>
         </option>
