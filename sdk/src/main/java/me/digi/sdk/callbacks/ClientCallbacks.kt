@@ -2,6 +2,7 @@ package me.digi.sdk.callbacks
 
 import me.digi.sdk.Error
 import me.digi.sdk.entities.GetTokenExchangeDone
+import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 
@@ -21,13 +22,13 @@ typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<
 
 typealias AvailableServicesCompletion = (ServicesResponse?, error: Error?) -> Unit
 
-typealias UserDeleteCompletion = (isLibraryDeleted: Boolean?, error: Error?) -> Unit
+typealias UserDeleteCompletion = (response: UserDeletedResponse?, error: Error?) -> Unit
 
 typealias GetAuthorizationDoneCompletion = (response: AuthorizationResponse?, error: Error?) -> Unit
 
 typealias GetOnboardDoneCompletion = (response: OnboardResponse?, error: Error?) -> Unit
 
-typealias OngoingWriteCompletion = (isDataPushed: Boolean?, error: Error?) -> Unit
+typealias OngoingWriteCompletion = (response: WriteDataResponse?, error: Error?) -> Unit
 
 typealias GetSessionCompletion = (isSessionUpdated: Boolean?, error: Error?) -> Unit
 

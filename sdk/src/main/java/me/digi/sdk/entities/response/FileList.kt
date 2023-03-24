@@ -8,13 +8,15 @@ import com.google.gson.annotations.JsonAdapter
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.entities.FileListAccount
 import me.digi.sdk.entities.FileListItem
+import me.digi.sdk.entities.payload.CredentialsPayload
 import java.lang.reflect.Type
 
 @JsonAdapter(FileListDeserializer::class)
 class FileList(
     val fileList: List<FileListItem>,
     val syncStatus: SyncStatus,
-    val accounts: List<FileListAccount>?
+    val accounts: List<FileListAccount>?,
+    var credentials: CredentialsPayload? = null
 ) {
 
     open class SyncStatus(val rawValue: String) {
@@ -65,7 +67,7 @@ private class FileListDeserializer : JsonDeserializer<FileList> {
                 FileListAccount(accountId, accSyncState, accError)
             }
 
-            return FileList(fileListItems, syncState, accounts)
+            return FileList(fileListItems, syncState, accounts, null)
 
         } ?: run { throw IllegalArgumentException() }
     }

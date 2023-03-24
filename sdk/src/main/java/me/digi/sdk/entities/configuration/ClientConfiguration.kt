@@ -9,7 +9,7 @@ abstract class ClientConfiguration(
     var baseUrl: String?
 ) {
 
-    var globalTimeout: Int = 62
+    var globalTimeout: Int = 65
     var maxConcurrentRequests: Int = 5
 
     var retryOnFail: Boolean = false

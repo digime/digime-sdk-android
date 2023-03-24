@@ -86,6 +86,7 @@
     <string name="saas_service">service</string>
     <string name="labelSaasAuthorize">authorize</string>
     <string name="labelSaasOnboarding">onboard</string>
+    <string name="labelSaasReAuth">reauthorize</string>
 
     <!-- Pull client -->
     <string name="labelReferenceOnboardingCode">Fetching reference code for onboarding</string>

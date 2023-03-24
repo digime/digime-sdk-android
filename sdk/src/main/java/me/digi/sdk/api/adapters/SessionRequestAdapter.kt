@@ -117,7 +117,7 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                 val criteriaJson = JsonObject()
 
                 when (criteria) {
-                    is MetadataCriteria -> {
+                    is Criteria -> {
                         val from = criteria.from
                         val to = criteria.to
                         val last = criteria.last
@@ -128,14 +128,14 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                         if (last != null) {
                             criteriaJson.addProperty("last", last)
                         } else if (from != null && to != null) {
-                            criteriaJson.addProperty("from", from.time)
-                            criteriaJson.addProperty("to", to.time)
+                            criteriaJson.addProperty("from", from)
+                            criteriaJson.addProperty("to", to)
                         }
 
                         if (metadataCriteria != null) {
-                            val accountsIds = metadataCriteria.accountId
-                            val mimeTypes = metadataCriteria.mimeType
-                            val references = metadataCriteria.reference
+                            val accountsIds = metadataCriteria.accountIds
+                            val mimeTypes = metadataCriteria.mimeTypes
+                            val references = metadataCriteria.references
                             val tags = metadataCriteria.tags
 
                             if (!accountsIds.isNullOrEmpty()) {

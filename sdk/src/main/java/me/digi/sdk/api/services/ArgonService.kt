@@ -76,6 +76,13 @@ internal interface ArgonService {
 
     @POST("v1.7/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
+
+    @POST("v1.7/reference")
+    fun getAccountIdReference(
+        @Header("Authorization") jwt: String,
+        @Body accountIdRequest: AccountIdRequest
+    ): Call<AccountReferenceResponse>
+
     @DELETE("v1.7/user")
     fun  deleteUser(@Header("Authorization") jwt: String): Call<Unit>
 }

@@ -9,5 +9,5 @@ class DigiMeConfiguration(
     ClientConfiguration(appId, contractId, privateKeyHex, baseUrl) {
 
     var pollInterval = 3
-    var maxStalePolls = 100
+    var maxStalePolls = 200
 }

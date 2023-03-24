@@ -58,7 +58,8 @@ annotation class ArgonCode(val value: String)
 sealed class APIError(
     internal var code: String? = null,
     override var message: String,
-    internal var reference: String? = null
+    internal var reference: String? = null,
+    var accountIds: List<String>? = null
 
 ) : Error(message) {
 
@@ -114,4 +115,7 @@ sealed class APIError(
     class ErrorWithMessage(message: String) : AuthError(message)
     class UNREACHABLE :
         APIError(message = "Couldn't reach the digi.me API - please check your network connection.")
+
+    class REAUTHREQUIRED :
+        APIError(message = "Reauthorization required.")
 }

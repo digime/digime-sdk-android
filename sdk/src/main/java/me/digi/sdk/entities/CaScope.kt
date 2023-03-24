@@ -1,6 +1,5 @@
 package me.digi.sdk.entities
 
-import com.google.gson.annotations.SerializedName
 import java.util.*
 
 /**
@@ -40,17 +39,17 @@ data class TimeRange(
     val last: String? = null
 )
 
-data class MetadataCriteria(
-    var from: Date? = null,
-    var to: Date? = null,
+data class Criteria(
+    var from: Long? = null,
+    var to: Long? = null,
     var last: String? = null,
     var metadata: MetadataScope? = null
 )
 
 data class MetadataScope(
-    var accountId: List<String>? = null,
-    var mimeType: List<String>? = null,
-    var reference: List<String>? = null,
+    var accountIds: List<String>? = null,
+    var mimeTypes: List<String>? = null,
+    var references: List<String>? = null,
     var tags: List<String>? = null
 )
 
