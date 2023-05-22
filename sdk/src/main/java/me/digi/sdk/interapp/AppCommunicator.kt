@@ -7,7 +7,6 @@ import me.digi.sdk.R
 import me.digi.sdk.SDKError
 
 class AppCommunicator(val context: Context) {
-
     companion object {
 
         // Mem leak warning not an issue as we enforce the context be app context. This is always held in mem anyway.

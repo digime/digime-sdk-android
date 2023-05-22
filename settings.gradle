@@ -1,7 +1,2 @@
 include ':sdk'
-include ':examples:ongoing'
-include ':examples:saas'
-include ':examples:testapp'
-include ':examples:testSync'
-include ':examples:saasread'
-include ':examples:saasrawdata'
+include ':examples:mst'

@@ -22,7 +22,8 @@ internal interface ArgonService {
     @GET("/v1.7/permission-access/query/{sessionKey}")
     fun getFileList(
         @Header("Authorization") jwt: String,
-        @Path("sessionKey") sessionKey: String): Call<FileList>
+        @Path("sessionKey") sessionKey: String
+    ): Single<FileList>
 
     @Headers("Accept: application/octet-stream")
     @GET("/v1.7/permission-access/query/{sessionKey}/{fileName}")
@@ -46,12 +47,17 @@ internal interface ArgonService {
         @Part("file") description: RequestBody
     ): Single<DataWriteResponse>
 
-    @Headers("Accept: application/json", "Content-Type: application/octet-stream",  "cache-control: no-cache")
+    @Headers(
+        "Accept: application/json",
+        "Content-Type: application/octet-stream",
+        "cache-control: no-cache"
+    )
     @POST("/v1.7/permission-access/import")
     fun directImport(
         @Header("Authorization") jwt: String,
         @Header("FileDescriptor") fileDescriptor: String,
-        @Body file: RequestBody): Single<Unit>
+        @Body file: RequestBody
+    ): Single<Unit>
 
     @POST("v1.7/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>
@@ -84,5 +90,14 @@ internal interface ArgonService {
     ): Call<AccountReferenceResponse>
 
     @DELETE("v1.7/user")
-    fun  deleteUser(@Header("Authorization") jwt: String): Call<Unit>
+    fun deleteUser(@Header("Authorization") jwt: String): Call<Unit>
+
+    @GET("v1.7/export/{serviceType}/report?")
+    fun getPortabilityReport(
+        @Header("Authorization") jwt: String,
+        @Path("serviceType") serviceType: String,
+        @Query("format") format: String,
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): Single<Response<ResponseBody>>
 }

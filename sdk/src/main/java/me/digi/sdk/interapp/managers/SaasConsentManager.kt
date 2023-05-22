@@ -5,12 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import me.digi.sdk.AuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.AuthorizationCompletion
-import me.digi.sdk.callbacks.ServiceOnboardingCompletion
-import me.digi.sdk.entities.response.ConsentAuthResponse
-import me.digi.sdk.entities.response.OnboardAuthResponse
-import me.digi.sdk.interapp.AppCallbackHandler
-import me.digi.sdk.interapp.AppCommunicator
+import me.digi.sdk.entities.response.SaasCallbackResponse
+import me.digi.sdk.interapp.*
 import me.digi.sdk.ui.ConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
@@ -18,7 +14,7 @@ import me.digi.sdk.utilities.toMap
 class SaasConsentManager(private val baseURL: String?, private val type: String) :
     AppCallbackHandler() {
 
-    private var authorizationCallbackHandler: AuthorizationCompletion? = null
+    private var authorizationCallbackHandler: AuthorizationCallback? = null
         set(value) {
             if (field != null && value != null)
                 field?.invoke(null, AuthError.Cancelled)
@@ -26,7 +22,15 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
             field = value
         }
 
-    private var onboardingCallbackHandler: ServiceOnboardingCompletion? = null
+    private var onboardingCallbackHandler: ServiceOnboardCallback? = null
+        set(value) {
+            if (field != null && value != null)
+                field?.invoke(null, AuthError.Cancelled)
+
+            field = value
+        }
+
+    private var reAuthCallbackHandler: ServiceReAuthCallback? = null
         set(value) {
             if (field != null && value != null)
                 field?.invoke(null, AuthError.Cancelled)
@@ -38,10 +42,10 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        completion: AuthorizationCompletion
+        callback: AuthorizationCallback
     ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
-        authorizationCallbackHandler = completion
+        authorizationCallbackHandler = callback
         handlerAction(fromActivity, "service", serviceId, codeValue)
     }
 
@@ -49,21 +53,20 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        completion: ServiceOnboardingCompletion
+        callback: ServiceOnboardCallback
     ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
-        onboardingCallbackHandler = completion
+        onboardingCallbackHandler = callback
         handlerAction(fromActivity, "service", serviceId, codeValue)
     }
-
     fun beginReAuthAction(
         fromActivity: Activity,
         codeValue: String,
         accountId: String? = null,
-        completion: ServiceOnboardingCompletion
+        callback: ServiceReAuthCallback
     ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
-        onboardingCallbackHandler = completion
+        reAuthCallbackHandler = callback
         handlerAction(fromActivity, "accountRef", accountId, codeValue)
     }
 
@@ -134,7 +137,7 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         }
 
         authorizationCallbackHandler?.invoke(
-            ConsentAuthResponse(
+            SaasCallbackResponse(
                 success.toBoolean(),
                 code,
                 state,
@@ -143,7 +146,17 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
             ), error
         )
         onboardingCallbackHandler?.invoke(
-            OnboardAuthResponse(
+            SaasCallbackResponse(
+                success.toBoolean(),
+                code,
+                state,
+                postboxId,
+                publicKey
+            ),
+            error)
+
+        reAuthCallbackHandler?.invoke(
+            SaasCallbackResponse(
                 success.toBoolean(),
                 code,
                 state,
@@ -154,6 +167,7 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         AppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
         onboardingCallbackHandler = null
+        reAuthCallbackHandler = null
     }
 
     override fun extractAndAppendMetadata(payload: Map<String, Any>) {

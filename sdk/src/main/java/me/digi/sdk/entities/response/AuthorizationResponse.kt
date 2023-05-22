@@ -5,6 +5,6 @@ import me.digi.sdk.entities.payload.CredentialsPayload
 
 data class AuthorizationResponse(
     val session: Session? = null,
-    val authResponse: ConsentAuthResponse? = null,
+    val authResponse: SaasCallbackResponse? = null,
     val credentials: CredentialsPayload? = null
 )

@@ -5,6 +5,6 @@ import me.digi.sdk.entities.payload.CredentialsPayload
 
 data class OnboardResponse(
     val session: Session? = null,
-    val onboardResponse: OnboardAuthResponse? = null,
+    val onboardResponse: SaasCallbackResponse? = null,
     val credentials: CredentialsPayload? = null
 )

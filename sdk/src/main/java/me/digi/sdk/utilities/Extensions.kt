@@ -2,6 +2,7 @@ package me.digi.sdk.utilities
 
 import android.os.Bundle
 import android.text.format.Time
+import me.digi.sdk.APIError
 import me.digi.sdk.entities.FileListAccount
 
 fun Bundle.toMap() = this.keySet().map { it to this.get(it) }.toMap()
@@ -19,12 +20,25 @@ fun List<FileListAccount>.hasError(): Boolean {
     return false
 }
 
-fun List<FileListAccount>.errorAccounts(): List<String> {
-    val accountIds = mutableListOf<String>()
+fun List<FileListAccount>.errorAccounts(): List<FileListAccount> {
+    val errorAccounts = mutableListOf<FileListAccount>()
     this.forEach {
         if (it.error != null)
-            accountIds.add(it.identifier)
+            errorAccounts.add(it)
     }
 
-    return accountIds
+    return errorAccounts
+}
+
+fun List<FileListAccount>.parseError(): APIError {
+    return when(this.first().error?.get("statuscode")){
+        511.0 -> {
+            APIError.REAUTHREQUIRED()
+        }
+        401 -> {
+            APIError.INVALID_REFRESH_TOKEN()
+        }
+        else ->
+            APIError.GENERIC()
+    }
 }
