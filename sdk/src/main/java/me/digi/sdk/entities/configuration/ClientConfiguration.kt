@@ -1,12 +1,15 @@
 package me.digi.sdk.entities.configuration
 
+import me.digi.sdk.entities.payload.TokenPayload
+import me.digi.sdk.entities.payload.TokensPayload
 import me.digi.sdk.utilities.DMELog
 
 abstract class ClientConfiguration(
     var appId: String,
     var contractId: String,
     var privateKeyHex: String,
-    var baseUrl: String?
+    var baseUrl: String?,
+    var tokensPayload: TokensPayload?
 ) {
 
     var globalTimeout: Int = 65

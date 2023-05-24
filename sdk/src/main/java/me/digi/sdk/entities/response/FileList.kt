@@ -15,8 +15,7 @@ import java.lang.reflect.Type
 class FileList(
     val fileList: List<FileListItem>,
     val syncStatus: SyncStatus,
-    val accounts: List<FileListAccount>?,
-    var credentials: CredentialsPayload? = null
+    val accounts: List<FileListAccount>?
 ) {
 
     open class SyncStatus(val rawValue: String) {
@@ -67,7 +66,7 @@ private class FileListDeserializer : JsonDeserializer<FileList> {
                 FileListAccount(accountId, accSyncState, accError)
             }
 
-            return FileList(fileListItems, syncState, accounts, null)
+            return FileList(fileListItems, syncState, accounts)
 
         } ?: run { throw IllegalArgumentException() }
     }

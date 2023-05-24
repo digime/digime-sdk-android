@@ -16,7 +16,7 @@ data class RefreshToken(
     val value: String? = null
 )
 
-data class CredentialsPayload(
+data class TokensPayload(
     @SerializedName("access_token")
     val accessToken: AccessToken = AccessToken(),
     val consentid: String = "",

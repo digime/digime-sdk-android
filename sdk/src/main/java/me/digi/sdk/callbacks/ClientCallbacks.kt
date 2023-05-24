@@ -2,7 +2,7 @@ package me.digi.sdk.callbacks
 
 import me.digi.sdk.Error
 import me.digi.sdk.entities.TokenExchangeResponse
-import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.TokensPayload
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.entities.service.ServicesResponse
 
@@ -29,6 +29,6 @@ typealias FileContentBytesCallback = (fileItem: FileItemBytes?, error: Error?) -
 
 typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<String>) -> Unit
 
-typealias CredentialsCallback = (credentials: CredentialsPayload?, error: Error?) -> Unit
+typealias CredentialsCallback = (credentials: TokensPayload?, error: Error?) -> Unit
 
 typealias PortabilityReportCallback = (portabilityReportResponse: PortabilityReportResponse?, error: Error?) -> Unit
