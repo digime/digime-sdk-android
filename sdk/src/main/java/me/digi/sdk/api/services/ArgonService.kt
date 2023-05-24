@@ -92,6 +92,9 @@ internal interface ArgonService {
     @DELETE("v1.7/user")
     fun deleteUser(@Header("Authorization") jwt: String): Call<Unit>
 
+    @Headers(
+        "Accept: application/octet-stream",
+    )
     @GET("v1.7/export/{serviceType}/report?")
     fun getPortabilityReport(
         @Header("Authorization") jwt: String,
