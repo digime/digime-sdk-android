@@ -133,10 +133,10 @@ object SessionRequestAdapter : JsonSerializer<SessionRequest> {
                         }
 
                         if (metadataCriteria != null) {
-                            val accountsIds = metadataCriteria.accountId
-                            val mimeTypes = metadataCriteria.mimeType
-                            val references = metadataCriteria.reference
-                            val tags = metadataCriteria.tag
+                            val accountsIds = metadataCriteria.accountIds
+                            val mimeTypes = metadataCriteria.mimeTypes
+                            val references = metadataCriteria.references
+                            val tags = metadataCriteria.tags
 
                             if (!accountsIds.isNullOrEmpty()) {
                                 val accountIdsJson = JsonArray()

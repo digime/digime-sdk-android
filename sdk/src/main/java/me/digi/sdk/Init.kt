@@ -16,7 +16,10 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
-import me.digi.sdk.entities.payload.*
+import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.OnboardPayload
+import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
+import me.digi.sdk.entities.payload.TokenReferencePayload
 import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
@@ -36,7 +39,8 @@ import kotlin.math.max
 class Init(
     val context: Context,
     val configuration: DigiMeConfiguration,
-    val onTokenAcquired: (tokensPayload: TokensPayload) -> Unit
+    //val saveTokens: (tokens: CredentialsPayload) -> Unit,
+    //val getTokens: () -> CredentialsPayload
 ) : Client(context = context, config = configuration) {
 
     private val authorizeConsentManager: SaasConsentManager by lazy {
@@ -102,11 +106,13 @@ class Init(
     private var stalePollCount = 0
     private var isFirstRun: Boolean = false
 
-    private fun checkAccessToken(): Single<Boolean> {
-        return if (!configuration.tokenPayload?.accessToken?.expiresOn?.isValid()!!)
-            requestNewTokens()
+    private fun checkAccessToken(
+        credentials: CredentialsPayload
+    ): Single<out CredentialsPayload> {
+        return if (!credentials.accessToken.expiresOn.isValid())
+            requestNewTokens(credentials)
         else
-            Single.just(false)
+            Single.just(credentials)
     }
 
     /**
@@ -136,10 +142,11 @@ class Init(
     fun authorizeAccess(
         fromActivity: Activity,
         scope: DataRequest? = null,
+        credentials: CredentialsPayload? = null,
         serviceId: String? = null,
         callback: AuthorizeAccessCallback
     ) {
-        requestPreAuthorizationCode(scope)
+        requestPreAuthorizationCode(credentials, scope)
             .compose(requestConsentAccess(fromActivity, serviceId))
             .compose(requestTokenExchange())
             .onErrorResumeNext { error ->
@@ -161,7 +168,8 @@ class Init(
 
                     val response = AuthorizationResponse().copy(
                         session = result.consentData.session,
-                        authResponse = result.consentData.consentResponse
+                        authResponse = result.consentData.consentResponse,
+                        credentials = result.credentials
                     )
 
                     callback.invoke(response, null)
@@ -180,6 +188,7 @@ class Init(
     fun reAuthorizeAccount(
         fromActivity: Activity,
         accountId: String?,
+        credentials: CredentialsPayload,
         callback: AuthorizeAccessCallback
     ) {
 
@@ -243,7 +252,8 @@ class Init(
                                         val consentDone = AuthorizationResponse()
                                             .copy(
                                                 session = accountIdReferencePayload.session,
-                                                authResponse = onboardResponse
+                                                authResponse = onboardResponse,
+                                                credentials = credentials
                                             )
 
                                         emitter.onSuccess(consentDone)
@@ -258,7 +268,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestCodeReference())
             .compose(requestAccountIdReference())
             .compose(requestReAuth())
@@ -290,15 +300,16 @@ class Init(
      * or any error encountered
      */
     fun deleteUser(
+        credentials: CredentialsPayload,
         callback: DeleteUserCallback
     ) {
         DMELog.i(context.getString(R.string.labelDeleteLibrary))
 
-        fun deleteLibrary(): SingleTransformer<Boolean, DeleteUserResponse> =
+        fun deleteLibrary(): SingleTransformer<CredentialsPayload, DeleteUserResponse> =
             SingleTransformer { credentialsPayload ->
                 credentialsPayload.flatMap { credentials ->
                     Single.create<DeleteUserResponse> { emitter ->
-                        configuration.tokensPayload?.accessToken?.value?.let { accessToken ->
+                        credentials.accessToken.value?.let { accessToken ->
 
                             val jwt = UserDeletionRequestJWT(
                                 configuration.appId,
@@ -313,7 +324,7 @@ class Init(
                             apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->
                                 when {
                                     error != null -> emitter.onError(error)
-                                    else -> emitter.onSuccess(DeleteUserResponse(true))
+                                    else -> emitter.onSuccess(DeleteUserResponse(true, credentials))
                                 }
                             }
                         }
@@ -322,7 +333,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(deleteLibrary())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -349,7 +360,7 @@ class Init(
      * @param callback Block called upon completion with either list of accounts in the library;
      * or any errors encountered.
      */
-    fun readAccounts(credentials: TokensPayload, callback: GetAccountsCallback) {
+    fun readAccounts(credentials: CredentialsPayload, callback: GetAccountsCallback) {
         DMELog.i(context.getString(R.string.labelReadAccounts))
 
         val currentSession = sessionManager.updatedSession
@@ -378,7 +389,7 @@ class Init(
      * delivery status or any error encountered.
      */
     fun write(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         writeDataPayload: WriteDataPayload,
         callback: WriteDataCallback
     ) {
@@ -409,7 +420,7 @@ class Init(
         fromActivity: Activity,
         serviceId: String,
         scope: DataRequest?,
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         callback: AuthorizeAccessCallback
     ) {
 
@@ -430,7 +441,8 @@ class Init(
                                         val consentDone = AuthorizationResponse()
                                             .copy(
                                                 session = onboardPayload.session,
-                                                authResponse = onboardResponse
+                                                authResponse = onboardResponse,
+                                                credentials = onboardPayload.credentials
                                             )
 
                                         emitter.onSuccess(consentDone)
@@ -445,7 +457,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestCodeReference())
             .compose(requestOnboard())
             .subscribeOn(Schedulers.io())
@@ -510,7 +522,8 @@ class Init(
      */
     fun readAllFiles(
         scope: DataRequest? = null,
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
+        credentialsCallback: CredentialsCallback,
         fileContentCallback: FileContentCallback,
         isOnboarding: Boolean,
         fileListCallback: FileListCallback
@@ -521,28 +534,34 @@ class Init(
 
         isFirstRun = isOnboarding
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            checkAccessToken()
+            checkAccessToken(credentials)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
-                    if (it)
-                        handleContinuousDataDownload(fileContentCallback, fileListCallback)
+                    credentialsCallback.invoke(it, null)
+                    handleContinuousDataDownload(it, fileContentCallback, fileListCallback)
                 }, {
-                    fileListCallback.invoke(null, AuthError.ErrorWithMessage(
-                        it.localizedMessage ?: "Unknown error occurred"
-                    ))
+                    credentialsCallback.invoke(
+                        null,
+                        AuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
                 })
         } else {
-            checkAccessToken()
+            checkAccessToken(credentials)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
-                    if (it)
-                        handleCyclicDataDownload(scope, fileContentCallback, fileListCallback)
+                    credentialsCallback.invoke(it, null)
+                    handleCyclicDataDownload(scope, it, fileContentCallback, fileListCallback)
                 }, {
-                    fileListCallback.invoke(null, AuthError.ErrorWithMessage(
-                        it.localizedMessage ?: "Unknown error occurred"
-                    ))
+                    credentialsCallback.invoke(
+                        null,
+                        AuthError.ErrorWithMessage(
+                            it.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
                 })
         }
     }
@@ -553,7 +572,7 @@ class Init(
      * @param callback Block called upon completion with either list of files in the library;
      * returned as json objects, or any errors encountered.
      */
-    fun readFileList(credentials: TokensPayload, callback: FileListCallback) {
+    fun readFileList(credentials: CredentialsPayload, callback: FileListCallback) {
 
         val currentSession = sessionManager.updatedSession
 
@@ -573,6 +592,7 @@ class Init(
                 apiClient.argonService.getFileList(authHeader, currentSession?.key!!)
                     .map {
 
+                        it.credentials = credentials
                         it
                     }
                     .subscribeOn(Schedulers.io())
@@ -589,9 +609,9 @@ class Init(
                         }
                     )
             else {
-                refreshAccessToken(null) { _, error ->
+                refreshAccessToken(credentials, null) { tokenExchangeResponse, error ->
                     val newJwt = PermissionAccessRequestJWT(
-                        configuration.tokenPayload?.accessToken?.value!!,
+                        tokenExchangeResponse?.credentials?.accessToken?.value!!,
                         configuration.appId,
                         configuration.contractId
                     )
@@ -603,6 +623,7 @@ class Init(
                     apiClient.argonService.getFileList(newAuthHeader, currentSession?.key!!)
                         .map {
 
+                            it.credentials = tokenExchangeResponse.credentials
                             it
                         }
                         .subscribeOn(Schedulers.io())
@@ -630,7 +651,7 @@ class Init(
      * @param callback Block called upon completion with either file or any errors encountered.
      */
     fun readFile(
-        credentials: TokenPayload,
+        credentials: CredentialsPayload,
         fileId: String,
         callback: FileContentBytesCallback
     ) {
@@ -690,19 +711,19 @@ class Init(
     }
 
     fun getPortabilityReport(
-        credentials: TokenPayload,
+        credentials: CredentialsPayload,
         serviceType: String,
         format: String,
         from: String,
         to: String,
         callback: PortabilityReportCallback
     ){
-        fun getPortabilityReport(): SingleTransformer<in Boolean, out PortabilityReportResponse> =
+        fun getPortabilityReport(): SingleTransformer<in CredentialsPayload, out PortabilityReportResponse> =
         SingleTransformer {
             it.flatMap { onboardPayload ->
                 Single.create { emitter ->
                     val jwt = PermissionAccessRequestJWT(
-                        configuration.tokenPayload?.accessToken?.value!!,
+                        onboardPayload.accessToken.value!!,
                         configuration.appId,
                         configuration.contractId
                     )
@@ -738,7 +759,7 @@ class Init(
             }
         }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(getPortabilityReport())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -813,7 +834,7 @@ class Init(
             })
     }
 
-    private fun requestCodeReference(): SingleTransformer<Boolean, OnboardPayload> =
+    private fun requestCodeReference(): SingleTransformer<CredentialsPayload, OnboardPayload> =
         SingleTransformer {
             it.flatMap { credentials ->
                 Single.create { emitter ->
@@ -822,7 +843,7 @@ class Init(
                     val jwt = ReferenceCodeRequestJWT(
                         configuration.appId,
                         configuration.contractId,
-                        configuration.tokenPayload?.accessToken?.value!!
+                        credentials.accessToken.value!!
                     )
 
                     val signingKey: PrivateKey =
@@ -844,7 +865,8 @@ class Init(
                                     OnboardPayload(
                                         tokenReferencePayload,
                                         tokenReference.session,
-                                        null
+                                        null,
+                                        credentials
                                     )
 
                                 emitter.onSuccess(result)
@@ -859,12 +881,13 @@ class Init(
 
     private fun getSessionData(
         fileId: String,
+        credentials: CredentialsPayload,
         callback: FileContentCallback
     ) {
         val currentSession = sessionManager.updatedSession
 
         val jwt = PermissionAccessRequestJWT(
-            configuration.tokenPayload?.accessToken?.value!!,
+            credentials.accessToken.value!!,
             configuration.appId,
             configuration.contractId
         )
@@ -914,11 +937,11 @@ class Init(
                         )
                     }
                 )
-        } else handleGetSessionData(fileId, callback)
+        } else handleGetSessionData(credentials, fileId, callback)
     }
 
     private fun getSessionFileList(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         updateHandler: IncrementalFileListUpdate,
         callback: FileListCallback
     ) {
@@ -940,7 +963,7 @@ class Init(
         }
     }
 
-    private fun scheduleNextPoll(credentials: TokensPayload) {
+    private fun scheduleNextPoll(credentials: CredentialsPayload) {
 
         DMELog.d("Session data poll scheduled.")
 
@@ -948,6 +971,7 @@ class Init(
         if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
             Handler(Looper.getMainLooper()).postDelayed({
                 readFileList(credentials) { fileList, listFetchError ->
+                    fileList?.credentials = credentials
 
                     when {
                         fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
@@ -989,6 +1013,7 @@ class Init(
                         fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                         stalePollCount = 0
                     } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
+                        fileList?.credentials = credentials
                         fileListCallbackHandler?.invoke(
                             fileList,
                             SDKError.FileListPollingTimeout()
@@ -1018,14 +1043,16 @@ class Init(
     }
 
     private fun refreshAccessToken(
+        credentials: CredentialsPayload,
         scope: DataRequest?,
         callback: RefreshTokenCallback
     ) {
-        requestPreAuthorizationCode(scope)
+        requestPreAuthorizationCode(credentials, scope)
             .map { response: GetPreAuthCodeDone ->
                 TokenExchangeResponse()
                     .copy(
-                        consentData = GetConsentDone(session = response.session)
+                        consentData = GetConsentDone(session = response.session),
+                        credentials = credentials
                     )
             }
             .compose(requestCredentialsRefresh())
@@ -1037,7 +1064,8 @@ class Init(
                     isFirstRun = true
 
                     val response = TokenExchangeResponse().copy(
-                        consentData = result.consentData
+                        consentData = result.consentData,
+                        credentials = result.credentials
                     )
 
                     callback.invoke(response, null)
@@ -1055,12 +1083,12 @@ class Init(
 
     private fun obtainNewRefreshToken(
         fromActivity: Activity,
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         serviceId: String?,
         scope: DataRequest?,
         callback: RefreshTokenCallback
     ) {
-        requestPreAuthorizationCode(scope)
+        requestPreAuthorizationCode(credentials, scope)
             .compose(requestConsentAccess(fromActivity, serviceId))
             .compose(requestTokenExchange())
             .subscribeOn(Schedulers.io())
@@ -1071,7 +1099,8 @@ class Init(
                     isFirstRun = true
 
                     val response = TokenExchangeResponse().copy(
-                        consentData = result.consentData
+                        consentData = result.consentData,
+                        credentials = result.credentials
                     )
 
                     callback.invoke(response, null)
@@ -1089,13 +1118,13 @@ class Init(
 
     private fun refreshCredentials(
         fromActivity: Activity,
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         scope: DataRequest?,
         serviceId: String?,
         callback: RefreshTokenCallback
     ) {
         if (credentials.refreshToken.expiresOn.isValid()) {
-            refreshAccessToken(scope, callback)
+            refreshAccessToken(credentials, scope, callback)
         } else {
             obtainNewRefreshToken(fromActivity, credentials, serviceId, scope, callback)
         }
@@ -1122,13 +1151,13 @@ class Init(
     private fun errorHandler(
         fromActivity: Activity,
         error: Throwable?,
-        credentials: TokensPayload?,
+        credentials: CredentialsPayload?,
         scope: DataRequest?,
         serviceId: String?
     ): SingleSource<out TokenExchangeResponse>? {
 
         return if (error is APIError && error.code == "InternalServerError") {
-            requestPreAuthorizationCode(scope)
+            requestPreAuthorizationCode(credentials, scope)
                 .compose(requestConsentAccess(fromActivity, serviceId))
                 .compose(requestTokenExchange())
 
@@ -1136,11 +1165,12 @@ class Init(
             // has expired.
         } else if (error is APIError && error.code == "InvalidToken") {
             // If so, we take the active session and expired credentials and try to refresh them.
-            requestPreAuthorizationCode(scope)
+            requestPreAuthorizationCode(credentials, scope)
                 .map { response: GetPreAuthCodeDone ->
                     TokenExchangeResponse()
                         .copy(
-                            consentData = GetConsentDone(session = response.session)
+                            consentData = GetConsentDone(session = response.session),
+                            credentials = credentials as CredentialsPayload
                         )
                 }
                 .compose(requestCredentialsRefresh())
@@ -1154,7 +1184,7 @@ class Init(
                         // that auto-recover is enabled. If not, we throw a specific error and
                         // exit the flow.
                         if (configuration.autoRecoverExpiredCredentials) {
-                            requestPreAuthorizationCode(scope)
+                            requestPreAuthorizationCode(credentials, scope)
                                 .compose(requestConsentAccess(fromActivity, serviceId))
                                 .compose(requestTokenExchange())
 
@@ -1188,6 +1218,7 @@ class Init(
      * @see PreAuthorizationResponse
      */
     private fun requestPreAuthorizationCode(
+        credentials: CredentialsPayload?,
         scope: DataRequest?
     ): Single<out GetPreAuthCodeDone> =
         Single.create { emitter ->
@@ -1195,12 +1226,12 @@ class Init(
             val codeVerifier =
                 ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
-            val jwt = if (configuration.tokenPayload != null)
+            val jwt = if (credentials != null)
                 PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
-                    configuration.tokenPayload!!.accessToken.value
+                    credentials.accessToken.value
                 )
             else PreAuthorizationRequestJWT(
                 configuration.appId,
@@ -1315,24 +1346,22 @@ class Init(
 
                     val chunks: List<String> = response.token.split(".")
                     val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                    val tokenPayload: TokensPayload =
-                        Gson().fromJson(payloadJson, TokensPayload::class.java)
-
-                    onTokenAcquired(tokenPayload)
-
+                    val credentialsPayload: CredentialsPayload =
+                        Gson().fromJson(payloadJson, CredentialsPayload::class.java)
                     TokenExchangeResponse().copy(
-                        consentData = input
+                        consentData = input,
+                        credentials = credentialsPayload
                     )
                 }
             }
         }
 
-    private fun requestNewTokens(): Single<Boolean> =
+    private fun requestNewTokens(credentials: CredentialsPayload): Single<out CredentialsPayload> =
         Single.create { emitter ->
             val jwt = RefreshCredentialsRequestJWT(
                 configuration.appId,
                 configuration.contractId,
-                configuration.tokenPayload?.refreshToken?.value!!
+                credentials.refreshToken.value!!
             )
 
             val signingKey: PrivateKey =
@@ -1346,12 +1375,12 @@ class Init(
                     onSuccess = { response ->
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val tokenPayload =
-                            Gson().fromJson(payloadJson, TokensPayload::class.java)
+                        val credentialsPayload =
+                            Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
-                        onTokenAcquired(tokenPayload)
+//                        saveTokens(credentialsPayload)
 
-                        emitter.onSuccess(true)
+                        emitter.onSuccess(credentialsPayload)
                     },
                     onError = { throwable ->
                         emitter.onError(throwable)
@@ -1375,7 +1404,7 @@ class Init(
                 val jwt = RefreshCredentialsRequestJWT(
                     configuration.appId,
                     configuration.contractId,
-                    configuration.tokenPayload?.refreshToken?.value!!
+                    input.credentials.refreshToken.value!!
                 )
 
                 val signingKey: PrivateKey =
@@ -1387,14 +1416,13 @@ class Init(
 
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val tokenPayload =
-                            Gson().fromJson(payloadJson, TokensPayload::class.java)
-
-                        onTokenAcquired(tokenPayload)
+                        val credentialsPayload =
+                            Gson().fromJson(payloadJson, CredentialsPayload::class.java)
 
                         TokenExchangeResponse()
                             .copy(
-                                consentData = input.consentData
+                                consentData = input.consentData,
+                                credentials = credentialsPayload
                             )
                     }
             }
@@ -1413,7 +1441,7 @@ class Init(
                 val jwt = TriggerDataQueryRequestJWT(
                     configuration.appId,
                     configuration.contractId,
-                    configuration.tokenPayload?.accessToken?.value!!
+                    input.credentials.accessToken.value!!
                 )
 
                 val signingKey: PrivateKey =
@@ -1436,7 +1464,8 @@ class Init(
 
                     TokenExchangeResponse()
                         .copy(
-                            consentData = GetConsentDone(session = response.session)
+                            consentData = GetConsentDone(session = response.session),
+                            credentials = input.credentials
                         )
                 }
             }
@@ -1446,18 +1475,22 @@ class Init(
         callback: GetAccountsCallback,
         sessionKey: String,
         authHeader: String,
-        credentials: TokensPayload
+        credentials: CredentialsPayload
     ) {
 
-        fun getAccounts(): SingleTransformer<in Boolean, out GetAccountsResponse> =
+        fun getAccounts(): SingleTransformer<in CredentialsPayload, out GetAccountsResponse> =
             SingleTransformer {
                 it.flatMap { onboardPayload ->
                     Single.create { emitter ->
+                        Log.d("DEBUG expire", onboardPayload.accessToken.expiresOn.toString())
                         apiClient.argonService.getFileBytes(authHeader, sessionKey, "accounts.json")
                             .map { response: Response<ResponseBody> ->
 
+                                Log.d("DEBUG headers", response.headers().toString())
+                                Log.d("DEBUG response body", response.raw().body.toString())
                                 val headers = response.headers()["x-metadata"]
                                 val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+                                Log.d("DEBUG extracted headers", headerString)
 
                                 val payloadHeader = Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
 
@@ -1508,7 +1541,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(getAccounts())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -1532,18 +1565,18 @@ class Init(
     /// Handlers ///
     ///////////////
     private fun handleReadAccounts(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         callback: GetAccountsCallback
     ) {
 
-        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+        fun requestDataQuery(): SingleTransformer<in CredentialsPayload, out DataQueryResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
                     Single.create { emitter ->
                         val jwt = TriggerDataQueryRequestJWT(
                             configuration.appId,
                             configuration.contractId,
-                            configuration.tokenPayload?.accessToken?.value!!
+                            credentials.accessToken.value!!
                         )
 
                         val signingKey: PrivateKey =
@@ -1573,7 +1606,7 @@ class Init(
             }
 
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -1608,11 +1641,11 @@ class Init(
     }
 
     private fun handleDataWrite(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         writeDataPayload: WriteDataPayload,
         callback: WriteDataCallback
     ) {
-        fun writeData(): SingleTransformer<Boolean, WriteDataResponse> =
+        fun writeData(): SingleTransformer<CredentialsPayload, WriteDataResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
                     Single.create { emitter ->
@@ -1624,7 +1657,7 @@ class Init(
                             )
 
                         val jwt = DirectImportRequestJWT(
-                            configuration.tokenPayload?.accessToken?.value!!,
+                            credentials.accessToken.value!!,
                             configuration.appId,
                             configuration.contractId
                         )
@@ -1662,7 +1695,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(writeData())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -1704,16 +1737,16 @@ class Init(
     )
 
     private fun handleFileList(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         callback: FileListCallback
     ) {
-        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+        fun requestDataQuery(): SingleTransformer<in CredentialsPayload, out DataQueryResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
                     Single.create { emitter ->
                         val accessToken =
                             Gson().fromJson(
-                                configuration.tokenPayload?.accessToken?.value,
+                                credentials.accessToken.value,
                                 UserAccessToken::class.java
                             )
                         val jwt = TriggerDataQueryRequestJWT(
@@ -1750,7 +1783,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -1773,6 +1806,7 @@ class Init(
                     apiClient.argonService.getFileList(authHeader, it.session.key)
                         .map {
 
+                            it.credentials = credentials
                             it
                         }
                         .subscribeOn(Schedulers.io())
@@ -1801,19 +1835,19 @@ class Init(
     }
 
     private fun handleFileItemBytes(
-        credentials: TokensPayload,
+        credentials: CredentialsPayload,
         fileId: String,
         callback: FileContentBytesCallback
     ) {
 
-        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+        fun requestDataQuery(): SingleTransformer<in CredentialsPayload, out DataQueryResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
                     Single.create { emitter ->
                         val jwt = TriggerDataQueryRequestJWT(
                             configuration.appId,
                             configuration.contractId,
-                            configuration.tokenPayload?.accessToken?.value!!
+                            credentials.accessToken.value!!
                         )
 
                         val signingKey: PrivateKey =
@@ -1841,7 +1875,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -1918,11 +1952,12 @@ class Init(
     }
 
     private fun handleGetSessionData(
+        credentials: CredentialsPayload,
         fileId: String,
         callback: FileContentCallback
     ) {
 
-        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+        fun requestDataQuery(): SingleTransformer<in CredentialsPayload, out DataQueryResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
 
@@ -1930,7 +1965,7 @@ class Init(
                         val jwt = TriggerDataQueryRequestJWT(
                             configuration.appId,
                             configuration.contractId,
-                            configuration.tokenPayload?.accessToken?.value!!
+                            credentials.accessToken.value!!
                         )
 
                         val signingKey: PrivateKey =
@@ -1958,7 +1993,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -2036,11 +2071,12 @@ class Init(
 
     private fun handleCyclicDataDownload(
         scope: DataRequest?,
+        credentials: CredentialsPayload,
         downloadHandler: FileContentCallback,
         callback: FileListCallback
     ) {
 
-        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+        fun requestDataQuery(): SingleTransformer<in CredentialsPayload, out DataQueryResponse> =
             SingleTransformer {
                 it.flatMap { credentials ->
                     Single.create { emitter ->
@@ -2048,7 +2084,7 @@ class Init(
                         val jwt = TriggerDataQueryRequestJWT(
                             configuration.appId,
                             configuration.contractId,
-                            configuration.tokenPayload?.accessToken?.value!!
+                            credentials.accessToken.value!!
                         )
 
                         val signingKey: PrivateKey =
@@ -2079,7 +2115,7 @@ class Init(
                 }
             }
 
-        checkAccessToken()
+        checkAccessToken(credentials)
             .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -2088,7 +2124,7 @@ class Init(
                     sessionManager.updatedSession = it.session
                     sessionKey = sessionManager.updatedSession?.key
 
-                    handleContinuousDataDownload(downloadHandler, callback)
+                    handleContinuousDataDownload(it.credentials, downloadHandler, callback)
                 },
                 onError = {
                     callback.invoke(
@@ -2102,6 +2138,7 @@ class Init(
     }
 
     private fun handleContinuousDataDownload(
+        credentials: CredentialsPayload,
         fileContentCallback: FileContentCallback,
         fileListCallback: FileListCallback
     ) {
@@ -2110,14 +2147,14 @@ class Init(
         activeFileDownloadHandler = fileContentCallback
         activeSessionDataFetchCallbackHandler = fileListCallback
 
-        getSessionFileList(configuration.tokenPayload!!, { _, updatedFileIds ->
+        getSessionFileList(credentials, { _, updatedFileIds ->
 
             updatedFileIds.forEach {
 
                 activeDownloadCount++
                 DMELog.i("Downloading file with ID: $it.")
 
-                getSessionData(it) { file, error ->
+                getSessionData(it, credentials) { file, error ->
 
                     when {
                         file != null -> DMELog.i("Successfully downloaded updates for file with ID: $it.")
@@ -2130,6 +2167,7 @@ class Init(
             }
 
         }) { fileList, error ->
+            fileList?.credentials = credentials
             if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null && fileList.accounts?.hasError() == false && activeDownloadCount == 0) {
                 syncRunning = false
                 fileListCallback(

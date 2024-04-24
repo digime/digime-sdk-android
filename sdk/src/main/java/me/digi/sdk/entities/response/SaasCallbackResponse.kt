@@ -7,8 +7,3 @@ data class SaasCallbackResponse(
     val postboxId: String? = null,
     val publicKey: String? = null
 )
-
-data class RevokeCallbackResponse(
-    val result: String? = null,
-)
-
