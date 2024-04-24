@@ -48,34 +48,34 @@
 <!--    &lt;!&ndash;// This contract id and private key allow the user to read social,-->
 <!--    financial and music data from the past 3 months.&ndash;&gt;-->
 <!--&lt;!&ndash;    Production&ndash;&gt;-->
-    <string name="readAppId">8YcZRyfgKeimmlCUC3cBaVJLLmqEodgh</string>
-    <string name="readContractId">Fi59RMAhq4szT5o6IjWfWv0YqWIRwWXu</string>
+    <string name="readAppId">CJfTgINN484TmpEIdXTdXzJY6AQXj1jf</string>
+    <string name="readContractId">HV1kgxS5mPmy5ck7F4zAmJOOQ0Xdoo6T</string>
     <string name="readPrivateKey">-----BEGIN RSA PRIVATE KEY-----
-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
+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
  -----END RSA PRIVATE KEY-----</string>
     <!--// This contract id and private key allow the user to read social,
     financial and music data from the past 3 months.-->

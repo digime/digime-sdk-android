@@ -17,9 +17,6 @@ internal class UserDeletionRequestJWT(
     val nonce: String
 
     @JwtClaim
-    val redirectUri = "digime-ca://callback"
-
-    @JwtClaim
     val timestamp = Date().time
 
     init {

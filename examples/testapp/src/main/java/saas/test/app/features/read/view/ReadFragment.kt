@@ -75,6 +75,7 @@ class ReadFragment : Fragment(R.layout.fragment_read), View.OnClickListener {
                                 "Number of files: " + data.fileList.size.toString() + ", Sync status: " + data.syncStatus.rawValue
 
                             binding.incEmptyState.root.isVisible = data.fileList.isEmpty()
+                            viewModel.getAccounts()
                         } else {
                             binding.pbPull.isVisible = false
                             binding.numOfFiles.text = "Number of files: " + result.data?.fileList?.size.toString() + ", Sync status: " + result.data?.syncStatus?.rawValue +

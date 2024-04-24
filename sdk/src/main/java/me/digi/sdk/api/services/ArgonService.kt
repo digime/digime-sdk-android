@@ -1,6 +1,7 @@
 package me.digi.sdk.api.services
 
 import io.reactivex.rxjava3.core.Single
+import me.digi.sdk.entities.request.AccountIdRequest
 import me.digi.sdk.entities.request.AuthorizationScopeRequest
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.request.Pull
@@ -15,22 +16,26 @@ import retrofit2.http.*
 
 internal interface ArgonService {
 
-    @POST("v1.6/permission-access/session")
+    @POST("v1.7/permission-access/session")
     fun getSession(@Body sessionRequest: SessionRequest): Call<SessionResponse>
 
-    @GET("/v1.6/permission-access/query/{sessionKey}")
-    fun getFileList(@Path("sessionKey") sessionKey: String): Call<FileList>
+    @GET("/v1.7/permission-access/query/{sessionKey}")
+    fun getFileList(
+        @Header("Authorization") jwt: String,
+        @Path("sessionKey") sessionKey: String
+    ): Single<FileList>
 
     @Headers("Accept: application/octet-stream")
-    @GET("/v1.6/permission-access/query/{sessionKey}/{fileName}")
+    @GET("/v1.7/permission-access/query/{sessionKey}/{fileName}")
     fun getFileBytes(
+        @Header("Authorization") jwt: String,
         @Path("sessionKey") sessionKey: String,
         @Path("fileName") fileName: String
     ): Single<Response<ResponseBody>>
 
     @Multipart
     @Headers("Accept: application/json", "cache-control: no-cache")
-    @POST("/v1.6/permission-access/postbox/{id}")
+    @POST("/v1.7/permission-access/postbox/{id}")
     fun pushOngoingData(
         @Header("Authorization") jwt: String,
         @Header("sessionKey") sessionKey: String,
@@ -42,30 +47,73 @@ internal interface ArgonService {
         @Part("file") description: RequestBody
     ): Single<DataWriteResponse>
 
-    @POST("v1.6/oauth/token")
+    @Headers(
+        "Accept: application/json",
+        "Content-Type: application/octet-stream",
+        "cache-control: no-cache"
+    )
+    @POST("/v1.7/permission-access/import")
+    fun directImport(
+        @Header("Authorization") jwt: String,
+        @Header("FileDescriptor") fileDescriptor: String,
+        @Body file: RequestBody
+    ): Single<Unit>
+
+    @POST("v1.7/oauth/token")
     fun refreshCredentials(@Header("Authorization") jwt: String): Call<TokenResponse>
 
-    @POST("v1.6/oauth/token")
+    @POST("v1.7/oauth/token")
     fun exchangeAuthToken(@Header("Authorization") jwt: String): Call<TokenResponse>
 
-    @POST("v1.6/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
+    @POST("v1.7/permission-access/trigger?schemaVersion=5.0.0&prefetch=false")
     fun triggerDataQuery(
         @Header("Authorization") jwt: String,
         @Body scopeRequest: Pull
     ): Call<DataQueryResponse>
 
-    @POST("v1.6/oauth/authorize")
+    @POST("v1.7/oauth/authorize")
     fun getPreAuthorizationCode(
         @Header("Authorization") jwt: String,
         @Body scopeRequest: AuthorizationScopeRequest
     ): Call<PreAuthorizationResponse>
 
-    @GET("v1.5/discovery/services")
-    fun getServicesForContract(@Header("contractId") contractId: String?): Single<ServicesResponse>
+    @GET("v1.7/discovery/services")
+    fun getServicesForContract(
+        @Header("contractId") contractId: String,
+        @Query("includeSampleDataOnlySources") includeSampleDataOnlySources: Boolean): Single<ServicesResponse>
 
-    @POST("v1.6/oauth/token/reference")
+    @POST("v1.7/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
 
-    @DELETE("v1.6/user")
+    @POST("v1.7/reference")
+    fun getAccountIdReference(
+        @Header("Authorization") jwt: String,
+        @Body accountIdRequest: AccountIdRequest
+    ): Call<AccountReferenceResponse>
+
+    @DELETE("v1.7/user")
     fun deleteUser(@Header("Authorization") jwt: String): Call<Unit>
+
+    @Headers("Accept: application/octet-stream")
+    @GET("v1.7/export/{serviceType}/report?")
+    fun getPortabilityReport(
+        @Header("Authorization") jwt: String,
+        @Path("serviceType") serviceType: String,
+        @Query("format") format: String,
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): Single<Response<ResponseBody>>
+
+    @GET("v1.7/permission-access/sample/datasets/{sourceId}")
+    fun getServiceDataSets(
+        @Header("Authorization") jwt: String,
+        @Path("sourceId") sourceId: String
+    ): Single<Response<Map<String, DataSet>>>
+
+    @GET("v1.7/permission-access/revoke/h:accountId")
+    fun revokeEndpoint(
+        @Header("Authorization") jwt: String,
+        @Header("accountId") accountId: String,
+        @Header("redirectUri") redirectUri: String
+    ): Single<Response<ResponseBody>>
 }

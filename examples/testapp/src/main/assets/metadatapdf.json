@@ -1,16 +1,13 @@
 {
-  "accounts": [
-    {
-      "accountId": "222222",
-      "references": ["$.accounts[0]"]
-    }
-  ],
-  "objectTypes": [
-    {
-      "name": "names"
-    }
-  ],
-  "reference": ["file.pdf"],
-  "tags": ["receipts"],
-  "mimeType": "application/pdf"
+  "metadata": {
+    "mimeType": "application/pdf",
+    "reference": [
+      "file.pdf"
+    ],
+    "accounts": [
+      {
+        "accountId": "1"
+      }
+    ]
+  }
 }

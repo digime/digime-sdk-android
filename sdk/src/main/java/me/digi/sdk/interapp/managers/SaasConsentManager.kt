@@ -5,11 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import me.digi.sdk.AuthError
 import me.digi.sdk.R
-import me.digi.sdk.callbacks.AuthorizationCompletion
-import me.digi.sdk.callbacks.ServiceOnboardingCompletion
-import me.digi.sdk.entities.response.ConsentAuthResponse
-import me.digi.sdk.interapp.AppCallbackHandler
-import me.digi.sdk.interapp.AppCommunicator
+import me.digi.sdk.entities.response.SaasCallbackResponse
+import me.digi.sdk.interapp.*
 import me.digi.sdk.ui.ConsentBrowserActivity
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.toMap
@@ -17,7 +14,7 @@ import me.digi.sdk.utilities.toMap
 class SaasConsentManager(private val baseURL: String?, private val type: String) :
     AppCallbackHandler() {
 
-    private var authorizationCallbackHandler: AuthorizationCompletion? = null
+    private var authorizationCallbackHandler: AuthorizationCallback? = null
         set(value) {
             if (field != null && value != null)
                 field?.invoke(null, AuthError.Cancelled)
@@ -25,10 +22,18 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
             field = value
         }
 
-    private var onboardingCallbackHandler: ServiceOnboardingCompletion? = null
+    private var onboardingCallbackHandler: ServiceOnboardCallback? = null
         set(value) {
             if (field != null && value != null)
-                field?.invoke(AuthError.Cancelled)
+                field?.invoke(null, AuthError.Cancelled)
+
+            field = value
+        }
+
+    private var reAuthCallbackHandler: ServiceReAuthCallback? = null
+        set(value) {
+            if (field != null && value != null)
+                field?.invoke(null, AuthError.Cancelled)
 
             field = value
         }
@@ -37,31 +42,41 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        completion: AuthorizationCompletion
+        callback: AuthorizationCallback
     ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
-        authorizationCallbackHandler = completion
-        handlerAction(fromActivity, serviceId, codeValue)
+        authorizationCallbackHandler = callback
+        handlerAction(fromActivity, "service", serviceId, codeValue)
     }
 
     fun beginOnboardAction(
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        completion: ServiceOnboardingCompletion
+        callback: ServiceOnboardCallback
     ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
-        onboardingCallbackHandler = completion
-        handlerAction(fromActivity, serviceId, codeValue)
+        onboardingCallbackHandler = callback
+        handlerAction(fromActivity, "service", serviceId, codeValue)
+    }
+    fun beginReAuthAction(
+        fromActivity: Activity,
+        codeValue: String,
+        accountId: String? = null,
+        callback: ServiceReAuthCallback
+    ) {
+        AppCommunicator.getSharedInstance().addCallbackHandler(this)
+        reAuthCallbackHandler = callback
+        handlerAction(fromActivity, "accountRef", accountId, codeValue)
     }
 
-    private fun handlerAction(fromActivity: Activity, serviceId: String?, codeValue: String) {
+    private fun handlerAction(fromActivity: Activity, queryParameterKey: String, queryParameter: String?, codeValue: String) {
         val guestRequestCode = AppCommunicator.getSharedInstance()
             .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
         val proxyLaunchIntent = Intent(fromActivity, ConsentBrowserActivity::class.java)
 
-        proxyLaunchIntent.data = buildSaaSClientURI(serviceId, codeValue)
+        proxyLaunchIntent.data = buildSaaSClientURI(queryParameterKey, queryParameter, codeValue)
 
         fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
@@ -122,7 +137,7 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         }
 
         authorizationCallbackHandler?.invoke(
-            ConsentAuthResponse(
+            SaasCallbackResponse(
                 success.toBoolean(),
                 code,
                 state,
@@ -130,17 +145,36 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
                 publicKey
             ), error
         )
-        onboardingCallbackHandler?.invoke(error)
+        onboardingCallbackHandler?.invoke(
+            SaasCallbackResponse(
+                success.toBoolean(),
+                code,
+                state,
+                postboxId,
+                publicKey
+            ),
+            error)
+
+        reAuthCallbackHandler?.invoke(
+            SaasCallbackResponse(
+                success.toBoolean(),
+                code,
+                state,
+                postboxId,
+                publicKey
+            ),
+            error)
         AppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
         onboardingCallbackHandler = null
+        reAuthCallbackHandler = null
     }
 
     override fun extractAndAppendMetadata(payload: Map<String, Any>) {
         // TODO: Does quark do metadata?
     }
 
-    private fun buildSaaSClientURI(serviceId: String? = null, codeValue: String): Uri {
+    private fun buildSaaSClientURI(queryParameterKey: String, queryParameter: String? = null, codeValue: String): Uri {
 
         val ctx = AppCommunicator.getSharedInstance().context
 
@@ -149,9 +183,8 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         val uri: Uri.Builder = Uri.parse("${baseURL}apps/saas/$type")
             .buildUpon()
             .appendQueryParameter(code, codeValue)
-            .appendQueryParameter("callback", "digime-ca://callback")
 
-        serviceId?.let { uri.appendQueryParameter("service", serviceId) }
+        queryParameter?.let { uri.appendQueryParameter(queryParameterKey, queryParameter) }
 
         return uri.build()
     }

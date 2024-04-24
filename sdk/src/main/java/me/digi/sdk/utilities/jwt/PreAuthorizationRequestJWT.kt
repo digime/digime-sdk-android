@@ -30,7 +30,7 @@ internal class PreAuthorizationRequestJWT(
     val codeChallengeMethod = "S256"
 
     @JwtClaim
-    val redirectUri = "digime-ca://callback"
+    val redirectUri = "digime-ca://callback-${appId}"
 
     @JwtClaim
     val responseMode = "query"

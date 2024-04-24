@@ -56,4 +56,8 @@ class DefaultMainRepository(
         remoteAccess.getFile(fileName)
 
     override fun getFileBytes(fileName: String): Single<FileItemBytes> = remoteAccess.getFileBytes(fileName)
+
+    override fun getAccounts(): Single<ReadAccountsResponse>  {
+        return remoteAccess.getAccounts()
+    }
 }

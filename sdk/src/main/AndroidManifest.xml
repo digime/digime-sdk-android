@@ -3,26 +3,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-
     <application>
         <activity
-            android:name=".ui.ConsentBrowserActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="digime-ca"/>
-            </intent-filter>
-
-        </activity>
-
-        <activity
             android:name=".utilities.ResumeStateActivity"
-            android:exported="true"
-            />
-
+            android:exported="true"/>
     </application>
 </manifest>

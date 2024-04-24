@@ -38,4 +38,6 @@ interface MainRemoteDataAccess {
     fun getFile(fileName: String): Single<FileItemBytes>
 
     fun getFileBytes(fileName: String): Single<FileItemBytes>
+
+    fun getAccounts(): Single<ReadAccountsResponse>
 }

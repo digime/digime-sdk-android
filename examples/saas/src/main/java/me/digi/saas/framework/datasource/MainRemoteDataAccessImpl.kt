@@ -93,19 +93,19 @@ class MainRemoteDataAccessImpl(
             }
         }
 
-    override fun pushDataToPostbox(
-        payloadToWrite: WriteDataPayload,
-        accessToken: String
-    ): Single<DataWriteResponse> =
-        Single.create { emitter ->
-            writeClient.write(
-                payloadToWrite,
-                accessToken
-            ) { response: DataWriteResponse?, error ->
-                error?.let(emitter::onError)
-                    ?: emitter.onSuccess(response as DataWriteResponse)
-            }
-        }
+//    override fun pushDataToPostbox(
+//        payloadToWrite: WriteDataPayload,
+//        accessToken: String
+//    ): Single<DataWriteResponse> =
+//        Single.create { emitter ->
+//            writeClient.write(
+//                payloadToWrite,
+//                accessToken
+//            ) { response: DataWriteResponse?, error ->
+//                error?.let(emitter::onError)
+//                    ?: emitter.onSuccess(response as DataWriteResponse)
+//            }
+//        }
 
     override fun deleteUsersLibrary(accessToken: String?): Single<Boolean> =
         Single.create { emitter ->

@@ -1,5 +1,7 @@
 package me.digi.sdk
 
+import me.digi.sdk.entities.FileListAccount
+
 abstract class Error(override val message: String) : Throwable(message)
 
 sealed class SDKError(override val message: String) : Error(message) {
@@ -58,7 +60,8 @@ annotation class ArgonCode(val value: String)
 sealed class APIError(
     internal var code: String? = null,
     override var message: String,
-    internal var reference: String? = null
+    internal var reference: String? = null,
+    var accounts: List<FileListAccount>? = null
 
 ) : Error(message) {
 
@@ -114,4 +117,7 @@ sealed class APIError(
     class ErrorWithMessage(message: String) : AuthError(message)
     class UNREACHABLE :
         APIError(message = "Couldn't reach the digi.me API - please check your network connection.")
+
+    class REAUTHREQUIRED :
+        APIError(message = "Reauthorization required.")
 }

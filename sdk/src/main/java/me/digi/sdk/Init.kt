@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
+import android.util.Log
 import com.google.gson.Gson
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
@@ -12,22 +13,21 @@ import io.reactivex.rxjava3.core.SingleSource
 import io.reactivex.rxjava3.core.SingleTransformer
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
-import me.digi.sdk.*
-import me.digi.sdk.api.helpers.WriteMultipartBody
 import me.digi.sdk.callbacks.*
 import me.digi.sdk.entities.*
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
-import me.digi.sdk.entities.payload.CredentialsPayload
-import me.digi.sdk.entities.payload.PreAuthorizationCodePayload
-import me.digi.sdk.entities.payload.TokenReferencePayload
+import me.digi.sdk.entities.payload.*
 import me.digi.sdk.entities.request.*
 import me.digi.sdk.entities.response.*
 import me.digi.sdk.interapp.managers.SaasConsentManager
-import me.digi.sdk.utilities.Compressor
+import me.digi.sdk.utilities.*
 import me.digi.sdk.utilities.DMELog
 import me.digi.sdk.utilities.FileListItemCache
 import me.digi.sdk.utilities.crypto.*
 import me.digi.sdk.utilities.jwt.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import java.security.PrivateKey
@@ -35,7 +35,8 @@ import kotlin.math.max
 
 class Init(
     val context: Context,
-    val configuration: DigiMeConfiguration
+    val configuration: DigiMeConfiguration,
+    val onTokenAcquired: (tokensPayload: TokensPayload) -> Unit
 ) : Client(context = context, config = configuration) {
 
     private val authorizeConsentManager: SaasConsentManager by lazy {
@@ -49,10 +50,14 @@ class Init(
         )
     }
 
-    private var activeFileDownloadHandler: FileContentCompletion? = null
-    private var activeSessionDataFetchCompletionHandler: FileListCompletion? = null
+    private val reAuthConsentManager: SaasConsentManager by lazy {
+        SaasConsentManager(configuration.baseUrl, context.getString(R.string.labelSaasReAuth))
+    }
+
+    private var activeFileDownloadHandler: FileContentCallback? = null
+    private var activeSessionDataFetchCallbackHandler: FileListCallback? = null
     private var fileListUpdateHandler: IncrementalFileListUpdate? = null
-    private var fileListCompletionHandler: FileListCompletion? = null
+    private var fileListCallbackHandler: FileListCallback? = null
     private var fileListItemCache: FileListItemCache? = null
     private var latestFileList: FileList? = null
 
@@ -65,19 +70,24 @@ class Init(
             if (activeDownloadCount == 0) {
                 when (value) {
                     FileList.SyncStatus.COMPLETED(),
-                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(
+                        null
+                    )
                     else -> Unit
                 }
             }
 
             field = value
         }
+
     var activeDownloadCount = 0
         set(value) {
             if (value == 0) {
                 when (activeSyncStatus) {
                     FileList.SyncStatus.COMPLETED(),
-                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(null)
+                    FileList.SyncStatus.PARTIAL() -> completeDeliveryOfSessionData(
+                        null
+                    )
                     else -> Unit
                 }
             }
@@ -85,8 +95,19 @@ class Init(
             field = value
         }
 
+    var sessionKey: String? = ""
+    var sdkVersion: String = BuildConfig.SDK_VERSION
+    var syncRunning: Boolean = false
+
     private var stalePollCount = 0
     private var isFirstRun: Boolean = false
+
+    private fun checkAccessToken(): Single<Boolean> {
+        return if (!configuration.tokenPayload?.accessToken?.expiresOn?.isValid()!!)
+            requestNewTokens()
+        else
+            Single.just(false)
+    }
 
     /**
      * Authorizes the contract configured with this digi.me instance to access to a library.
@@ -110,44 +131,43 @@ class Init(
      * @param serviceId Identifier of initial service to add. Only valid for first
      * authorization of read contracts where user has not previously granted consent.
      * Ignored for all subsequent calls.
-     * @param completion Block called upon authorization with any errors encountered.
+     * @param callback Block called upon authorization with any errors encountered.
      */
     fun authorizeAccess(
         fromActivity: Activity,
         scope: DataRequest? = null,
-        credentials: CredentialsPayload? = null,
         serviceId: String? = null,
-        completion: GetAuthorizationDoneCompletion
+        callback: AuthorizeAccessCallback
     ) {
-        requestPreAuthorizationCode(credentials, scope)
+        requestPreAuthorizationCode(scope)
             .compose(requestConsentAccess(fromActivity, serviceId))
             .compose(requestTokenExchange())
             .onErrorResumeNext { error ->
                 errorHandler(
                     fromActivity,
                     error,
-                    credentials,
+                    null,
                     scope,
                     serviceId
-                )
+                )!!
             }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { result: GetTokenExchangeDone ->
+                onSuccess = { result: TokenExchangeResponse ->
                     sessionManager.updatedSession = result.consentData.session
+                    sessionKey = sessionManager.updatedSession?.key
                     isFirstRun = true
 
                     val response = AuthorizationResponse().copy(
                         session = result.consentData.session,
-                        authResponse = result.consentData.consentResponse,
-                        credentials = result.credentials
+                        authResponse = result.consentData.consentResponse
                     )
 
-                    completion.invoke(response, null)
+                    callback.invoke(response, null)
                 },
                 onError = { error ->
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         error.let { it as? Error }
                             ?: APIError.ErrorWithMessage(
@@ -157,53 +177,165 @@ class Init(
             )
     }
 
+    fun reAuthorizeAccount(
+        fromActivity: Activity,
+        accountId: String?,
+        callback: AuthorizeAccessCallback
+    ) {
+
+        fun requestAccountIdReference(): SingleTransformer<OnboardPayload, AccountIdReferencePayload> =
+            SingleTransformer {
+                it.flatMap { referenceCodePayload ->
+                    Single.create { emitter ->
+                        DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
+
+                        val jwt = AccountIdReferenceRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                        )
+
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                        val accountIdRequest = AccountIdRequest()
+                        accountIdRequest.value = accountId
+
+                        apiClient.makeCall(
+                            apiClient.argonService.getAccountIdReference(
+                                authHeader,
+                                accountIdRequest
+                            )
+                        ) { response, error ->
+                            when {
+                                response != null -> {
+                                    val accountIdReferencePayload =
+                                        AccountIdReferencePayload(
+                                            tokenReferencePayload = referenceCodePayload.tokenReferencePayload,
+                                            session = referenceCodePayload.session,
+                                            code = referenceCodePayload.code,
+                                            accountId = response.id
+                                        )
+                                    emitter.onSuccess(accountIdReferencePayload)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
+                    }
+                }
+            }
+
+        fun requestReAuth(): SingleTransformer<AccountIdReferencePayload, AuthorizationResponse> =
+            SingleTransformer {
+                it.flatMap { accountIdReferencePayload ->
+                    Single.create { emitter ->
+                        DMELog.i(context.getString(R.string.labelUserOnboardingRequest))
+
+                        accountIdReferencePayload.tokenReferencePayload?.referenceCode?.let { code ->
+                            reAuthConsentManager.beginReAuthAction(
+                                fromActivity,
+                                code,
+                                accountIdReferencePayload.accountId
+                            ) { onboardResponse: SaasCallbackResponse?, error: Error? ->
+                                when {
+                                    onboardResponse?.success == true -> {
+                                        val consentDone = AuthorizationResponse()
+                                            .copy(
+                                                session = accountIdReferencePayload.session,
+                                                authResponse = onboardResponse
+                                            )
+
+                                        emitter.onSuccess(consentDone)
+                                    }
+                                    error != null -> emitter.onError(error)
+                                    else -> emitter.onError(IllegalArgumentException())
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
+        checkAccessToken()
+            .compose(requestCodeReference())
+            .compose(requestAccountIdReference())
+            .compose(requestReAuth())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onError = { error ->
+                callback.invoke(
+                    null,
+                    error.let { it as? Error }
+                        ?: APIError.ErrorWithMessage(
+                            error.localizedMessage ?: "Unknown error occurred"
+                        ))
+            }, onSuccess = { result ->
+                sessionKey = sessionManager.updatedSession?.key
+                isFirstRun = true
+
+                callback.invoke(result, null)
+            })
+    }
+
     /**
      * Deletes the user's library associated with the configured contract.
      *
      * Please note that if multiple contracts are linked to the same library,
-     * then 'deleteUser' will also need to be called on those contracts to remove
+     * the n 'deleteUser' will also need to be called on those contracts to remove
      * any stored credentials, in which case an error may be reported on those calls.
      *
-     * @param completion Block called on completion with value true/false upon library deletion
+     * @param callback Block called on completion with value true/false upon library deletion
      * or any error encountered
      */
     fun deleteUser(
-        userAccessToken: String?,
-        completion: UserDeleteCompletion
+        callback: DeleteUserCallback
     ) {
         DMELog.i(context.getString(R.string.labelDeleteLibrary))
 
-        fun deleteLibrary() = Single.create<Boolean> { emitter ->
-            userAccessToken?.let {
+        fun deleteLibrary(): SingleTransformer<Boolean, DeleteUserResponse> =
+            SingleTransformer { credentialsPayload ->
+                credentialsPayload.flatMap { credentials ->
+                    Single.create<DeleteUserResponse> { emitter ->
+                        configuration.tokensPayload?.accessToken?.value?.let { accessToken ->
 
-                val jwt = UserDeletionRequestJWT(
-                    configuration.appId,
-                    configuration.contractId,
-                    userAccessToken
-                )
+                            val jwt = UserDeletionRequestJWT(
+                                configuration.appId,
+                                configuration.contractId,
+                                accessToken
+                            )
 
-                val signingKey: PrivateKey =
-                    KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-                val authHeader: String = jwt.sign(signingKey).tokenize()
+                            val signingKey: PrivateKey =
+                                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                            val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->
-                    when {
-                        error != null -> emitter.onError(error)
-                        else -> emitter.onSuccess(true)
+                            apiClient.makeCall(apiClient.argonService.deleteUser(authHeader)) { _, error ->
+                                when {
+                                    error != null -> emitter.onError(error)
+                                    else -> emitter.onSuccess(DeleteUserResponse(true))
+                                }
+                            }
+                        }
+                            ?: emitter.onError(APIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
                     }
                 }
             }
-                ?: emitter.onError(APIError.ErrorWithMessage(context.getString(R.string.labelAccessTokenInvalidOrMissing)))
-        }
 
-        deleteLibrary()
+        checkAccessToken()
+            .compose(deleteLibrary())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
+            .subscribeBy(onSuccess = {
+                callback.invoke(
+                    it,
+                    null
+                )
+            }, onError = {
                 it.localizedMessage?.let { message ->
                     if (message.contains("204"))
-                        completion.invoke(true, null)
-                    else completion.invoke(
+                        callback.invoke(DeleteUserResponse(true, credentials), null)
+                    else callback.invoke(
                         null,
                         APIError.ErrorWithMessage(message)
                     )
@@ -214,257 +346,140 @@ class Init(
     /**
      * Gets list of possible accounts from the users library.
      *
-     * @param completion Block called upon completion with either list of accounts in the library;
+     * @param callback Block called upon completion with either list of accounts in the library;
      * or any errors encountered.
      */
-    fun readAccounts(userAccessToken: String, completion: AccountsCompletion) {
+    fun readAccounts(credentials: TokensPayload, callback: GetAccountsCallback) {
         DMELog.i(context.getString(R.string.labelReadAccounts))
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            credentials.accessToken.value!!,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, "accounts.json")
-                .map { response: Response<ResponseBody> ->
-
-                    val result: ByteArray = response.body()?.byteStream()?.readBytes() as ByteArray
-
-                    val contentBytes: ByteArray =
-                        DataDecryptor.dataFromEncryptedBytes(result, configuration.privateKeyHex)
-
-                    val decompressedContentBytes: ByteArray =
-                        Compressor.decompressData(contentBytes, Compressor.COMPRESSION_NONE)
-
-                    Gson().fromJson(
-                        String(decompressedContentBytes),
-                        ReadAccountsResponse::class.java
-                    )
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { completion.invoke(it, null) },
-                    onError = {
-                        completion.invoke(
-                            null,
-                            AuthError.ErrorWithMessage(
-                                it.localizedMessage ?: "Unknown error occurred"
-                            )
-                        )
-                    }
-                )
-        } else handleReadAccounts(userAccessToken, completion)
+            getAccountsContent(callback, currentSession?.key!!, authHeader, credentials)
+        } else handleReadAccounts(credentials, callback)
     }
 
     /**
      * Writes data to user's library associated with configured contract
      *
-     * @param data The data to be written
-     * @param userAccessToken Token to reference the existing library
-     * @param completion Block called on completion with updated/returned session values with
+     * @param writeDataPayload The data to be written
+     * @param credentials to reference the existing library
+     * @param callback Block called on completion with updated/returned session values with
      * delivery status or any error encountered.
      */
     fun write(
+        credentials: TokensPayload,
         writeDataPayload: WriteDataPayload,
-        userAccessToken: String,
-        completion: OngoingWriteCompletion
+        callback: WriteDataCallback
     ) {
         DMELog.i(context.getString(R.string.labelWriteDataToLibrary))
 
         if (sessionManager.isSessionValid())
-            handleDataWrite(writeDataPayload, userAccessToken, completion)
+            handleDataWrite(credentials, writeDataPayload, callback)
         else
-            updateSession { isSessionUpdated, error ->
+            updateSession { _, error ->
                 error?.let {
                     DMELog.e("Your session is invalid; please request a new one.")
-                    completion(null, AuthError.InvalidSession())
+                    callback(WriteDataResponse(null, credentials), AuthError.InvalidSession())
                 }
                     ?: run {
-                        handleDataWrite(writeDataPayload, userAccessToken, completion)
+                        handleDataWrite(credentials, writeDataPayload, callback)
                     }
             }
-    }
-
-    /**
-     * Requests new session, and updates session manager with it.
-     *
-     * @param completion Block called upon completion with updated session, boolean value
-     * if session was in fact updated, or any error encountered.
-     */
-    private fun updateSession(completion: GetSessionCompletion) {
-
-        val sessionRequest = SessionRequest(
-            configuration.appId,
-            configuration.contractId,
-            SdkAgent(),
-            "gzip",
-            null
-        )
-
-        fun requestSession(): Single<SessionResponse> =
-            Single.create { emitter ->
-                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
-                    when {
-                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
-                        error != null -> emitter.onError(error)
-                        else -> emitter.onError(IllegalArgumentException())
-                    }
-                }
-            }
-
-        requestSession()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    val session = Session().copy(key = it.key, expiry = it.expiry)
-                    sessionManager.updatedSession = session
-                    completion.invoke(true, null)
-                },
-                onError = {
-                    completion.invoke(
-                        false,
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
-                        )
-                    )
-                }
-            )
     }
 
     /**
      * Once a user has granted consent, adds an additional service
      *
      * @param serviceId Identifier of service to add
-     * @param userAccessToken Token to reference the same library
-     * @param completion Block called upon completion with any errors encountered
+     * @param credentials to reference the same library
+     * @param callback Block called upon completion with any errors encountered
      */
     fun addService(
         fromActivity: Activity,
         serviceId: String,
-        userAccessToken: String,
-        completion: ServiceOnboardingCompletion
+        scope: DataRequest?,
+        credentials: TokensPayload,
+        callback: AuthorizeAccessCallback
     ) {
 
-        fun requestCodeReference(): Single<TokenReferencePayload> = Single.create { emitter ->
-            DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
-
-            val jwt = ReferenceCodeRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
-
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
-
-            apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
-                when {
-                    tokenReference != null -> {
-                        val chunks: List<String> = tokenReference.token.split(".")
-                        val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val result: TokenReferencePayload =
-                            Gson().fromJson(payloadJson, TokenReferencePayload::class.java)
-
-                        emitter.onSuccess(result)
-                    }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
-                }
-            }
-        }
-
-        fun requestOnboard(): SingleTransformer<TokenReferencePayload, Boolean> =
+        fun requestOnboard(): SingleTransformer<OnboardPayload, AuthorizationResponse> =
             SingleTransformer {
-                it.flatMap { payload ->
+                it.flatMap { onboardPayload ->
                     Single.create { emitter ->
                         DMELog.i(context.getString(R.string.labelUserOnboardingRequest))
 
-                        payload.referenceCode?.let { code ->
+                        onboardPayload.tokenReferencePayload?.referenceCode?.let { code ->
                             onboardConsentManager.beginOnboardAction(
                                 fromActivity,
                                 code,
                                 serviceId
-                            ) { error ->
+                            ) { onboardResponse: SaasCallbackResponse?, error: Error? ->
                                 when {
+                                    onboardResponse?.success == true -> {
+                                        val consentDone = AuthorizationResponse()
+                                            .copy(
+                                                session = onboardPayload.session,
+                                                authResponse = onboardResponse
+                                            )
+
+                                        emitter.onSuccess(consentDone)
+                                    }
                                     error != null -> emitter.onError(error)
-                                    else -> emitter.onSuccess(true)
+                                    else -> emitter.onError(IllegalArgumentException())
                                 }
+
                             }
                         }
                     }
                 }
             }
 
-        fun triggerDataQuery(): SingleTransformer<Boolean, Boolean> = SingleTransformer {
-            it.flatMap {
-                Single.create { emitter ->
-                    DMELog.i(context.getString(R.string.labelTriggeringDataQuery))
-
-                    val jwt = TriggerDataQueryRequestJWT(
-                        configuration.appId,
-                        configuration.contractId,
-                        userAccessToken
-                    )
-
-                    val signingKey: PrivateKey =
-                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-                    val authHeader: String = jwt.sign(signingKey).tokenize()
-
-                    apiClient.makeCall(
-                        apiClient.argonService.triggerDataQuery(
-                            authHeader,
-                            Pull()
-                        )
-                    ) { response, error ->
-                        when {
-                            response != null -> {
-                                sessionManager.updatedSession = response.session
-                                emitter.onSuccess(true)
-                            }
-                            error != null -> emitter.onError(error)
-                            else -> emitter.onError(IllegalArgumentException())
-                        }
-                    }
-                }
-            }
-        }
-
-        requestCodeReference()
+        checkAccessToken()
+            .compose(requestCodeReference())
             .compose(requestOnboard())
-            .compose(triggerDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { completion.invoke(null) },
-                onError = {
-                    activeSyncStatus = null
-                    completion.invoke(
-                        AuthError.ErrorWithMessage(
-                            it.localizedMessage ?: "Unknown error occurred"
-                        )
-                    )
-                }
+            .subscribe({ response ->
+                callback.invoke(response, null)
+            }, { error ->
+                callback.invoke(
+                    null,
+                    error.let { it as? Error }
+                        ?: APIError.ErrorWithMessage(
+                            error.localizedMessage ?: "Unknown error occurred"
+                        ))
+            }
             )
     }
 
     /**
      * Get a list of possible services a user can add to their digi.me library
      *
-     * @param completion Block called upon completion with either the service list
+     * @param callback Block called upon completion with either the service list
      * or any errors encountered
      */
     fun getAvailableServices(
-        contractId: String? = configuration.contractId,
-        completion: AvailableServicesCompletion
+        contractId: String,
+        callback: AvailableServicesCallback
     ) {
         DMELog.i(context.getString(R.string.labelAvailableServices))
 
         apiClient.argonService.getServicesForContract(contractId)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = { completion.invoke(it, null) }, onError = {
-                completion.invoke(
+            .subscribeBy(onSuccess = { callback.invoke(it, null) }, onError = {
+                callback.invoke(
                     null,
                     APIError.ErrorWithMessage(
                         it.localizedMessage ?: "Could not fetch services. Something went wrong"
@@ -490,55 +505,150 @@ class Init(
      *
      * @param downloadHandler Handler called after every file fetch attempt finishes.
      * Either contains the file or an error if fetch failed.
-     * @param completion Block called when fetching all files has completed. Contains
+     * @param callback Block called when fetching all files has completed. Contains
      * final list of files or an error if reading file list failed.
      */
     fun readAllFiles(
         scope: DataRequest? = null,
-        userAccessToken: String,
-        downloadHandler: FileContentCompletion,
-        completion: FileListCompletion
+        credentials: TokensPayload,
+        fileContentCallback: FileContentCallback,
+        isOnboarding: Boolean,
+        fileListCallback: FileListCallback
     ) {
 
         val currentSession = sessionManager.updatedSession
+        syncRunning = true
 
+        isFirstRun = isOnboarding
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+            checkAccessToken()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    if (it)
+                        handleContinuousDataDownload(fileContentCallback, fileListCallback)
+                }, {
+                    fileListCallback.invoke(null, AuthError.ErrorWithMessage(
+                        it.localizedMessage ?: "Unknown error occurred"
+                    ))
+                })
         } else {
-            handleCyclicDataDownload(scope, userAccessToken, downloadHandler, completion)
+            checkAccessToken()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    if (it)
+                        handleCyclicDataDownload(scope, fileContentCallback, fileListCallback)
+                }, {
+                    fileListCallback.invoke(null, AuthError.ErrorWithMessage(
+                        it.localizedMessage ?: "Unknown error occurred"
+                    ))
+                })
         }
     }
 
     /**
      * Get list of possible files from the users library.
      *
-     * @param completion Block called upon completion with either list of files in the library;
+     * @param callback Block called upon completion with either list of files in the library;
      * returned as json objects, or any errors encountered.
      */
-    fun readFileList(userAccessToken: String, completion: FileListCompletion) {
+    fun readFileList(credentials: TokensPayload, callback: FileListCallback) {
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            credentials.accessToken.value!!,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if ((currentSession != null && sessionManager.isSessionValid()) and (activeSyncStatus != FileList.SyncStatus.COMPLETED() && activeSyncStatus != FileList.SyncStatus.PARTIAL())) {
-            apiClient.makeCall(
-                apiClient.argonService.getFileList(currentSession?.key!!),
-                completion
-            )
-        } else handleFileList(userAccessToken, completion)
+
+            if (credentials.accessToken.expiresOn.isValid())
+                apiClient.argonService.getFileList(authHeader, currentSession?.key!!)
+                    .map {
+
+                        it
+                    }
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeBy(
+                        onSuccess = { callback.invoke(it, null) },
+                        onError = {
+                            callback.invoke(
+                                null,
+                                AuthError.ErrorWithMessage(
+                                    it.localizedMessage ?: "Unknown error occurred"
+                                )
+                            )
+                        }
+                    )
+            else {
+                refreshAccessToken(null) { _, error ->
+                    val newJwt = PermissionAccessRequestJWT(
+                        configuration.tokenPayload?.accessToken?.value!!,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val newSigningKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val newAuthHeader: String = newJwt.sign(newSigningKey).tokenize()
+
+                    apiClient.argonService.getFileList(newAuthHeader, currentSession?.key!!)
+                        .map {
+
+                            it
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { callback.invoke(it, null) },
+                            onError = {
+                                callback.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        it.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
+                }
+            }
+        } else handleFileList(credentials, callback)
     }
 
     /**
      * Get a file content by file ID.
      *
      * @param fileId ID for specific file
-     * @param completion Block called upon completion with either file or any errors encountered.
+     * @param callback Block called upon completion with either file or any errors encountered.
      */
-    fun readFile(userAccessToken: String, fileId: String, completion: FileContentBytesCompletion) {
+    fun readFile(
+        credentials: TokenPayload,
+        fileId: String,
+        callback: FileContentBytesCallback
+    ) {
 
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            credentials.accessToken.value!!,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -558,14 +668,17 @@ class Init(
                     val decompressedContentBytes: ByteArray =
                         Compressor.decompressData(contentBytes, compression)
 
-                    FileItemBytes().copy(fileContent = decompressedContentBytes)
+                    FileItemBytes().copy(
+                        fileContent = decompressedContentBytes,
+                        credentials = credentials
+                    )
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onSuccess = { completion.invoke(it, null) },
+                    onSuccess = { callback.invoke(it, null) },
                     onError = {
-                        completion.invoke(
+                        callback.invoke(
                             null,
                             AuthError.ErrorWithMessage(
                                 it.localizedMessage ?: "Unknown error occurred"
@@ -573,14 +686,195 @@ class Init(
                         )
                     }
                 )
-        } else handleFileItemBytes(userAccessToken, fileId, completion)
+        } else handleFileItemBytes(credentials, fileId, callback)
     }
 
-    private fun getSessionData(fileId: String, completion: FileContentCompletion) {
+    fun getPortabilityReport(
+        credentials: TokenPayload,
+        serviceType: String,
+        format: String,
+        from: String,
+        to: String,
+        callback: PortabilityReportCallback
+    ){
+        fun getPortabilityReport(): SingleTransformer<in Boolean, out PortabilityReportResponse> =
+        SingleTransformer {
+            it.flatMap { onboardPayload ->
+                Single.create { emitter ->
+                    val jwt = PermissionAccessRequestJWT(
+                        configuration.tokenPayload?.accessToken?.value!!,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getPortabilityReport(authHeader, serviceType, format, from, to)
+                        .map { response: Response<ResponseBody> ->
+                            PortabilityReportResponse(
+                                response.body()?.bytes(),
+                                credentials
+                            )
+
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { result ->
+                                callback.invoke(result, null)
+                            },
+                            onError = { throwable ->
+                                callback.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        throwable.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
+                }
+            }
+        }
+
+        checkAccessToken()
+            .compose(getPortabilityReport())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result ->
+                    callback.invoke(result, null)
+
+                },
+                onError = { throwable ->
+                    callback.invoke(
+                        null,
+                        AuthError.ErrorWithMessage(
+                            throwable.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+        val jwt = PermissionAccessRequestJWT(
+            credentials.accessToken.value!!,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+    }
+
+    /**
+     * Requests new session, and updates session manager with it.
+     *
+     * @param callback Block called upon completion with updated session, boolean value
+     * if session was in fact updated, or any error encountered.
+     */
+    private fun updateSession(callback: GetSessionCallback) {
+
+        val sessionRequest = SessionRequest(
+            configuration.appId,
+            configuration.contractId,
+            SdkAgent(),
+            "gzip",
+            null
+        )
+
+        fun requestSession(): Single<SessionResponse> =
+            Single.create { emitter ->
+                apiClient.makeCall(apiClient.argonService.getSession(sessionRequest)) { sessionResponse, error ->
+                    when {
+                        sessionResponse != null -> emitter.onSuccess(sessionResponse)
+                        error != null -> emitter.onError(error)
+                        else -> emitter.onError(IllegalArgumentException())
+                    }
+                }
+            }
+
+        requestSession()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                val session = Session().copy(key = it.key, expiry = it.expiry)
+                sessionManager.updatedSession = session
+                sessionKey = sessionManager.updatedSession?.key
+
+                callback.invoke(true, null)
+            }, {
+                callback.invoke(
+                    false,
+                    AuthError.ErrorWithMessage(
+                        it.localizedMessage ?: "Unknown error occurred"
+                    )
+                )
+            })
+    }
+
+    private fun requestCodeReference(): SingleTransformer<Boolean, OnboardPayload> =
+        SingleTransformer {
+            it.flatMap { credentials ->
+                Single.create { emitter ->
+                    DMELog.i(context.getString(R.string.labelReferenceOnboardingCode))
+
+                    val jwt = ReferenceCodeRequestJWT(
+                        configuration.appId,
+                        configuration.contractId,
+                        configuration.tokenPayload?.accessToken?.value!!
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.makeCall(apiClient.argonService.getReferenceCode(authHeader)) { tokenReference, error ->
+                        when {
+                            tokenReference != null -> {
+                                val chunks: List<String> = tokenReference.token.split(".")
+                                val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+
+                                sessionManager.updatedSession = tokenReference.session
+
+                                val tokenReferencePayload: TokenReferencePayload =
+                                    Gson().fromJson(payloadJson, TokenReferencePayload::class.java)
+
+                                val result =
+                                    OnboardPayload(
+                                        tokenReferencePayload,
+                                        tokenReference.session,
+                                        null
+                                    )
+
+                                emitter.onSuccess(result)
+                            }
+                            error != null -> emitter.onError(error)
+                            else -> emitter.onError(IllegalArgumentException())
+                        }
+                    }
+                }
+            }
+        }
+
+    private fun getSessionData(
+        fileId: String,
+        callback: FileContentCallback
+    ) {
         val currentSession = sessionManager.updatedSession
 
+        val jwt = PermissionAccessRequestJWT(
+            configuration.tokenPayload?.accessToken?.value!!,
+            configuration.appId,
+            configuration.contractId
+        )
+
+        val signingKey: PrivateKey =
+            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+        val authHeader: String = jwt.sign(signingKey).tokenize()
+
         if (isFirstRun and (currentSession != null && sessionManager.isSessionValid())) {
-            apiClient.argonService.getFileBytes(currentSession?.key!!, fileId)
+            apiClient.argonService.getFileBytes(authHeader, currentSession?.key!!, fileId)
                 .map { response ->
                     val headers = response.headers()["X-Metadata"]
                     val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -609,10 +903,10 @@ class Init(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = { fileItem ->
-                        completion.invoke(fileItem, null)
+                        callback.invoke(fileItem, null)
                     },
                     onError = {
-                        completion.invoke(
+                        callback.invoke(
                             null,
                             AuthError.ErrorWithMessage(
                                 it.localizedMessage ?: "Unknown error occurred"
@@ -620,20 +914,20 @@ class Init(
                         )
                     }
                 )
-        } else handleGetSessionData(currentSession?.key!!, fileId, completion)
+        } else handleGetSessionData(fileId, callback)
     }
 
     private fun getSessionFileList(
-        userAccessToken: String,
+        credentials: TokensPayload,
         updateHandler: IncrementalFileListUpdate,
-        completion: FileListCompletion
+        callback: FileListCallback
     ) {
 
         fileListUpdateHandler = updateHandler
-        fileListCompletionHandler = { fileList, error ->
+        fileListCallbackHandler = { fileList, error ->
             val err = if (error is SDKError.FileListPollingTimeout) null else error
-            completion(fileList, err)
-            if (activeFileDownloadHandler == null && activeSessionDataFetchCompletionHandler == null) {
+            callback(fileList, err)
+            if (activeFileDownloadHandler == null && activeSessionDataFetchCallbackHandler == null) {
                 completeDeliveryOfSessionData(err)
             }
         }
@@ -642,18 +936,18 @@ class Init(
             // Init syncStatus.
             activeSyncStatus = null
             fileListItemCache = FileListItemCache()
-            scheduleNextPoll(userAccessToken)
+            scheduleNextPoll(credentials)
         }
     }
 
-    private fun scheduleNextPoll(userAccessToken: String) {
+    private fun scheduleNextPoll(credentials: TokensPayload) {
 
         DMELog.d("Session data poll scheduled.")
 
         DMELog.d("Fetching file list.")
         if (activeSyncStatus != FileList.SyncStatus.COMPLETED()) {
             Handler(Looper.getMainLooper()).postDelayed({
-                readFileList(userAccessToken) { fileList, listFetchError ->
+                readFileList(credentials) { fileList, listFetchError ->
 
                     when {
                         fileList != null -> DMELog.d("File list obtained; Sync syncStatus is ${fileList.syncStatus.rawValue}.")
@@ -661,6 +955,24 @@ class Init(
                     }
 
                     val syncStatus = fileList?.syncStatus ?: FileList.SyncStatus.RUNNING()
+                    when (fileList?.syncStatus) {
+                        FileList.SyncStatus.RUNNING() -> {
+                            DMELog.d("Sync status: running")
+                        }
+
+                        FileList.SyncStatus.COMPLETED() -> {
+                            DMELog.d("Sync status: completed")
+                        }
+
+                        FileList.SyncStatus.PENDING() -> {
+                            DMELog.d("Sync status: pending")
+                        }
+
+                        FileList.SyncStatus.PARTIAL() -> {
+                            DMELog.d("Sync status: partial")
+                        }
+                    }
+
 
                     latestFileList = fileList
                     val updatedFileIds = fileListItemCache?.updateCacheWithItemsAndDeduceChanges(
@@ -673,11 +985,11 @@ class Init(
                         } files discovered. Of these, ${updatedFileIds.count()} have updates and need downloading."
                     )
 
-                    if (updatedFileIds.count() > 0 && fileList != null) {
+                    if (updatedFileIds.isNotEmpty() && fileList != null) {
                         fileListUpdateHandler?.invoke(fileList, updatedFileIds)
                         stalePollCount = 0
                     } else if (++stalePollCount == max(configuration.maxStalePolls, 20)) {
-                        fileListCompletionHandler?.invoke(
+                        fileListCallbackHandler?.invoke(
                             fileList,
                             SDKError.FileListPollingTimeout()
                         )
@@ -688,10 +1000,10 @@ class Init(
                         FileList.SyncStatus.PENDING(),
                         FileList.SyncStatus.RUNNING() -> {
                             DMELog.i("Sync still in progress, continuing to poll for updates.")
-                            scheduleNextPoll(userAccessToken)
+                            scheduleNextPoll(credentials!!)
                         }
                         FileList.SyncStatus.COMPLETED(),
-                        FileList.SyncStatus.PARTIAL() -> fileListCompletionHandler?.invoke(
+                        FileList.SyncStatus.PARTIAL() -> fileListCallbackHandler?.invoke(
                             fileList,
                             listFetchError
                         )
@@ -705,6 +1017,90 @@ class Init(
         }
     }
 
+    private fun refreshAccessToken(
+        scope: DataRequest?,
+        callback: RefreshTokenCallback
+    ) {
+        requestPreAuthorizationCode(scope)
+            .map { response: GetPreAuthCodeDone ->
+                TokenExchangeResponse()
+                    .copy(
+                        consentData = GetConsentDone(session = response.session)
+                    )
+            }
+            .compose(requestCredentialsRefresh())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: TokenExchangeResponse ->
+                    sessionKey = sessionManager.updatedSession?.key
+                    isFirstRun = true
+
+                    val response = TokenExchangeResponse().copy(
+                        consentData = result.consentData
+                    )
+
+                    callback.invoke(response, null)
+                },
+                onError = { error ->
+                    callback.invoke(
+                        null,
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(
+                                error.localizedMessage ?: "Unknown error occurred"
+                            ))
+                }
+            )
+    }
+
+    private fun obtainNewRefreshToken(
+        fromActivity: Activity,
+        credentials: TokensPayload,
+        serviceId: String?,
+        scope: DataRequest?,
+        callback: RefreshTokenCallback
+    ) {
+        requestPreAuthorizationCode(scope)
+            .compose(requestConsentAccess(fromActivity, serviceId))
+            .compose(requestTokenExchange())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result: TokenExchangeResponse ->
+                    sessionKey = sessionManager.updatedSession?.key
+                    isFirstRun = true
+
+                    val response = TokenExchangeResponse().copy(
+                        consentData = result.consentData
+                    )
+
+                    callback.invoke(response, null)
+                },
+                onError = { error ->
+                    callback.invoke(
+                        null,
+                        error.let { it as? Error }
+                            ?: APIError.ErrorWithMessage(
+                                error.localizedMessage ?: "Unknown error occurred"
+                            ))
+                }
+            )
+    }
+
+    private fun refreshCredentials(
+        fromActivity: Activity,
+        credentials: TokensPayload,
+        scope: DataRequest?,
+        serviceId: String?,
+        callback: RefreshTokenCallback
+    ) {
+        if (credentials.refreshToken.expiresOn.isValid()) {
+            refreshAccessToken(scope, callback)
+        } else {
+            obtainNewRefreshToken(fromActivity, credentials, serviceId, scope, callback)
+        }
+    }
+
     private fun completeDeliveryOfSessionData(error: Error?) {
 
         when {
@@ -712,13 +1108,13 @@ class Init(
             else -> DMELog.i("Session data fetch completed successfully.")
         }
 
-        activeSessionDataFetchCompletionHandler?.invoke(latestFileList, error)
+        activeSessionDataFetchCallbackHandler?.invoke(latestFileList, error)
 
         // Clear syncStatus.
         fileListItemCache = null
         latestFileList = null
         activeFileDownloadHandler = null
-        activeSessionDataFetchCompletionHandler = null
+        activeSessionDataFetchCallbackHandler = null
         activeSyncStatus = null
         activeDownloadCount = 0
     }
@@ -726,13 +1122,13 @@ class Init(
     private fun errorHandler(
         fromActivity: Activity,
         error: Throwable?,
-        credentials: CredentialsPayload?,
+        credentials: TokensPayload?,
         scope: DataRequest?,
         serviceId: String?
-    ): SingleSource<out GetTokenExchangeDone>? {
+    ): SingleSource<out TokenExchangeResponse>? {
 
         return if (error is APIError && error.code == "InternalServerError") {
-            requestPreAuthorizationCode(credentials, scope)
+            requestPreAuthorizationCode(scope)
                 .compose(requestConsentAccess(fromActivity, serviceId))
                 .compose(requestTokenExchange())
 
@@ -740,37 +1136,36 @@ class Init(
             // has expired.
         } else if (error is APIError && error.code == "InvalidToken") {
             // If so, we take the active session and expired credentials and try to refresh them.
-            requestPreAuthorizationCode(credentials, scope)
+            requestPreAuthorizationCode(scope)
                 .map { response: GetPreAuthCodeDone ->
-                    GetTokenExchangeDone()
+                    TokenExchangeResponse()
                         .copy(
-                            consentData = GetConsentDone(session = response.session),
-                            credentials = credentials as CredentialsPayload
+                            consentData = GetConsentDone(session = response.session)
                         )
                 }
                 .compose(requestCredentialsRefresh())
-                .onErrorResumeNext { error ->
+                .onErrorResumeNext { requestCredentialsError ->
 
                     // If an error is encountered from this call, we inspect it to see if it's an
                     // 'InvalidToken' error, meaning that the REFRESH token has expired.
-                    if (error is APIError && error.code == "InvalidToken") {
+                    if (requestCredentialsError is APIError && error.code == "InvalidToken") {
                         // If so, we need to obtain a new set of credentials from the digi.me
                         // application. Process the flow as before, for ongoing access, provided
                         // that auto-recover is enabled. If not, we throw a specific error and
                         // exit the flow.
                         if (configuration.autoRecoverExpiredCredentials) {
-                            requestPreAuthorizationCode(credentials, scope)
+                            requestPreAuthorizationCode(scope)
                                 .compose(requestConsentAccess(fromActivity, serviceId))
                                 .compose(requestTokenExchange())
 
-                                // Once new credentials are obtained, re-trigger the data query.
-                                // If it fails here, credentials are not the issue. The error
-                                // will be propagated down to the callback as normal.
-                                .compose(requestDataQuery(scope))
+                            // Once new credentials are obtained, re-trigger the data query.
+                            // If it fails here, credentials are not the issue. The error
+                            // will be propagated down to the callback as normal.
+//                                .compose(requestDataQuery(scope))
                         } else Single.error(AuthError.TokenExpired())
                     } else Single.error(error)
                 }
-        } else Single.error(error)
+        } else Single.error(error!!)
     }
 
     /**
@@ -793,7 +1188,6 @@ class Init(
      * @see PreAuthorizationResponse
      */
     private fun requestPreAuthorizationCode(
-        credentials: CredentialsPayload?,
         scope: DataRequest?
     ): Single<out GetPreAuthCodeDone> =
         Single.create { emitter ->
@@ -801,12 +1195,12 @@ class Init(
             val codeVerifier =
                 ByteTransformer.hexStringFromBytes(CryptoUtilities.generateSecureRandom(64))
 
-            val jwt = if (credentials != null)
+            val jwt = if (configuration.tokenPayload != null)
                 PreAuthorizationRequestJWT(
                     configuration.appId,
                     configuration.contractId,
                     codeVerifier,
-                    credentials.accessToken.value
+                    configuration.tokenPayload!!.accessToken.value
                 )
             else PreAuthorizationRequestJWT(
                 configuration.appId,
@@ -814,8 +1208,6 @@ class Init(
                 codeVerifier
             )
 
-            val aaa = configuration.contractId
-            val bbb = configuration.appId
             val signingKey = KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
             val authHeader = jwt.sign(signingKey).tokenize()
 
@@ -874,7 +1266,7 @@ class Init(
                             fromActivity,
                             code,
                             serviceId
-                        ) { consentResponse: ConsentAuthResponse?, error: Error? ->
+                        ) { consentResponse: SaasCallbackResponse?, error: Error? ->
                             when {
                                 consentResponse?.success == true -> {
                                     val consentDone = GetConsentDone()
@@ -899,8 +1291,8 @@ class Init(
      * Once consent is completed, we trigger this method to get fresh set of credentials.
      * @see CredentialsPayload
      */
-    private fun requestTokenExchange(): SingleTransformer<in GetConsentDone, out GetTokenExchangeDone> =
-        SingleTransformer<GetConsentDone, GetTokenExchangeDone> {
+    private fun requestTokenExchange(): SingleTransformer<in GetConsentDone, out TokenExchangeResponse> =
+        SingleTransformer<GetConsentDone, TokenExchangeResponse> {
             it.flatMap { input: GetConsentDone ->
                 val codeVerifier =
                     input.session.metadata[context.getString(R.string.key_code_verifier)].toString()
@@ -923,16 +1315,51 @@ class Init(
 
                     val chunks: List<String> = response.token.split(".")
                     val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                    val credentialsPayload: CredentialsPayload =
-                        Gson().fromJson(payloadJson, CredentialsPayload::class.java)
+                    val tokenPayload: TokensPayload =
+                        Gson().fromJson(payloadJson, TokensPayload::class.java)
 
-                    GetTokenExchangeDone().copy(
-                        consentData = input,
-                        credentials = credentialsPayload
+                    onTokenAcquired(tokenPayload)
+
+                    TokenExchangeResponse().copy(
+                        consentData = input
                     )
                 }
             }
         }
+
+    private fun requestNewTokens(): Single<Boolean> =
+        Single.create { emitter ->
+            val jwt = RefreshCredentialsRequestJWT(
+                configuration.appId,
+                configuration.contractId,
+                configuration.tokenPayload?.refreshToken?.value!!
+            )
+
+            val signingKey: PrivateKey =
+                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+            val authHeader: String = jwt.sign(signingKey).tokenize()
+
+            apiClient.makeCall(apiClient.argonService.refreshCredentials(authHeader))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { response ->
+                        val chunks: List<String> = response.token.split(".")
+                        val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
+                        val tokenPayload =
+                            Gson().fromJson(payloadJson, TokensPayload::class.java)
+
+                        onTokenAcquired(tokenPayload)
+
+                        emitter.onSuccess(true)
+                    },
+                    onError = { throwable ->
+                        emitter.onError(throwable)
+                    }
+                )
+
+        }
+
 
     /**
      * In case our credentials have expired, we'll trigger this method.
@@ -941,14 +1368,14 @@ class Init(
      * @see CredentialsPayload
      * @see GetTokenExchangeDone
      */
-    private fun requestCredentialsRefresh(): SingleTransformer<in GetTokenExchangeDone, out GetTokenExchangeDone> =
-        SingleTransformer<GetTokenExchangeDone, GetTokenExchangeDone> {
-            it.flatMap { input: GetTokenExchangeDone ->
+    private fun requestCredentialsRefresh(): SingleTransformer<in TokenExchangeResponse, out TokenExchangeResponse> =
+        SingleTransformer<TokenExchangeResponse, TokenExchangeResponse> {
+            it.flatMap { input: TokenExchangeResponse ->
 
                 val jwt = RefreshCredentialsRequestJWT(
                     configuration.appId,
                     configuration.contractId,
-                    input.credentials.refreshToken.value!!
+                    configuration.tokenPayload?.refreshToken?.value!!
                 )
 
                 val signingKey: PrivateKey =
@@ -960,13 +1387,14 @@ class Init(
 
                         val chunks: List<String> = response.token.split(".")
                         val payloadJson = String(Base64.decode(chunks[1], Base64.URL_SAFE))
-                        val credentialsPayload =
-                            Gson().fromJson(payloadJson, CredentialsPayload::class.java)
+                        val tokenPayload =
+                            Gson().fromJson(payloadJson, TokensPayload::class.java)
 
-                        GetTokenExchangeDone()
+                        onTokenAcquired(tokenPayload)
+
+                        TokenExchangeResponse()
                             .copy(
-                                consentData = input.consentData,
-                                credentials = credentialsPayload
+                                consentData = input.consentData
                             )
                     }
             }
@@ -978,14 +1406,14 @@ class Init(
      *
      * @see Session
      */
-    private fun requestDataQuery(scope: DataRequest?): SingleTransformer<in GetTokenExchangeDone, out GetTokenExchangeDone> =
-        SingleTransformer<GetTokenExchangeDone, GetTokenExchangeDone> {
-            it.flatMap { input: GetTokenExchangeDone ->
+    private fun requestDataQuery(scope: DataRequest?): SingleTransformer<in TokenExchangeResponse, out TokenExchangeResponse> =
+        SingleTransformer<TokenExchangeResponse, TokenExchangeResponse> {
+            it.flatMap { input: TokenExchangeResponse ->
 
                 val jwt = TriggerDataQueryRequestJWT(
                     configuration.appId,
                     configuration.contractId,
-                    input.credentials.accessToken.value!!
+                    configuration.tokenPayload?.accessToken?.value!!
                 )
 
                 val signingKey: PrivateKey =
@@ -1004,92 +1432,172 @@ class Init(
                 ).map { response: DataQueryResponse ->
 
                     sessionManager.updatedSession = response.session
+                    sessionKey = sessionManager.updatedSession?.key
 
-                    GetTokenExchangeDone()
+                    TokenExchangeResponse()
                         .copy(
-                            consentData = GetConsentDone(session = response.session),
-                            credentials = input.credentials
+                            consentData = GetConsentDone(session = response.session)
                         )
                 }
             }
         }
 
+    private fun getAccountsContent(
+        callback: GetAccountsCallback,
+        sessionKey: String,
+        authHeader: String,
+        credentials: TokensPayload
+    ) {
+
+        fun getAccounts(): SingleTransformer<in Boolean, out GetAccountsResponse> =
+            SingleTransformer {
+                it.flatMap { onboardPayload ->
+                    Single.create { emitter ->
+                        apiClient.argonService.getFileBytes(authHeader, sessionKey, "accounts.json")
+                            .map { response: Response<ResponseBody> ->
+
+                                val headers = response.headers()["x-metadata"]
+                                val headerString = String(Base64.decode(headers, Base64.DEFAULT))
+
+                                val payloadHeader = Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
+
+                                val result: ByteArray =
+                                    response.body()?.byteStream()?.readBytes() as ByteArray
+
+                                val contentBytes: ByteArray =
+                                    DataDecryptor.dataFromEncryptedBytes(
+                                        result,
+                                        configuration.privateKeyHex
+                                    )
+
+                                val compression: String = try {
+                                    payloadHeader.compression
+                                } catch (e: Throwable) {
+                                    Compressor.COMPRESSION_NONE
+                                }
+
+                                val decompressedContentBytes: ByteArray =
+                                    Compressor.decompressData(contentBytes, compression)
+
+                                Log.d("DEBUG content", String(decompressedContentBytes))
+
+                                GetAccountsResponse(
+                                    Gson().fromJson(
+                                        String(decompressedContentBytes),
+                                        Accounts::class.java
+                                    ), credentials
+                                )
+
+                            }
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribeBy(
+                                onSuccess = { result ->
+                                    callback.invoke(result, null)
+                                },
+                                onError = { throwable ->
+                                    callback.invoke(
+                                        null,
+                                        AuthError.ErrorWithMessage(
+                                            throwable.localizedMessage ?: "Unknown error occurred"
+                                        )
+                                    )
+                                }
+                            )
+                    }
+                }
+            }
+
+        checkAccessToken()
+            .compose(getAccounts())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { result ->
+                    callback.invoke(result, null)
+
+                },
+                onError = { throwable ->
+                    callback.invoke(
+                        null,
+                        AuthError.ErrorWithMessage(
+                            throwable.localizedMessage ?: "Unknown error occurred"
+                        )
+                    )
+                }
+            )
+    }
+
     ////////////////
     /// Handlers ///
     ///////////////
-    private fun handleReadAccounts(userAccessToken: String, completion: AccountsCompletion) {
+    private fun handleReadAccounts(
+        credentials: TokensPayload,
+        callback: GetAccountsCallback
+    ) {
 
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
+        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
+                    Single.create { emitter ->
+                        val jwt = TriggerDataQueryRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            configuration.tokenPayload?.accessToken?.value!!
+                        )
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, Pull())
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
+                        apiClient.makeCall(
+                            apiClient
+                                .argonService
+                                .triggerDataQuery(authHeader, Pull())
+                        ) { response: DataQueryResponse?, error: Error? ->
+                            when {
+                                response != null -> {
+                                    sessionManager.updatedSession = response.session
+                                    sessionKey = sessionManager.updatedSession?.key
+
+                                    response.credentials = credentials
+
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
                     }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
                 }
             }
-        }
 
-        requestDataQuery()
+
+        checkAccessToken()
+            .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
+                    sessionKey = sessionManager.updatedSession?.key
 
-                    apiClient.argonService.getFileBytes(it.session.key, "accounts.json")
-                        .map { response: Response<ResponseBody> ->
+                    val jwt = PermissionAccessRequestJWT(
+                        it.credentials.accessToken.value!!,
+                        configuration.appId,
+                        configuration.contractId
+                    )
 
-                            val result: ByteArray =
-                                response.body()?.byteStream()?.readBytes() as ByteArray
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
 
-                            val contentBytes: ByteArray =
-                                DataDecryptor.dataFromEncryptedBytes(
-                                    result,
-                                    configuration.privateKeyHex
-                                )
+                    getAccountsContent(callback, it.session.key, authHeader, it.credentials)
 
-                            val decompressedContentBytes: ByteArray =
-                                Compressor.decompressData(contentBytes, Compressor.COMPRESSION_NONE)
-
-                            Gson().fromJson(
-                                String(decompressedContentBytes),
-                                ReadAccountsResponse::class.java
-                            )
-                        }
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeBy(
-                            onSuccess = { completion.invoke(it, null) },
-                            onError = {
-                                completion.invoke(
-                                    null,
-                                    AuthError.ErrorWithMessage(
-                                        it.localizedMessage ?: "Unknown error occurred"
-                                    )
-                                )
-                            }
-                        )
                 },
                 onError = {
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         APIError.ErrorWithMessage(
                             it.localizedMessage ?: context.getString(R.string.labelUnknownError)
@@ -1100,64 +1608,81 @@ class Init(
     }
 
     private fun handleDataWrite(
+        credentials: TokensPayload,
         writeDataPayload: WriteDataPayload,
-        userAccessToken: String,
-        completion: OngoingWriteCompletion
+        callback: WriteDataCallback
     ) {
-        val encryptedData = DataEncryptor.encryptedDataFromBytes(
-            writeDataPayload.data.publicKey!!,
-            writeDataPayload.content,
-            writeDataPayload.metadata
-        )
+        fun writeData(): SingleTransformer<Boolean, WriteDataResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
+                    Single.create { emitter ->
+                        val requestBody: RequestBody =
+                            writeDataPayload.content.toRequestBody(
+                                writeDataPayload.metadata.mimeType?.toMediaTypeOrNull(),
+                                0,
+                                writeDataPayload.content.size
+                            )
 
-        val multipartBody: WriteMultipartBody = WriteMultipartBody.Builder()
-            .postboxPushPayload(writeDataPayload)
-            .dataContent(context, encryptedData.fileContent, writeDataPayload.mimeType)
-            .build()
+                        val jwt = DirectImportRequestJWT(
+                            configuration.tokenPayload?.accessToken?.value!!,
+                            configuration.appId,
+                            configuration.contractId
+                        )
 
-        val jwt = AuthTokenRequestJWT(
-            userAccessToken,
-            encryptedData.iv,
-            encryptedData.metadata,
-            encryptedData.symmetricalKey,
-            configuration.appId,
-            configuration.contractId
-        )
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
 
-        val signingKey: PrivateKey =
-            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-        val authHeader: String = jwt.sign(signingKey).tokenize()
+                        val fileDescriptor = DirectImportMetadataRequestJWT(
+                            writeDataPayload.metadata
+                        )
 
-        apiClient.argonService.pushOngoingData(
-            authHeader,
-            writeDataPayload.data.key!!,
-            encryptedData.symmetricalKey,
-            encryptedData.iv,
-            encryptedData.metadata,
-            writeDataPayload.data.postboxId!!,
-            multipartBody.requestBody,
-            multipartBody.description
-        )
+                        val fileDescSigningKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val fileDesc: String = fileDescriptor.sign(fileDescSigningKey).tokenize()
+
+                        apiClient.argonService.directImport(
+                            authHeader,
+                            fileDesc,
+                            requestBody
+                        )
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribeBy(
+                                onSuccess = {
+                                    emitter.onSuccess(WriteDataResponse(true, credentials))
+                                    DMELog.i("Successfully pushed data to postbox")
+                                },
+                                onError = { error ->
+                                    emitter.onError(error)
+                                    DMELog.i("Successfully pushed data to postbox")
+                                }
+                            )
+                    }
+                }
+            }
+
+        checkAccessToken()
+            .compose(writeData())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = {
-                    sessionManager.updatedSession = it.session
-                    completion(
-                        it,
+                onSuccess = { response ->
+                    callback(
+                        WriteDataResponse(response.dataWritten, response.credentials),
                         null
-                    ).also { DMELog.i("Successfully pushed data to postbox") }
+                    )
                 },
                 onError = { error ->
                     when {
-                        error is APIError && error.code == "InvalidToken" -> completion(
-                            null,
+                        error is APIError && error.code == "InvalidToken" -> callback(
+                            WriteDataResponse(null, credentials),
                             APIError.GENERIC(message = "Failed to push file to postbox. Access token is invalid. Request new session.")
                         )
                         else -> {
                             DMELog.e("Failed to push file to postbox. Error: ${error.printStackTrace()} ${error.message}")
-                            completion(
-                                null,
+                            callback(
+                                WriteDataResponse(null, credentials),
                                 AuthError.ErrorWithMessage(
                                     error.localizedMessage
                                         ?: context.getString(R.string.labelUnknownError)
@@ -1169,66 +1694,103 @@ class Init(
             )
     }
 
-//    {"access_token":{"expires_on":1664831686,"value":"d8e19799c75ed9db2f2eca9f1d9062fdcd549adc4fcb7538449300654ff742a3a3c5901562a67fb8136c25b7cbc906cb94866840fccfbc1074676f9f6c84a1fba77a6bd90f07465cb6b6fa89650da325"},"consentid":"df2f16318deb7d85672ec1f1e0ce652b","identifier":{"id":"3111d038abcf6e58868c4b8fcd26849b"},"refresh_token":{"expires_on":1680297286,"value":"0d54664b62de08472d1db7348638aecf0c8e266cff37278dc42718bcbe7a5cb1de870a86a4e74ffaa2f2f40228810e53be42d0f8b0dc57bb58471b567fb9a99f7b7e2318cb17a53b976a9c96cea294cd"},"token_type":"Bearer"}
     data class UserAccessToken(
         val accessToken: AccessToken? = null,
     )
 
-    data class AccessToken (
+    data class AccessToken(
         val expires_on: Long = 0L,
         val value: String? = null
     )
 
-
-
     private fun handleFileList(
-        userAccessToken: String,
-        completion: FileListCompletion
+        credentials: TokensPayload,
+        callback: FileListCallback
     ) {
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val accessToken = Gson().fromJson<UserAccessToken>(userAccessToken, UserAccessToken::class.java)
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                accessToken.accessToken?.value!!)
+        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
+                    Single.create { emitter ->
+                        val accessToken =
+                            Gson().fromJson(
+                                configuration.tokenPayload?.accessToken?.value,
+                                UserAccessToken::class.java
+                            )
+                        val jwt = TriggerDataQueryRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            accessToken.accessToken?.value!!
+                        )
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, Pull())
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
+                        apiClient.makeCall(
+                            apiClient
+                                .argonService
+                                .triggerDataQuery(authHeader, Pull())
+                        ) { response: DataQueryResponse?, error: Error? ->
+                            when {
+                                response != null -> {
+                                    sessionManager.updatedSession = response.session
+                                    sessionKey = sessionManager.updatedSession?.key
+
+                                    response.credentials = credentials
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> {
+                                    emitter.onError(error)
+                                }
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
                     }
-                    error != null -> {
-                        emitter.onError(error)
-                    }
-                    else -> emitter.onError(IllegalArgumentException())
+
                 }
             }
-        }
 
-        requestDataQuery()
+        checkAccessToken()
+            .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
+                    sessionKey = sessionManager.updatedSession?.key
 
-                    apiClient.makeCall(
-                        apiClient.argonService.getFileList(it.session.key),
-                        completion
+                    val jwt = PermissionAccessRequestJWT(
+                        it.credentials.accessToken.value!!,
+                        configuration.appId,
+                        configuration.contractId
                     )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileList(authHeader, it.session.key)
+                        .map {
+
+                            it
+                        }
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeBy(
+                            onSuccess = { callback.invoke(it, null) },
+                            onError = {
+                                callback.invoke(
+                                    null,
+                                    AuthError.ErrorWithMessage(
+                                        it.localizedMessage ?: "Unknown error occurred"
+                                    )
+                                )
+                            }
+                        )
                 },
                 onError = {
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         APIError.ErrorWithMessage(
                             it.localizedMessage ?: context.getString(R.string.labelUnknownError)
@@ -1239,139 +1801,67 @@ class Init(
     }
 
     private fun handleFileItemBytes(
-        userAccessToken: String,
+        credentials: TokensPayload,
         fileId: String,
-        completion: FileContentBytesCompletion
+        callback: FileContentBytesCallback
     ) {
 
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
+        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
+                    Single.create { emitter ->
+                        val jwt = TriggerDataQueryRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            configuration.tokenPayload?.accessToken?.value!!
+                        )
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, Pull())
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
-                    }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
-                }
-            }
-        }
+                        apiClient.makeCall(
+                            apiClient
+                                .argonService
+                                .triggerDataQuery(authHeader, Pull())
+                        ) { response: DataQueryResponse?, error: Error? ->
+                            when {
+                                response != null -> {
+                                    sessionManager.updatedSession = response.session
+                                    sessionKey = sessionManager.updatedSession?.key
 
-        requestDataQuery()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = {
-                    DMELog.i(context.getString(R.string.labelReadingFiles))
-                    sessionManager.updatedSession = it.session
-
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
-                        .map { response ->
-                            val headers = response.headers()["X-Metadata"]
-                            val headerString = String(Base64.decode(headers, Base64.DEFAULT))
-                            val payloadHeader =
-                                Gson().fromJson(headerString, HeaderMetadataPayload::class.java)
-
-                            val result: ByteArray =
-                                response.body()?.byteStream()?.readBytes() as ByteArray
-
-                            val contentBytes: ByteArray =
-                                DataDecryptor.dataFromEncryptedBytes(
-                                    result,
-                                    configuration.privateKeyHex
-                                )
-
-                            val compression: String = try {
-                                payloadHeader.compression
-                            } catch (e: Throwable) {
-                                Compressor.COMPRESSION_NONE
+                                    response.credentials = credentials
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
                             }
-                            val decompressedContentBytes: ByteArray =
-                                Compressor.decompressData(contentBytes, compression)
-
-                            FileItemBytes().copy(fileContent = decompressedContentBytes)
                         }
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeBy(
-                            onSuccess = { completion.invoke(it, null) },
-                            onError = {
-                                completion.invoke(
-                                    null,
-                                    AuthError.ErrorWithMessage(
-                                        it.localizedMessage ?: "Unknown error occurred"
-                                    )
-                                )
-                            }
-                        )
-                },
-                onError = {
-                    completion.invoke(
-                        null,
-                        APIError.ErrorWithMessage(
-                            it.localizedMessage ?: context.getString(R.string.labelUnknownError)
-                        )
-                    )
-                }
-            )
-    }
-
-    private fun handleFileItem(
-        userAccessToken: String,
-        fileId: String,
-        completion: FileContentCompletion
-    ) {
-
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
-
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
-
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, Pull())
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
                     }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
                 }
             }
-        }
 
-        requestDataQuery()
+        checkAccessToken()
+            .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
+                    sessionKey = sessionManager.updatedSession?.key
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        it.credentials.accessToken.value!!,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1395,27 +1885,29 @@ class Init(
                             val decompressedContentBytes: ByteArray =
                                 Compressor.decompressData(contentBytes, compression)
 
-                            FileItem().copy(
-                                fileContent = String(decompressedContentBytes),
-                                fileName = fileId
+                            FileItemBytes().copy(
+                                fileContent = decompressedContentBytes,
+                                credentials = credentials
                             )
                         }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeBy(
-                            onSuccess = { completion.invoke(it, null) },
-                            onError = {
-                                completion.invoke(
+                            onSuccess = { result ->
+                                callback.invoke(result, null)
+                            },
+                            onError = { throwable ->
+                                callback.invoke(
                                     null,
                                     AuthError.ErrorWithMessage(
-                                        it.localizedMessage ?: "Unknown error occurred"
+                                        throwable.localizedMessage ?: "Unknown error occurred"
                                     )
                                 )
                             }
                         )
                 },
                 onError = {
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         APIError.ErrorWithMessage(
                             it.localizedMessage ?: context.getString(R.string.labelUnknownError)
@@ -1426,47 +1918,67 @@ class Init(
     }
 
     private fun handleGetSessionData(
-        userAccessToken: String,
         fileId: String,
-        completion: FileContentCompletion
+        callback: FileContentCallback
     ) {
 
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
+        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+                    Single.create { emitter ->
+                        val jwt = TriggerDataQueryRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            configuration.tokenPayload?.accessToken?.value!!
+                        )
 
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, Pull())
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                        apiClient.makeCall(
+                            apiClient
+                                .argonService
+                                .triggerDataQuery(authHeader, Pull())
+                        ) { response: DataQueryResponse?, error: Error? ->
+                            when {
+                                response != null -> {
+                                    sessionManager.updatedSession = response.session
+                                    sessionKey = sessionManager.updatedSession?.key
+
+                                    response.credentials = credentials
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
                     }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
                 }
             }
-        }
 
-        requestDataQuery()
+        checkAccessToken()
+            .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
                     DMELog.i(context.getString(R.string.labelReadingFiles))
                     sessionManager.updatedSession = it.session
+                    sessionKey = sessionManager.updatedSession?.key
 
-                    apiClient.argonService.getFileBytes(it.session.key, fileId)
+                    val jwt = PermissionAccessRequestJWT(
+                        it.credentials.accessToken.value!!,
+                        configuration.appId,
+                        configuration.contractId
+                    )
+
+                    val signingKey: PrivateKey =
+                        KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                    val authHeader: String = jwt.sign(signingKey).tokenize()
+
+                    apiClient.argonService.getFileBytes(authHeader, it.session.key, fileId)
                         .map { response ->
                             val headers = response.headers()["X-Metadata"]
                             val headerString = String(Base64.decode(headers, Base64.DEFAULT))
@@ -1498,19 +2010,21 @@ class Init(
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeBy(
-                            onSuccess = { completion.invoke(it, null) },
-                            onError = {
-                                completion.invoke(
+                            onSuccess = { result ->
+                                callback.invoke(result, null)
+                            },
+                            onError = { throwable ->
+                                callback.invoke(
                                     null,
                                     AuthError.ErrorWithMessage(
-                                        it.localizedMessage ?: "Unknown error occurred"
+                                        throwable.localizedMessage ?: "Unknown error occurred"
                                     )
                                 )
                             }
                         )
                 },
                 onError = {
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         APIError.ErrorWithMessage(
                             it.localizedMessage ?: context.getString(R.string.labelUnknownError)
@@ -1521,50 +2035,63 @@ class Init(
     }
 
     private fun handleCyclicDataDownload(
-        scope: DataRequest?, userAccessToken: String,
-        downloadHandler: FileContentCompletion,
-        completion: FileListCompletion
+        scope: DataRequest?,
+        downloadHandler: FileContentCallback,
+        callback: FileListCallback
     ) {
 
-        fun requestDataQuery(): Single<out DataQueryResponse> = Single.create { emitter ->
-            val jwt = TriggerDataQueryRequestJWT(
-                configuration.appId,
-                configuration.contractId,
-                userAccessToken
-            )
+        fun requestDataQuery(): SingleTransformer<in Boolean, out DataQueryResponse> =
+            SingleTransformer {
+                it.flatMap { credentials ->
+                    Single.create { emitter ->
 
-            val signingKey: PrivateKey =
-                KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
-            val authHeader: String = jwt.sign(signingKey).tokenize()
+                        val jwt = TriggerDataQueryRequestJWT(
+                            configuration.appId,
+                            configuration.contractId,
+                            configuration.tokenPayload?.accessToken?.value!!
+                        )
 
-            val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+                        val signingKey: PrivateKey =
+                            KeyTransformer.privateKeyFromString(configuration.privateKeyHex)
+                        val authHeader: String = jwt.sign(signingKey).tokenize()
 
-            apiClient.makeCall(
-                apiClient
-                    .argonService
-                    .triggerDataQuery(authHeader, dataQueryScope)
-            ) { response: DataQueryResponse?, error: Error? ->
-                when {
-                    response != null -> {
-                        sessionManager.updatedSession = response.session
-                        emitter.onSuccess(response)
+                        val dataQueryScope: Pull = scope?.let { scope -> Pull(scope) } ?: Pull()
+
+                        apiClient.makeCall(
+                            apiClient
+                                .argonService
+                                .triggerDataQuery(authHeader, dataQueryScope)
+                        ) { response: DataQueryResponse?, error: Error? ->
+                            when {
+                                response != null -> {
+                                    sessionManager.updatedSession = response.session
+                                    sessionKey = sessionManager.updatedSession?.key
+
+                                    response.credentials = credentials
+
+                                    emitter.onSuccess(response)
+                                }
+                                error != null -> emitter.onError(error)
+                                else -> emitter.onError(IllegalArgumentException())
+                            }
+                        }
                     }
-                    error != null -> emitter.onError(error)
-                    else -> emitter.onError(IllegalArgumentException())
                 }
             }
-        }
 
-        requestDataQuery()
+        checkAccessToken()
+            .compose(requestDataQuery())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = {
                     sessionManager.updatedSession = it.session
-                    handleContinuousDataDownload(userAccessToken, downloadHandler, completion)
+                    sessionKey = sessionManager.updatedSession?.key
+
+                    handleContinuousDataDownload(downloadHandler, callback)
                 },
                 onError = {
-                    completion.invoke(
+                    callback.invoke(
                         null,
                         APIError.ErrorWithMessage(
                             it.localizedMessage ?: context.getString(R.string.labelUnknownError)
@@ -1575,16 +2102,15 @@ class Init(
     }
 
     private fun handleContinuousDataDownload(
-        userAccessToken: String,
-        downloadHandler: FileContentCompletion,
-        completion: FileListCompletion
+        fileContentCallback: FileContentCallback,
+        fileListCallback: FileListCallback
     ) {
         DMELog.i(context.getString(R.string.labelReadingFiles))
 
-        activeFileDownloadHandler = downloadHandler
-        activeSessionDataFetchCompletionHandler = completion
+        activeFileDownloadHandler = fileContentCallback
+        activeSessionDataFetchCallbackHandler = fileListCallback
 
-        getSessionFileList(userAccessToken, { _, updatedFileIds ->
+        getSessionFileList(configuration.tokenPayload!!, { _, updatedFileIds ->
 
             updatedFileIds.forEach {
 
@@ -1598,20 +2124,30 @@ class Init(
                         else -> DMELog.e("Failed to download updates for file with ID: $it.")
                     }
 
-                    downloadHandler.invoke(file, error)
+                    fileContentCallback.invoke(file, error)
                     activeDownloadCount--
                 }
             }
 
         }) { fileList, error ->
-            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null && activeDownloadCount == 0) {
-                completion(
+            if (fileList?.syncStatus == FileList.SyncStatus.COMPLETED() && error == null && fileList.accounts?.hasError() == false && activeDownloadCount == 0) {
+                syncRunning = false
+                fileListCallback(
                     fileList,
                     null
                 ) // We only want to push this if the error exists, else
                 // it'll cause a premature loop exit.
+            } else if (fileList?.accounts?.hasError() == true) {
+                val reAuthError = fileList.accounts.parseError()
+                reAuthError.accounts = fileList.accounts.errorAccounts()
+                syncRunning = false
+                fileListCallback(
+                    fileList,
+                    reAuthError
+                )
             } else if (fileList?.syncStatus == FileList.SyncStatus.PARTIAL()) {
-                completion(
+                syncRunning = false
+                fileListCallback(
                     fileList,
                     error
                 )

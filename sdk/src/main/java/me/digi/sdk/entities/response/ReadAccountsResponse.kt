@@ -13,8 +13,11 @@ data class Service(
     val name: String = ""
 )
 
-data class ReadAccountsResponse(
+data class Accounts(
     val accounts: List<Account> = listOf(),
     @SerializedName("consentid")
-    val consentId: String = ""
+    val consentId: String = "",
+)
+data class GetAccountsResponse(
+    val readAccounts: Accounts
 )

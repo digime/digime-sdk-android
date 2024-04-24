@@ -4,11 +4,8 @@ import me.digi.sdk.utilities.crypto.ByteTransformer
 import me.digi.sdk.utilities.crypto.CryptoUtilities
 import java.util.*
 
-internal class AuthTokenRequestJWT(
+internal class PermissionAccessRequestJWT(
     @JwtClaim val accessToken: String,
-    @JwtClaim val iv: String,
-    @JwtClaim val metadata: String,
-    @JwtClaim val symmetricalKey: String,
     appId: String,
     contractId: String
 ) : JsonWebToken() {
@@ -18,9 +15,6 @@ internal class AuthTokenRequestJWT(
 
     @JwtClaim
     val nonce: String
-
-    @JwtClaim
-    val redirectUri = "digime-ca://callback"
 
     @JwtClaim
     val timestamp = Date().time

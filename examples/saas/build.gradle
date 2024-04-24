@@ -39,7 +39,8 @@ android {
 }
 
 dependencies {
-    implementation "me.digi:sdk:4.0.10"
+//    implementation "me.digi:sdk:4.0.12"
+    implementation project(':sdk')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
