@@ -1,6 +1,5 @@
 package me.digi.sdk.entities.configuration
 
-import me.digi.sdk.entities.payload.TokenPayload
 import me.digi.sdk.entities.payload.TokensPayload
 import me.digi.sdk.utilities.DMELog
 

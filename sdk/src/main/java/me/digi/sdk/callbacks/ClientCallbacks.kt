@@ -32,3 +32,5 @@ typealias IncrementalFileListUpdate = (fileList: FileList, updatedFileIds: List<
 typealias CredentialsCallback = (credentials: TokensPayload?, error: Error?) -> Unit
 
 typealias PortabilityReportCallback = (portabilityReportResponse: PortabilityReportResponse?, error: Error?) -> Unit
+
+typealias SampleDataSetsCallback = (dataSetsResponse: DataSetsResponse?, error: Error?) -> Unit

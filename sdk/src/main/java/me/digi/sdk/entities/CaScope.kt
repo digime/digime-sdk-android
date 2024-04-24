@@ -47,10 +47,10 @@ data class Criteria(
 )
 
 data class MetadataScope(
-    var accountIds: List<String>? = null,
-    var mimeTypes: List<String>? = null,
-    var references: List<String>? = null,
-    var tags: List<String>? = null
+    var accountId: List<String>? = null,
+    var mimeType: List<String>? = null,
+    var reference: List<String>? = null,
+    var tag: List<String>? = null
 )
 
 data class PartnersCriteria(

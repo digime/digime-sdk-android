@@ -8,7 +8,6 @@ import com.google.gson.annotations.JsonAdapter
 import com.google.gson.reflect.TypeToken
 import me.digi.sdk.entities.FileListAccount
 import me.digi.sdk.entities.FileListItem
-import me.digi.sdk.entities.payload.CredentialsPayload
 import java.lang.reflect.Type
 
 @JsonAdapter(FileListDeserializer::class)
