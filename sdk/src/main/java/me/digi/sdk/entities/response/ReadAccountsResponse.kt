@@ -1,7 +1,7 @@
 package me.digi.sdk.entities.response
 
 import com.google.gson.annotations.SerializedName
-import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.TokensPayload
 
 data class Account(
     val id: String = "",
@@ -21,5 +21,5 @@ data class Accounts(
 )
 data class GetAccountsResponse(
     val readAccounts: Accounts,
-    val credentials: CredentialsPayload? = null
+    val credentials: TokensPayload? = null
 )

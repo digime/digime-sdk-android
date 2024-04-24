@@ -78,7 +78,9 @@ internal interface ArgonService {
     ): Call<PreAuthorizationResponse>
 
     @GET("v1.7/discovery/services")
-    fun getServicesForContract(@Header("contractId") contractId: String?): Single<ServicesResponse>
+    fun getServicesForContract(
+        @Header("contractId") contractId: String,
+        @Query("includeSampleDataOnlySources") includeSampleDataOnlySources: Boolean): Single<ServicesResponse>
 
     @POST("v1.7/oauth/token/reference")
     fun getReferenceCode(@Header("Authorization") jwt: String): Call<TokenReferenceResponse>
@@ -102,5 +104,18 @@ internal interface ArgonService {
         @Query("format") format: String,
         @Query("from") from: String,
         @Query("to") to: String
+    ): Single<Response<ResponseBody>>
+
+    @GET("v1.7/permission-access/sample/datasets/{sourceId}")
+    fun getServiceDataSets(
+        @Header("Authorization") jwt: String,
+        @Path("sourceId") sourceId: String
+    ): Single<Response<Map<String, DataSet>>>
+
+    @GET("v1.7/permission-access/revoke/h:accountId")
+    fun revokeEndpoint(
+        @Header("Authorization") jwt: String,
+        @Header("accountId") accountId: String,
+        @Header("redirectUri") redirectUri: String
     ): Single<Response<ResponseBody>>
 }

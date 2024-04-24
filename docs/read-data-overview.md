@@ -24,13 +24,11 @@
 
 # Reading data - Step by step guide
 
-Requesting user data using digi.me is easy!
-
-On this page, we will learn how to receive data from your users using digi.me Private Share platform.
+On this page, we will learn how to receive data from specific services using digi.me Private Share platform.
 
 In order to access the digi.me platform, you need to obtain an application ID, a contract ID for reading data, and its private key.
 
-Please check [Getting Started](start.md) for more details.
+Please check [Getting Started](start.html) for more details.
 
 ### 1. Available services
 
@@ -39,12 +37,12 @@ To start reading user data, we first need to ask the user to onboard a service.
 To see a list of available services for user to onboard: 
 
 ```kotlin
-client.availableServices { servicesResponse, error ->	...	}
+client.getAvailableServices { servicesResponse, error ->	...	}
 ```
 
 *In Android Studio, hover with your mouse over the method name to see its full description*
 
-See [Available Services](available-services.md) for more explanation.
+See [Available Services](available-services.html) for more explanation.
 
 ### 2. Onboarding and Authorization
 

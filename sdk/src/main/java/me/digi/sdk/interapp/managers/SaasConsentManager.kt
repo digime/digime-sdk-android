@@ -42,41 +42,55 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
-        callback: AuthorizationCallback
-    ) {
+        sampleData: Boolean?,
+        callback: AuthorizationCallback,
+        ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
         authorizationCallbackHandler = callback
-        handlerAction(fromActivity, "service", serviceId, codeValue)
+        handlerAction(fromActivity, "service", serviceId, codeValue, sampleData)
     }
 
     fun beginOnboardAction(
         fromActivity: Activity,
         codeValue: String,
         serviceId: String? = null,
+        sampleData: Boolean?,
         callback: ServiceOnboardCallback
-    ) {
+        ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
         onboardingCallbackHandler = callback
-        handlerAction(fromActivity, "service", serviceId, codeValue)
+        handlerAction(fromActivity, "service", serviceId, codeValue, sampleData)
     }
     fun beginReAuthAction(
         fromActivity: Activity,
         codeValue: String,
         accountId: String? = null,
+        sampleData: Boolean?,
         callback: ServiceReAuthCallback
-    ) {
+        ) {
         AppCommunicator.getSharedInstance().addCallbackHandler(this)
         reAuthCallbackHandler = callback
-        handlerAction(fromActivity, "accountRef", accountId, codeValue)
+        handlerAction(fromActivity, "accountRef", accountId, codeValue, sampleData)
     }
 
-    private fun handlerAction(fromActivity: Activity, queryParameterKey: String, queryParameter: String?, codeValue: String) {
+    private fun handlerAction(fromActivity: Activity, queryParameterKey: String, queryParameter: String?, codeValue: String, sampleData: Boolean?) {
         val guestRequestCode = AppCommunicator.getSharedInstance()
             .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
 
         val proxyLaunchIntent = Intent(fromActivity, ConsentBrowserActivity::class.java)
 
-        proxyLaunchIntent.data = buildSaaSClientURI(queryParameterKey, queryParameter, codeValue)
+        proxyLaunchIntent.data = buildSaaSClientURI(queryParameterKey, queryParameter, codeValue, sampleData)
+
+        fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
+    }
+
+    private fun revokeHandlerAction(fromActivity: Activity, revokeUrl: String) {
+        val guestRequestCode = AppCommunicator.getSharedInstance()
+            .requestCodeForDeeplinkIntentActionId(R.string.deeplink_guest_consent_callback)
+
+        val proxyLaunchIntent = Intent(fromActivity, ConsentBrowserActivity::class.java)
+
+        proxyLaunchIntent.data = Uri.parse(revokeUrl)
 
         fromActivity.startActivityForResult(proxyLaunchIntent, guestRequestCode)
     }
@@ -164,6 +178,7 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
                 publicKey
             ),
             error)
+
         AppCommunicator.getSharedInstance().removeCallbackHandler(this)
         authorizationCallbackHandler = null
         onboardingCallbackHandler = null
@@ -174,7 +189,7 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
         // TODO: Does quark do metadata?
     }
 
-    private fun buildSaaSClientURI(queryParameterKey: String, queryParameter: String? = null, codeValue: String): Uri {
+    private fun buildSaaSClientURI(queryParameterKey: String, queryParameter: String? = null, codeValue: String, sampleData: Boolean?): Uri {
 
         val ctx = AppCommunicator.getSharedInstance().context
 
@@ -185,6 +200,12 @@ class SaasConsentManager(private val baseURL: String?, private val type: String)
             .appendQueryParameter(code, codeValue)
 
         queryParameter?.let { uri.appendQueryParameter(queryParameterKey, queryParameter) }
+
+        sampleData?.let {
+            uri.appendQueryParameter("sampleDataAutoOnboard", sampleData.toString())
+            uri.appendQueryParameter("sampleDataSet", "default")
+            uri.appendQueryParameter("includeSampleDataOnlySources", true.toString())
+        }
 
         return uri.build()
     }

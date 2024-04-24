@@ -32,7 +32,7 @@ The SDK provides a method which you can use to determine what services can be on
 The most basic initialization:
 
 ```kotlin
-client.availableServices { servicesResponse, error ->	...	}
+client.getAvailableServices { servicesResponse, error ->	...	}
 ```
 
 For contract that only asks for Twitter data, the response might be:
