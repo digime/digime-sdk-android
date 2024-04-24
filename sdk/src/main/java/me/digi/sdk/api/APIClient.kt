@@ -16,7 +16,6 @@ import me.digi.sdk.api.interceptors.RetryInterceptor
 import me.digi.sdk.api.services.ArgonService
 import me.digi.sdk.entities.configuration.ClientConfiguration
 import me.digi.sdk.entities.configuration.DigiMeConfiguration
-import me.digi.sdk.entities.payload.CredentialsPayload
 import me.digi.sdk.entities.request.SessionRequest
 import me.digi.sdk.entities.response.FileItem
 import okhttp3.Dispatcher

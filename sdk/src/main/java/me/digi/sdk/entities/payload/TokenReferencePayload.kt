@@ -16,5 +16,5 @@ data class OnboardPayload(
     val tokenReferencePayload: TokenReferencePayload? = null,
     val session: Session? = null,
     val code: String? = null,
-    val credentials: CredentialsPayload? = null
+    val credentials: TokensPayload? = null
 )

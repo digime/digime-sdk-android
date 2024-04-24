@@ -2,12 +2,12 @@ package me.digi.sdk.entities.response
 
 import com.google.gson.Gson
 import com.google.gson.JsonElement
-import me.digi.sdk.entities.payload.CredentialsPayload
+import me.digi.sdk.entities.payload.TokensPayload
 
 data class FileItem(
     val fileContent: String? = "",
     val fileName: String? = "",
-    var credentials: CredentialsPayload? = null
+    var credentials: TokensPayload? = null
 ) {
     lateinit var identifier: String
 
